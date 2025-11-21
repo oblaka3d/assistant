@@ -1,0 +1,17 @@
+appId: com.voiceassistant.arm
+productName: Voice Assistant ARM
+directories:
+  output: release
+files:
+  - dist/**/*
+  - app/ui/**/*
+  - package.json
+linux:
+  target:
+    - AppImage
+    - zip
+  arch:
+    - arm64
+  category: Utility
+  icon: assets/icon.png
+

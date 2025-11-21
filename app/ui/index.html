@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосовой Ассистент</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Индикатор загрузки Unity -->
+        <div id="unityLoading" class="unity-loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Загрузка персонажа...</div>
+        </div>
+
+        <!-- Блок персонажа Unity -->
+        <div id="unity-container" class="unity-container">
+            <canvas id="unity-canvas" class="unity-canvas"></canvas>
+            <div class="character-glow"></div>
+        </div>
+
+        <!-- Блок управления -->
+        <div class="control-section">
+            <div class="status-section">
+                <div id="status" class="status">Готов к работе</div>
+            </div>
+
+            <div class="button-section">
+                <button id="recordButton" class="record-button" aria-label="Начать запись">
+                    <span class="button-icon">🎤</span>
+                    <span class="button-text">Говорить</span>
+                </button>
+            </div>
+
+            <!-- Текстовые блоки под Unity -->
+            <div class="text-section">
+                <div class="text-box">
+                    <h2 class="text-label">Вы сказали:</h2>
+                    <div id="userText" class="text-content">—</div>
+                </div>
+
+                <div class="text-box">
+                    <h2 class="text-label">Ответ:</h2>
+                    <div id="assistantText" class="text-content assistant-pulse">—</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-text">ARM Voice Assistant v1.0</div>
+        </footer>
+    </div>
+
+    <script src="unity-loader.js"></script>
+    <script src="unity-wrapper.js"></script>
+    <script src="index.js"></script>
+</body>
+</html>
+
