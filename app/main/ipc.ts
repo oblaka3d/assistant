@@ -3,69 +3,57 @@ import * as path from 'path';
 
 import { ipcMain } from 'electron';
 
-import { checkDependencies, DependencyCheckResult } from '../backend/dependency-checker';
+import { checkDependencies } from '../backend/dependency-checker';
 import { generateResponse } from '../backend/llm';
 import { transcribe } from '../backend/stt';
 import { synthesize } from '../backend/tts';
 import { startRecord, stopRecord } from '../backend/voice';
 
+import { readLogs, clearLogs, getLogFileSize, getLogFilePath } from './utils/fileLogger';
+import { createIPCHandler } from './utils/ipcHandler';
+
 export function setupIPC(): void {
-  ipcMain.handle('startRecord', async (): Promise<void> => {
-    try {
+  ipcMain.handle(
+    'startRecord',
+    createIPCHandler(async () => {
       await startRecord();
-    } catch (error) {
-      console.error('Error starting record:', error);
-      throw error;
-    }
-  });
+    }, 'startRecord')
+  );
 
-  ipcMain.handle('stopRecord', async (): Promise<Buffer> => {
-    try {
-      const buffer = await stopRecord();
-      return buffer;
-    } catch (error) {
-      console.error('Error stopping record:', error);
-      throw error;
-    }
-  });
+  ipcMain.handle(
+    'stopRecord',
+    createIPCHandler(async () => {
+      return await stopRecord();
+    }, 'stopRecord')
+  );
 
-  ipcMain.handle('transcribe', async (_event, audioBuffer: Buffer): Promise<string> => {
-    try {
-      const text = await transcribe(audioBuffer);
-      return text;
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      throw error;
-    }
-  });
+  ipcMain.handle(
+    'transcribe',
+    createIPCHandler(async (_event, audioBuffer: Buffer) => {
+      return await transcribe(audioBuffer);
+    }, 'transcribe')
+  );
 
-  ipcMain.handle('askLLM', async (_event, text: string): Promise<string> => {
-    try {
-      const response = await generateResponse(text);
-      return response;
-    } catch (error) {
-      console.error('Error asking LLM:', error);
-      throw error;
-    }
-  });
+  ipcMain.handle(
+    'askLLM',
+    createIPCHandler(async (_event, text: string) => {
+      return await generateResponse(text);
+    }, 'askLLM')
+  );
 
-  ipcMain.handle('speak', async (_event, text: string): Promise<void> => {
-    try {
+  ipcMain.handle(
+    'speak',
+    createIPCHandler(async (_event, text: string) => {
       await synthesize(text);
-    } catch (error) {
-      console.error('Error synthesizing speech:', error);
-      throw error;
-    }
-  });
+    }, 'speak')
+  );
 
-  ipcMain.handle('checkDependencies', async (): Promise<DependencyCheckResult[]> => {
-    try {
+  ipcMain.handle(
+    'checkDependencies',
+    createIPCHandler(async () => {
       return await checkDependencies();
-    } catch (error) {
-      console.error('Error checking dependencies:', error);
-      throw error;
-    }
-  });
+    }, 'checkDependencies')
+  );
 
   ipcMain.handle('getModelList', async (): Promise<string[]> => {
     try {
@@ -109,47 +97,139 @@ export function setupIPC(): void {
     }
   });
 
-  ipcMain.handle('getSceneList', async (): Promise<string[]> => {
-    try {
+  ipcMain.handle(
+    'getSceneList',
+    createIPCHandler(async () => {
       // Путь к папке со сценами
       // В development: app/ui/public/assets/scenes
       // В production: dist/app/ui/assets/scenes
       const scenesPath1 = path.join(__dirname, '../ui/assets/scenes');
       const scenesPath2 = path.join(__dirname, '../ui/public/assets/scenes');
-      
+
       let scenesPath = scenesPath1;
       if (!fs.existsSync(scenesPath1) && fs.existsSync(scenesPath2)) {
         scenesPath = scenesPath2;
       }
-      
+
       // Проверяем существование папки
       if (!fs.existsSync(scenesPath)) {
-        // Если папки нет, возвращаем пустой список
-        console.log(`Scenes directory not found: ${scenesPath}`);
+        console.log(`[IPC] Scenes directory not found: ${scenesPath}`);
         return [];
       }
 
-      console.log(`Reading scenes from: ${scenesPath}`);
+      console.log(`[IPC] Reading scenes from: ${scenesPath}`);
 
       // Читаем список файлов в папке
       const files = fs.readdirSync(scenesPath);
-      
-      // Фильтруем файлы сцен (можно расширить список поддерживаемых форматов)
+
+      // Фильтруем файлы сцен
+      const sceneExtensions = ['.json', '.gltf', '.glb', '.scene'];
       const sceneFiles = files
         .filter((file) => {
           const fullPath = path.join(scenesPath, file);
           const stats = fs.statSync(fullPath);
           const ext = path.extname(file).toLowerCase();
-          // Пока поддерживаем только JSON и GLTF/GLB для сцен
-          return stats.isFile() && (ext === '.json' || ext === '.gltf' || ext === '.glb' || ext === '.scene');
+          return stats.isFile() && sceneExtensions.includes(ext);
         })
         .sort(); // Сортируем по алфавиту
 
-      console.log(`Found ${sceneFiles.length} scene files:`, sceneFiles);
+      console.log(`[IPC] Found ${sceneFiles.length} scene files:`, sceneFiles);
       return sceneFiles;
-    } catch (error) {
-      console.error('Error getting scene list:', error);
-      throw error;
-    }
-  });
+    }, 'getSceneList')
+  );
+
+  // Пользователь
+  ipcMain.handle(
+    'login',
+    createIPCHandler(async (_event, username: string, password: string) => {
+      // TODO: Реализовать проверку учетных данных
+      // Пока заглушка для демонстрации
+      if (username && password) {
+        return {
+          id: '1',
+          username,
+          displayName: username,
+          email: `${username}@example.com`,
+        };
+      }
+      throw new Error('Неверные учетные данные');
+    }, 'login')
+  );
+
+  ipcMain.handle(
+    'logout',
+    createIPCHandler(async () => {
+      // TODO: Реализовать выход из системы
+      return true;
+    }, 'logout')
+  );
+
+  ipcMain.handle(
+    'getCurrentUser',
+    createIPCHandler(async () => {
+      // TODO: Реализовать получение текущего пользователя из сессии/базы данных
+      // Пока возвращаем null (не авторизован)
+      return null;
+    }, 'getCurrentUser')
+  );
+
+  // API ключи
+  ipcMain.handle(
+    'getAPIKeys',
+    createIPCHandler(async () => {
+      // TODO: Загрузить API ключи из файла/базы данных
+      // Пока возвращаем из переменных окружения
+      return {
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+        YANDEX_STT_KEY: process.env.YANDEX_STT_KEY || '',
+        YANDEX_GPT_KEY: process.env.YANDEX_GPT_KEY || '',
+        YANDEX_TTS_KEY: process.env.YANDEX_TTS_KEY || '',
+        YANDEX_FOLDER_ID: process.env.YANDEX_FOLDER_ID || '',
+        GOOGLE_STT_KEY: process.env.GOOGLE_STT_KEY || '',
+        GOOGLE_TTS_KEY: process.env.GOOGLE_TTS_KEY || '',
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+      };
+    }, 'getAPIKeys')
+  );
+
+  ipcMain.handle(
+    'saveAPIKeys',
+    createIPCHandler(async (_event, keys: Record<string, string>) => {
+      // TODO: Сохранить API ключи в файл/базу данных
+      // Пока сохраняем в переменные окружения (только для текущей сессии)
+      Object.keys(keys).forEach((key) => {
+        if (keys[key]) {
+          process.env[key] = keys[key];
+        }
+      });
+      return true;
+    }, 'saveAPIKeys')
+  );
+
+  // Логирование
+  ipcMain.handle(
+    'getLogs',
+    createIPCHandler(async (_event, maxLines?: number) => {
+      return readLogs(maxLines);
+    }, 'getLogs')
+  );
+
+  ipcMain.handle(
+    'clearLogs',
+    createIPCHandler(async () => {
+      clearLogs();
+      return true;
+    }, 'clearLogs')
+  );
+
+  ipcMain.handle(
+    'getLogFileInfo',
+    createIPCHandler(async () => {
+      return {
+        size: getLogFileSize(),
+        path: getLogFilePath(),
+        lineCount: readLogs().length,
+      };
+    }, 'getLogFileInfo')
+  );
 }

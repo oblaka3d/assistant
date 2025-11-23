@@ -20,10 +20,15 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
+import { useTranslation } from 'react-i18next';
+
+import { SETTINGS_RANGES, ASSETS_PATHS } from '../../../../constants/app';
 import ScreenHeader from '../../../../components/ScreenHeader';
+import ScrollableContent from '../../../../components/ScrollableContent';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setVolume,
+  setLanguage,
   setModelPath,
   setSceneName,
   setEnableToonShader,
@@ -31,15 +36,20 @@ import {
   setCameraDistance,
   setAnimationSpeed,
 } from '../../../../store/slices/settingsSlice';
+import { createLogger } from '../../../../utils/logger';
 import styles from '../../MenuScreen.module.css';
+
+const log = createLogger('SettingsScreen');
 
 interface SettingsScreenProps {
   onBack: () => void;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const volume = useAppSelector((state) => state.settings.volume);
+  const language = useAppSelector((state) => state.settings.language);
   const modelScene = useAppSelector((state) => state.settings.modelScene);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
@@ -59,19 +69,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         setLoadingModels(true);
         const models = await window.api.getModelList();
         setAvailableModels(models);
-        console.log('Available models loaded:', models);
-        
+        log.debug('Available models loaded:', models);
+
         // Если текущая модель не найдена в списке, выбираем первую доступную
         if (models.length > 0) {
           const currentModelName = modelScene.modelPath.split('/').pop() || '';
           if (!models.includes(currentModelName)) {
             const firstModel = models[0];
-            dispatch(setModelPath(`./assets/models/${firstModel}`));
-            console.log(`Current model "${currentModelName}" not found, switching to "${firstModel}"`);
+            dispatch(setModelPath(`${ASSETS_PATHS.MODELS}${firstModel}`));
+            log.debug(`Current model "${currentModelName}" not found, switching to "${firstModel}"`);
           }
         }
       } catch (error) {
-        console.error('Error loading model list:', error);
+        log.error('Error loading model list:', error);
         setAvailableModels([]);
       } finally {
         setLoadingModels(false);
@@ -83,7 +93,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
     // Загружаем список сцен
     const loadScenes = async () => {
       if (!window.api) {
-        console.error('Electron API not available');
+        log.error('Electron API not available');
         setLoadingScenes(false);
         return;
       }
@@ -92,9 +102,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         setLoadingScenes(true);
         const scenes = await window.api.getSceneList();
         setAvailableScenes(scenes);
-        console.log('Available scenes loaded:', scenes);
+        log.debug('Available scenes loaded:', scenes);
       } catch (error) {
-        console.error('Error loading scene list:', error);
+        log.error('Error loading scene list:', error);
         setAvailableScenes([]);
       } finally {
         setLoadingScenes(false);
@@ -106,23 +116,24 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
 
   return (
     <Box className={styles.container}>
-      <ScreenHeader title="Настройки" onBack={onBack} />
+      <ScreenHeader title={t('settings.title')} onBack={onBack} />
 
-      <Box className={styles.content}>
+      <ScrollableContent screenId="settings">
         <Paper elevation={3} className={styles.settingPaper}>
           <Box className={styles.settingHeader}>
             <VolumeUpIcon className={styles.settingIcon} />
-            <Typography variant="h6">Громкость</Typography>
+            <Typography variant="h6">{t('settings.volume')}</Typography>
           </Box>
           <Box sx={{ px: 2 }}>
-            <Slider
-              value={volume}
-              onChange={(_, value) => dispatch(setVolume(value as number))}
-              min={0}
-              max={100}
-              valueLabelDisplay="auto"
-              className={styles.slider}
-            />
+              <Slider
+                value={volume}
+                onChange={(_, value) => dispatch(setVolume(value as number))}
+                min={SETTINGS_RANGES.VOLUME.min}
+                max={SETTINGS_RANGES.VOLUME.max}
+                step={SETTINGS_RANGES.VOLUME.step}
+                valueLabelDisplay="auto"
+                className={styles.slider}
+              />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
               {volume}%
             </Typography>
@@ -130,52 +141,65 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         </Paper>
 
         <Paper elevation={3} className={styles.settingPaper}>
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <LanguageIcon className={styles.settingIcon} />
-              <Typography variant="h6">Язык интерфейса</Typography>
-            </Box>
+          <Box className={styles.settingHeader}>
+            <LanguageIcon className={styles.settingIcon} />
+            <Typography variant="h6">{t('settings.language')}</Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">
-            Русский
-          </Typography>
+          <Box sx={{ px: 2, pb: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="language-select-label">{t('settings.language')}</InputLabel>
+              <Select
+                labelId="language-select-label"
+                id="language-select"
+                value={language}
+                label={t('settings.language')}
+                onChange={(e) => {
+                  dispatch(setLanguage(e.target.value));
+                }}
+                sx={{ color: 'text.primary' }}
+              >
+                <MenuItem value="ru">{t('app.russian')}</MenuItem>
+                <MenuItem value="en">{t('app.english')}</MenuItem>
+                <MenuItem value="zh">{t('app.chinese')}</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </Paper>
 
         {/* Секция "Модель и сцена" */}
         <Paper elevation={3} className={styles.settingPaper} sx={{ mt: 2 }}>
           <Box className={styles.settingHeader}>
             <ImageIcon className={styles.settingIcon} />
-            <Typography variant="h6">Модель и сцена</Typography>
+            <Typography variant="h6">{t('settings.modelAndScene')}</Typography>
           </Box>
 
           <Box sx={{ px: 2, pb: 2 }}>
             {/* Выбор модели */}
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Модель персонажа
+                {t('settings.model')}
               </Typography>
               {loadingModels ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CircularProgress size={20} />
                   <Typography variant="body2" color="text.secondary">
-                    Загрузка списка моделей...
+                    {t('ui.loadingModels')}
                   </Typography>
                 </Box>
               ) : (
                 <FormControl fullWidth size="small">
-                  <InputLabel id="model-select-label">Выберите модель</InputLabel>
+                  <InputLabel id="model-select-label">{t('settings.model')}</InputLabel>
                   <Select
                     labelId="model-select-label"
                     id="model-select"
                     value={modelScene.modelPath.split('/').pop() || availableModels[0] || ''}
-                    label="Выберите модель"
+                    label={t('settings.model')}
                     onChange={(e) => {
                       const selectedModel = e.target.value;
                       if (selectedModel) {
-                        const modelPath = `./assets/models/${selectedModel}`;
+                        const modelPath = `${ASSETS_PATHS.MODELS}${selectedModel}`;
                         dispatch(setModelPath(modelPath));
+                        log.debug('Model changed to:', modelPath);
                       }
                     }}
                     sx={{ color: 'text.primary' }}
@@ -183,7 +207,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                     {availableModels.length === 0 ? (
                       <MenuItem disabled value="">
                         <Typography variant="body2" color="text.secondary">
-                          Модели не найдены
+                          {t('ui.noModels')}
                         </Typography>
                       </MenuItem>
                     ) : (
@@ -196,41 +220,36 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                   </Select>
                 </FormControl>
               )}
-              {availableModels.length > 0 && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Найдено моделей: {availableModels.length}
-                </Typography>
-              )}
             </Box>
 
             {/* Выбор сцены */}
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Сцена окружения
+                {t('settings.scene')}
               </Typography>
               {loadingScenes ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CircularProgress size={20} />
                   <Typography variant="body2" color="text.secondary">
-                    Загрузка списка сцен...
+                    {t('ui.loadingScenes')}
                   </Typography>
                 </Box>
               ) : (
                 <FormControl fullWidth size="small">
-                  <InputLabel id="scene-select-label">Выберите сцену</InputLabel>
+                  <InputLabel id="scene-select-label">{t('settings.scene')}</InputLabel>
                   <Select
                     labelId="scene-select-label"
                     id="scene-select"
                     value={modelScene.sceneName || ''}
-                    label="Выберите сцену"
+                    label={t('settings.scene')}
                     onChange={(e) => {
                       const selectedScene = e.target.value;
                       if (selectedScene === '') {
                         dispatch(setSceneName(null));
-                        console.log('Scene cleared');
+                        log.debug('Scene cleared');
                       } else {
                         dispatch(setSceneName(selectedScene));
-                        console.log('Scene changed to:', selectedScene);
+                        log.debug('Scene changed to:', selectedScene);
                       }
                     }}
                     sx={{ color: 'text.primary' }}
@@ -238,13 +257,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                   >
                     <MenuItem value="">
                       <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                        Сцена не выбрана
+                        {t('ui.sceneNotSelected')}
                       </Typography>
                     </MenuItem>
                     {availableScenes.length === 0 ? (
                       <MenuItem disabled value="__no_scenes__">
                         <Typography variant="body2" color="text.secondary">
-                          Сцены не найдены
+                          {t('ui.noScenes')}
                         </Typography>
                       </MenuItem>
                     ) : (
@@ -256,11 +275,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                     )}
                   </Select>
                 </FormControl>
-              )}
-              {availableScenes.length > 0 && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Найдено сцен: {availableScenes.length}
-                </Typography>
               )}
             </Box>
 
@@ -277,7 +291,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <PaletteIcon sx={{ mr: 1, fontSize: '1rem' }} />
-                    <Typography variant="body2">Toon Shader</Typography>
+                    <Typography variant="body2">{t('settings.enableToonShader')}</Typography>
                   </Box>
                 }
               />
@@ -287,14 +301,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <LightModeIcon className={styles.settingIcon} sx={{ fontSize: '1rem', mr: 1 }} />
-                <Typography variant="body2">Интенсивность освещения</Typography>
+                <Typography variant="body2">{t('settings.lightIntensity')}</Typography>
               </Box>
               <Slider
                 value={modelScene.lightIntensity}
                 onChange={(_, value) => dispatch(setLightIntensity(value as number))}
-                min={0.5}
-                max={5.0}
-                step={0.1}
+                min={SETTINGS_RANGES.LIGHT_INTENSITY.min}
+                max={SETTINGS_RANGES.LIGHT_INTENSITY.max}
+                step={SETTINGS_RANGES.LIGHT_INTENSITY.step}
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
@@ -307,14 +321,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <VideocamIcon className={styles.settingIcon} sx={{ fontSize: '1rem', mr: 1 }} />
-                <Typography variant="body2">Расстояние камеры</Typography>
+                <Typography variant="body2">{t('settings.cameraDistance')}</Typography>
               </Box>
               <Slider
                 value={modelScene.cameraDistance}
                 onChange={(_, value) => dispatch(setCameraDistance(value as number))}
-                min={1.0}
-                max={5.0}
-                step={0.1}
+                min={SETTINGS_RANGES.CAMERA_DISTANCE.min}
+                max={SETTINGS_RANGES.CAMERA_DISTANCE.max}
+                step={SETTINGS_RANGES.CAMERA_DISTANCE.step}
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
@@ -327,14 +341,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <SpeedIcon className={styles.settingIcon} sx={{ fontSize: '1rem', mr: 1 }} />
-                <Typography variant="body2">Скорость анимации</Typography>
+                <Typography variant="body2">{t('settings.animationSpeed')}</Typography>
               </Box>
               <Slider
                 value={modelScene.animationSpeed}
                 onChange={(_, value) => dispatch(setAnimationSpeed(value as number))}
-                min={0.1}
-                max={3.0}
-                step={0.1}
+                min={SETTINGS_RANGES.ANIMATION_SPEED.min}
+                max={SETTINGS_RANGES.ANIMATION_SPEED.max}
+                step={SETTINGS_RANGES.ANIMATION_SPEED.step}
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
@@ -344,7 +358,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             </Box>
           </Box>
         </Paper>
-      </Box>
+      </ScrollableContent>
     </Box>
   );
 };

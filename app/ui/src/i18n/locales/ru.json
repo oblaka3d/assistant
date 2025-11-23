@@ -1,0 +1,114 @@
+{
+  "status": {
+    "ready": "Готов к работе",
+    "readyNoCharacter": "Готов к работе (без персонажа)",
+    "listening": "Слушаю...",
+    "processing": "Обработка...",
+    "recognizing": "Распознавание речи...",
+    "generating": "Генерация ответа...",
+    "speaking": "Отвечаю...",
+    "notRecognized": "Речь не распознана",
+    "error": "Ошибка",
+    "recording": "Запись..."
+  },
+  "ui": {
+    "loadingCharacter": "Загрузка персонажа...",
+    "characterUnavailable": "Персонаж недоступен",
+    "characterNotLoaded": "⚠️ Персонаж не загружен. Приложение работает в режиме без визуализации.",
+    "noModels": "Модели не найдены",
+    "noScenes": "Сцены не найдены",
+    "loadingModels": "Загрузка списка моделей...",
+    "loadingScenes": "Загрузка списка сцен...",
+    "sceneNotSelected": "Сцена не выбрана",
+    "emptyHistory": "История пуста",
+    "startDialog": "Начните диалог с ассистентом",
+    "historyPlaceholder": "История будет доступна здесь в будущих версиях",
+    "enterMessage": "Введите сообщение...",
+    "errorMessage": "Произошла ошибка при обработке запроса.",
+    "errorSorry": "Извините, не удалось получить ответ.",
+    "youSaid": "Вы сказали",
+    "answer": "Ответ"
+  },
+  "menu": {
+    "title": "Меню",
+    "settings": "Настройки",
+    "apiKeys": "API ключи",
+    "history": "История диалогов",
+    "logs": "Логи приложения",
+    "about": "О приложении"
+  },
+  "settings": {
+    "title": "Настройки",
+    "volume": "Громкость",
+    "modelAndScene": "Модель и сцена",
+    "model": "Модель",
+    "scene": "Сцена",
+    "enableToonShader": "Включить toon shader",
+    "lightIntensity": "Интенсивность света",
+    "cameraDistance": "Расстояние камеры",
+    "animationSpeed": "Скорость анимации",
+    "language": "Язык"
+  },
+  "apiKeys": {
+    "title": "API ключи",
+    "stt": "Распознавание речи (STT)",
+    "llm": "Языковая модель (LLM)",
+    "tts": "Синтез речи (TTS)",
+    "save": "Сохранить",
+    "saved": "Ключи успешно сохранены",
+    "error": "Ошибка сохранения ключей",
+    "apiKey": "API ключ",
+    "folderId": "Folder ID",
+    "show": "Показать",
+    "hide": "Скрыть"
+  },
+  "history": {
+    "title": "История диалогов",
+    "empty": "История пуста",
+    "placeholder": "История будет доступна здесь в будущих версиях",
+    "user": "Пользователь",
+    "assistant": "Ассистент",
+    "clearHistory": "Очистить историю",
+    "confirmClear": "Вы уверены, что хотите очистить историю диалогов?",
+    "noMessages": "Нет сообщений в истории",
+    "yesterday": "Вчера"
+  },
+  "logs": {
+    "title": "Логи приложения",
+    "fileSize": "Размер файла",
+    "lines": "Строк",
+    "path": "Путь",
+    "refresh": "Обновить",
+    "clear": "Очистить логи",
+    "confirmClear": "Вы уверены, что хотите очистить логи?",
+    "filter": "Фильтр по тексту...",
+    "shown": "Показано",
+    "of": "из",
+    "empty": "Логи пусты",
+    "error": "Ошибка загрузки логов",
+    "clearError": "Ошибка очистки логов"
+  },
+  "about": {
+    "title": "О приложении",
+    "version": "Версия",
+    "description": "Голосовой ассистент для BTT Pi 1.2 и других ARM устройств",
+    "tech": "Разработано с использованием Electron, React, THREE.js и Redux Toolkit"
+  },
+  "user": {
+    "login": "Войти",
+    "logout": "Выйти",
+    "loginPrompt": "Войдите в аккаунт",
+    "loginDescription": "Для доступа к расширенным функциям",
+    "loadError": "Ошибка загрузки пользователя",
+    "logoutError": "Ошибка выхода из системы"
+  },
+  "app": {
+    "name": "ARM Voice Assistant",
+    "version": "v1.0",
+    "language": "Язык",
+    "russian": "Русский",
+    "english": "English",
+    "chinese": "中文"
+  }
+}
+

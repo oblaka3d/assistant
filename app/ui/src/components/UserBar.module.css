@@ -1,0 +1,101 @@
+/* ========================================
+   User Bar Styles
+   ======================================== */
+
+.userBar {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: rgba(45, 45, 45, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.userAvatarContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.userAvatar {
+  width: 48px !important;
+  height: 48px !important;
+  background-color: #4a90e2;
+  font-weight: 600;
+}
+
+.userDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.userEmail {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.logoutButton {
+  margin-left: auto;
+}
+
+.loginPrompt {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loginIcon {
+  width: 48px;
+  height: 48px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.loginText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.loginButton {
+  margin-left: auto;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .userBar {
+    padding: 0.75rem;
+  }
+
+  .userAvatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .userName {
+    font-size: 0.9375rem;
+  }
+
+  .loginIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .loginButton {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
+

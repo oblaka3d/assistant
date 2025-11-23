@@ -13,7 +13,74 @@
 .content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1rem;
+  /* Улучшенная поддержка скролла на тач-устройствах */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* Плавная прокрутка */
+  scroll-behavior: smooth;
+  /* Стилизация скроллбара для WebKit браузеров */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(74, 144, 226, 0.5) rgba(45, 45, 45, 0.1);
+}
+
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: rgba(45, 45, 45, 0.1);
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 226, 0.5);
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 226, 0.7);
+}
+
+/* Контейнер для скроллируемых экранов */
+.contentScrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(74, 144, 226, 0.5) rgba(45, 45, 45, 0.1);
+}
+
+.contentScrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contentScrollable::-webkit-scrollbar-track {
+  background: rgba(45, 45, 45, 0.1);
+  border-radius: 4px;
+}
+
+.contentScrollable::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 226, 0.5);
+  border-radius: 4px;
+}
+
+.contentScrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 226, 0.7);
+}
+
+/* Контейнер для не скроллируемых экранов */
+.contentNoScroll {
+  flex: 1;
+  overflow: hidden;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .settingPaper {

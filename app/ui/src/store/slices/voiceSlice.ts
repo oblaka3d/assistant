@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { STATUS_MESSAGES } from '../../constants/messages';
+
 export type VoiceStatus =
   | 'Готов к работе'
   | 'Готов к работе (без персонажа)'

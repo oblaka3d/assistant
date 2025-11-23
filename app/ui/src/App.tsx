@@ -2,6 +2,8 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { useEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
+import { TIMEOUTS, DEFAULTS } from './constants/app';
+import { useLanguage } from './hooks/useLanguage';
 import NavigationIndicators from './components/NavigationIndicators';
 import StatusBar from './components/StatusBar';
 import ChatScreen from './screens/ChatScreen/ChatScreen';
@@ -30,17 +32,20 @@ function App() {
   const isTransitioning = useAppSelector((state) => state.ui.isTransitioning);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Синхронизация языка из Redux с i18n
+  useLanguage();
+
   // Отключаем свайпы, если открыт вложенный экран
   const canSwipe = subScreen === null;
 
   // Сброс isTransitioning после завершения анимации
   useEffect(() => {
-    if (isTransitioning) {
-      const timer = setTimeout(() => {
-        dispatch(setTransitioning(false));
-      }, 300);
-      return () => clearTimeout(timer);
-    }
+        if (isTransitioning) {
+          const timer = setTimeout(() => {
+            dispatch(setTransitioning(false));
+          }, TIMEOUTS.UI_TRANSITION);
+          return () => clearTimeout(timer);
+        }
   }, [isTransitioning, dispatch]);
 
   // Круговая навигация: влево = следующий экран справа, вправо = предыдущий экран слева
@@ -108,13 +113,13 @@ function App() {
             transition: isTransitioning ? 'transform 0.3s ease-in-out' : 'none',
           }}
         >
-          <div style={{ width: '33.333%', height: '100%', flexShrink: 0 }}>
+          <div style={{ width: `${100 / DEFAULTS.SCREEN_COUNT}%`, height: '100%', flexShrink: 0 }}>
             <ChatScreen />
           </div>
-          <div style={{ width: '33.333%', height: '100%', flexShrink: 0 }}>
+          <div style={{ width: `${100 / DEFAULTS.SCREEN_COUNT}%`, height: '100%', flexShrink: 0 }}>
             <MainScreen />
           </div>
-          <div style={{ width: '33.333%', height: '100%', flexShrink: 0 }}>
+          <div style={{ width: `${100 / DEFAULTS.SCREEN_COUNT}%`, height: '100%', flexShrink: 0 }}>
             <MenuScreen />
           </div>
         </div>

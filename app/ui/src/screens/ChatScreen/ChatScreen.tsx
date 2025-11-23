@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import SendIcon from '@mui/icons-material/Send';
 import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
 import React, { useRef, useEffect } from 'react';
@@ -8,10 +9,14 @@ import 'react-chat-elements/dist/main.css';
 import ScreenHeader from '../../components/ScreenHeader';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { addMessage, clearInput, setInputValue } from '../../store/slices/chatSlice';
+import { createLogger } from '../../utils/logger';
 
 import styles from './ChatScreen.module.css';
 
+const log = createLogger('ChatScreen');
+
 const ChatScreen: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const messages = useAppSelector((state) => state.chat.messages);
   const inputValue = useAppSelector((state) => state.chat.inputValue);
@@ -51,7 +56,7 @@ const ChatScreen: React.FC = () => {
           id: (Date.now() + 1).toString(),
           position: 'left' as const,
           type: 'text' as const,
-          text: response || 'Извините, не удалось получить ответ.',
+          text: response || t('ui.errorSorry'),
           date: new Date(),
         };
         dispatch(addMessage(assistantMessage));
@@ -61,12 +66,12 @@ const ChatScreen: React.FC = () => {
           await window.api.speak(response);
         }
       } catch (error) {
-        console.error('Failed to get assistant response:', error);
+        log.error('Failed to get assistant response:', error);
         const errorMessage = {
           id: (Date.now() + 1).toString(),
           position: 'left' as const,
           type: 'text' as const,
-          text: 'Произошла ошибка при обработке запроса.',
+          text: t('ui.errorMessage'),
           date: new Date(),
         };
         dispatch(addMessage(errorMessage));
@@ -84,17 +89,17 @@ const ChatScreen: React.FC = () => {
   return (
     <Box className={styles.container}>
       {/* Заголовок */}
-      <ScreenHeader title="История диалогов" />
+      <ScreenHeader title={t('menu.history')} />
 
       {/* Список сообщений */}
       <Box className={styles.messagesContainer}>
         {messages.length === 0 ? (
           <Box className={styles.emptyState}>
             <Typography variant="h6" color="text.secondary">
-              История пуста
+              {t('history.empty')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Начните диалог с ассистентом
+              {t('ui.startDialog')}
             </Typography>
           </Box>
         ) : (
@@ -110,7 +115,7 @@ const ChatScreen: React.FC = () => {
                 type: msg.type,
                 text: msg.text,
                 date: msg.date,
-                title: msg.position === 'right' ? 'Вы' : 'Ассистент',
+                title: msg.position === 'right' ? t('history.user') : t('history.assistant'),
                 titleColor: msg.position === 'right' ? '#4a90e2' : '#27ae60',
               }))}
             />
@@ -125,7 +130,7 @@ const ChatScreen: React.FC = () => {
             fullWidth
             multiline
             maxRows={4}
-            placeholder="Введите сообщение..."
+            placeholder={t('ui.enterMessage')}
             value={inputValue}
             onChange={(e) => dispatch(setInputValue(e.target.value))}
             onKeyPress={handleKeyPress}

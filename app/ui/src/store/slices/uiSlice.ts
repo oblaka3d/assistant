@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type MainScreen = 'main' | 'chat' | 'menu';
-export type SubScreen = 'settings' | 'history' | 'about' | null;
+export type SubScreen = 'settings' | 'history' | 'about' | 'logs' | 'apiKeys' | null;
 
 interface UIState {
   currentScreen: MainScreen;

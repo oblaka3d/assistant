@@ -1,5 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { AppBar, Toolbar, IconButton, Typography } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Box } from '@mui/material';
 import React from 'react';
 
 import commonStyles from '../styles/common.module.css';
@@ -7,9 +7,10 @@ import commonStyles from '../styles/common.module.css';
 interface ScreenHeaderProps {
   title: string;
   onBack?: () => void;
+  action?: React.ReactNode;
 }
 
-const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack }) => {
+const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack, action }) => {
   return (
     <AppBar position="static" className={commonStyles.appBar}>
       <Toolbar>
@@ -21,6 +22,7 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack }) => {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           {title}
         </Typography>
+        {action && <Box sx={{ ml: 2 }}>{action}</Box>}
       </Toolbar>
     </AppBar>
   );

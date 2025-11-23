@@ -3,30 +3,27 @@ import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 
 import App from './App';
+import './i18n/config'; // Инициализация i18n
 import './index.css';
 import { store } from './store';
+import { createLogger } from './utils/logger';
+
+const log = createLogger('main.tsx');
 
 // Обработка ошибок React
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
-  console.error('Root element not found!');
+  log.error('Root element not found!');
   document.body.innerHTML =
     '<div style="padding: 20px; color: red;">Error: Root element not found</div>';
 } else {
   try {
-    console.log('[main.tsx] ========================================');
-    console.log('[main.tsx] Initializing React app...');
-    console.log('[main.tsx] Window location:', window.location.href);
-    console.log('[main.tsx] Document ready state:', document.readyState);
-    
-    // Проверка доступности Electron API
-    if (window.api) {
-      console.log('[main.tsx] Electron API is available:', Object.keys(window.api));
-    } else {
-      console.warn('[main.tsx] Electron API is not available. Make sure preload script is loaded.');
-    }
-    console.log('[main.tsx] ========================================');
+    log.debug('Initializing React app', {
+      location: window.location.href,
+      readyState: document.readyState,
+      electronAPI: window.api ? Object.keys(window.api) : null,
+    });
     
     const root = ReactDOM.createRoot(rootElement);
 

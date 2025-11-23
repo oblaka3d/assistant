@@ -1,0 +1,114 @@
+{
+  "status": {
+    "ready": "准备就绪",
+    "readyNoCharacter": "准备就绪（无角色）",
+    "listening": "正在聆听...",
+    "processing": "正在处理...",
+    "recognizing": "正在识别语音...",
+    "generating": "正在生成回复...",
+    "speaking": "正在回答...",
+    "notRecognized": "语音未识别",
+    "error": "错误",
+    "recording": "正在录制..."
+  },
+  "ui": {
+    "loadingCharacter": "正在加载角色...",
+    "characterUnavailable": "角色不可用",
+    "characterNotLoaded": "⚠️ 角色未加载。应用程序在没有可视化的情况下运行。",
+    "noModels": "未找到模型",
+    "noScenes": "未找到场景",
+    "loadingModels": "正在加载模型列表...",
+    "loadingScenes": "正在加载场景列表...",
+    "sceneNotSelected": "未选择场景",
+    "emptyHistory": "历史记录为空",
+    "startDialog": "开始与助手对话",
+    "historyPlaceholder": "历史记录将在未来版本中提供",
+    "enterMessage": "输入消息...",
+    "errorMessage": "处理请求时发生错误。",
+    "errorSorry": "抱歉，无法获取回复。",
+    "youSaid": "您说",
+    "answer": "回答"
+  },
+  "menu": {
+    "title": "菜单",
+    "settings": "设置",
+    "apiKeys": "API密钥",
+    "history": "对话历史",
+    "logs": "应用程序日志",
+    "about": "关于"
+  },
+  "settings": {
+    "title": "设置",
+    "volume": "音量",
+    "modelAndScene": "模型和场景",
+    "model": "模型",
+    "scene": "场景",
+    "enableToonShader": "启用卡通着色器",
+    "lightIntensity": "光照强度",
+    "cameraDistance": "摄像机距离",
+    "animationSpeed": "动画速度",
+    "language": "语言"
+  },
+  "apiKeys": {
+    "title": "API密钥",
+    "stt": "语音识别 (STT)",
+    "llm": "语言模型 (LLM)",
+    "tts": "语音合成 (TTS)",
+    "save": "保存",
+    "saved": "密钥保存成功",
+    "error": "保存密钥时出错",
+    "apiKey": "API密钥",
+    "folderId": "文件夹ID",
+    "show": "显示",
+    "hide": "隐藏"
+  },
+  "history": {
+    "title": "对话历史",
+    "empty": "历史记录为空",
+    "placeholder": "历史记录将在未来版本中提供",
+    "user": "用户",
+    "assistant": "助手",
+    "clearHistory": "清除历史",
+    "confirmClear": "您确定要清除对话历史吗？",
+    "noMessages": "历史记录中没有消息",
+    "yesterday": "昨天"
+  },
+  "logs": {
+    "title": "应用程序日志",
+    "fileSize": "文件大小",
+    "lines": "行",
+    "path": "路径",
+    "refresh": "刷新",
+    "clear": "清除日志",
+    "confirmClear": "您确定要清除日志吗？",
+    "filter": "按文本筛选...",
+    "shown": "显示",
+    "of": "共",
+    "empty": "日志为空",
+    "error": "加载日志时出错",
+    "clearError": "清除日志时出错"
+  },
+  "about": {
+    "title": "关于",
+    "version": "版本",
+    "description": "适用于BTT Pi 1.2和其他ARM设备的语音助手",
+    "tech": "使用Electron、React、THREE.js和Redux Toolkit开发"
+  },
+  "user": {
+    "login": "登录",
+    "logout": "退出",
+    "loginPrompt": "登录您的账户",
+    "loginDescription": "以访问高级功能",
+    "loadError": "加载用户时出错",
+    "logoutError": "退出时出错"
+  },
+  "app": {
+    "name": "ARM语音助手",
+    "version": "v1.0",
+    "language": "语言",
+    "russian": "Русский",
+    "english": "English",
+    "chinese": "中文"
+  }
+}
+

@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import InfoIcon from '@mui/icons-material/Info';
 import { Box, Paper, Typography } from '@mui/material';
 import React from 'react';
 
 import ScreenHeader from '../../../../components/ScreenHeader';
+import ScrollableContent from '../../../../components/ScrollableContent';
 import styles from '../../MenuScreen.module.css';
 
 interface AboutScreenProps {
@@ -10,31 +12,33 @@ interface AboutScreenProps {
 }
 
 const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
+  const { t } = useTranslation();
+
   return (
     <Box className={styles.container}>
-      <ScreenHeader title="О приложении" onBack={onBack} />
+      <ScreenHeader title={t('about.title')} onBack={onBack} />
 
-      <Box className={styles.content}>
+      <ScrollableContent screenId="about">
         <Paper elevation={3} className={styles.settingPaper}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
               <InfoIcon className={styles.settingIcon} />
               <Box sx={{ ml: 2 }}>
-                <Typography variant="h6">ARM Voice Assistant</Typography>
+                <Typography variant="h6">{t('app.name')}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Версия 1.0
+                  {t('about.version')} 1.0
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Голосовой ассистент для BTT Pi 1.2 и других ARM устройств
+                  {t('about.description')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Разработано с использованием Electron, React, THREE.js и Redux Toolkit
+                  {t('about.tech')}
                 </Typography>
               </Box>
             </Box>
           </Box>
         </Paper>
-      </Box>
+      </ScrollableContent>
     </Box>
   );
 };

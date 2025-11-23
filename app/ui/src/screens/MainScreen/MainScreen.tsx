@@ -2,6 +2,8 @@ import { Box, Button, Typography, Paper } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import React, { useEffect, useRef } from 'react';
 
+import { TIMEOUTS, DEFAULTS } from '../../constants/app';
+import { STATUS_MESSAGES, UI_MESSAGES } from '../../constants/messages';
 import { initCharacterScene, CharacterScene } from '../../renderer/main';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { addMessage } from '../../store/slices/chatSlice';
@@ -15,8 +17,11 @@ import {
   setUserText,
   VoiceStatus,
 } from '../../store/slices/voiceSlice';
+import { createLogger } from '../../utils/logger';
 
 import styles from './MainScreen.module.css';
+
+const log = createLogger('MainScreen');
 
 const MainScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -30,15 +35,16 @@ const MainScreen: React.FC = () => {
     useAppSelector((state) => state.voice);
 
   useEffect(() => {
-    console.log('[MainScreen] useEffect triggered');
-    console.log('[MainScreen] canvasRef.current:', canvasRef.current);
-    console.log('[MainScreen] containerRef.current:', containerRef.current);
-    
+    log.debug('useEffect triggered', {
+      canvas: !!canvasRef.current,
+      container: !!containerRef.current,
+    });
+
     if (!canvasRef.current) {
-      console.warn('[MainScreen] Canvas element not found');
+      log.warn('Canvas element not found');
       dispatch(setIsLoading(false));
       dispatch(setLoadError(true));
-      dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
+      dispatch(setStatus(STATUS_MESSAGES.READY_NO_CHARACTER as VoiceStatus));
       return;
     }
 
@@ -54,36 +60,25 @@ const MainScreen: React.FC = () => {
           if (isMounted) {
             dispatch(setIsLoading(false));
             dispatch(setLoadError(true));
-            dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
+            dispatch(setStatus(STATUS_MESSAGES.READY_NO_CHARACTER as VoiceStatus));
           }
-        }, 3000);
+        }, TIMEOUTS.SCENE_LOAD);
 
-        // Определяем путь к модели персонажа
-        // В Electron файлы из public копируются в корень dist/app/ui/
-        // В Electron с loadFile() пути должны быть относительно HTML файла
-        // Используем относительный путь - GLTFLoader сам обработает его правильно
-        let modelPath = './assets/models/character.glb';
-        
-        // Для file:// протокола можно использовать относительный путь
-        // GLTFLoader автоматически создаст правильный абсолютный URL
-        console.log('[MainScreen] Using relative path for model:', modelPath);
-        
-        console.log('[MainScreen] Starting character scene initialization');
-        console.log('[MainScreen] Model path:', modelPath);
-        console.log('[MainScreen] Window location:', {
-          href: window.location.href,
+        // Используем путь к модели по умолчанию из настроек или констант
+        const modelPath = DEFAULTS.MODEL_PATH;
+
+        log.debug('Starting character scene initialization', {
+          modelPath,
+          windowLocation: window.location.href,
           protocol: window.location.protocol,
-          pathname: window.location.pathname,
-          origin: window.location.origin,
         });
-        console.log('[MainScreen] Canvas element:', canvasRef.current);
         
         // Создаем THREE.js сцену
         const scene = await initCharacterScene({
           canvas: canvasRef.current!,
           modelUrl: modelPath,
           onProgress: (progress) => {
-            console.log('Character loading progress:', Math.round(progress * 100) + '%');
+            log.debug('Character loading progress:', Math.round(progress * 100) + '%');
           },
           enableToonShader: false, // Отключаем toon shader, используем оригинальные материалы модели
         });
@@ -97,8 +92,8 @@ const MainScreen: React.FC = () => {
         sceneRef.current = scene;
         dispatch(setSceneReady(scene.ready));
         dispatch(setIsLoading(false));
-        dispatch(setStatus('Готов к работе' as VoiceStatus));
-        
+        dispatch(setStatus(STATUS_MESSAGES.READY as VoiceStatus));
+
         // Очищаем таймаут
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
@@ -108,7 +103,7 @@ const MainScreen: React.FC = () => {
         // Воспроизводим idle анимацию
         scene.playIdle();
 
-        console.log('Character scene loaded successfully');
+        log.log('Character scene loaded successfully');
       } catch (error) {
         if (!isMounted) return;
         
@@ -117,7 +112,7 @@ const MainScreen: React.FC = () => {
 
         dispatch(setLoadError(true));
         dispatch(setIsLoading(false));
-        dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
+        dispatch(setStatus(STATUS_MESSAGES.READY_NO_CHARACTER as VoiceStatus));
 
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
@@ -136,21 +131,21 @@ const MainScreen: React.FC = () => {
           for (const entry of entries) {
             const { width, height } = entry.contentRect;
             if (sceneRef.current && width > 0 && height > 0) {
-              console.log('[MainScreen] Container resized to:', width, 'x', height);
+              log.debug('Container resized to:', width, 'x', height);
               sceneRef.current.resize(width, height);
             }
           }
         });
 
         resizeObserverRef.current.observe(containerRef.current);
-        
+
         // Также следим за canvas напрямую
         if (canvasRef.current) {
           resizeObserverRef.current.observe(canvasRef.current);
         }
       } else {
         // Повторяем попытку, если элементы еще не готовы
-        setTimeout(setupResizeObserver, 100);
+        setTimeout(setupResizeObserver, TIMEOUTS.RESIZE_RETRY);
       }
     };
 
@@ -186,7 +181,7 @@ const MainScreen: React.FC = () => {
     if (isRecording) {
       // Остановить запись
       dispatch(setIsRecording(false));
-      dispatch(setStatus('Обработка...' as VoiceStatus));
+      dispatch(setStatus(STATUS_MESSAGES.PROCESSING as VoiceStatus));
 
       // Анимация персонажа - размышление
       if (sceneRef.current) {
@@ -198,15 +193,15 @@ const MainScreen: React.FC = () => {
         const audioBuffer = await window.api.stopRecord();
 
         // Распознавание речи
-        dispatch(setStatus('Распознавание речи...' as VoiceStatus));
+        dispatch(setStatus(STATUS_MESSAGES.RECOGNIZING as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playThinking();
         }
         const transcribedText = await window.api.transcribe(audioBuffer);
-        dispatch(setUserText(transcribedText || '—'));
+        dispatch(setUserText(transcribedText || DEFAULTS.EMPTY_TEXT));
 
         if (!transcribedText || transcribedText.trim() === '') {
-          dispatch(setStatus('Речь не распознана' as VoiceStatus));
+          dispatch(setStatus(STATUS_MESSAGES.NOT_RECOGNIZED as VoiceStatus));
           if (sceneRef.current) {
             sceneRef.current.playIdle();
           }
@@ -223,11 +218,11 @@ const MainScreen: React.FC = () => {
             date: new Date(),
           })
         );
-          
-          // Получить ответ от ассистента
-        dispatch(setStatus('Генерация ответа...' as VoiceStatus));
+
+        // Получить ответ от ассистента
+        dispatch(setStatus(STATUS_MESSAGES.GENERATING as VoiceStatus));
         const response = await window.api.askLLM(transcribedText);
-        dispatch(setAssistantText(response || '—'));
+        dispatch(setAssistantText(response || DEFAULTS.EMPTY_TEXT));
 
         // Добавляем ответ ассистента в чат
         if (response) {
@@ -241,34 +236,34 @@ const MainScreen: React.FC = () => {
             })
           );
         }
-          
-          // Воспроизвести ответ
-        dispatch(setStatus('Отвечаю...' as VoiceStatus));
+
+        // Воспроизвести ответ
+        dispatch(setStatus(STATUS_MESSAGES.SPEAKING as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playTalking();
-          }
-          
+        }
+
         await window.api.speak(response);
 
-        dispatch(setStatus('Готов к работе' as VoiceStatus));
+        dispatch(setStatus(STATUS_MESSAGES.READY as VoiceStatus));
         if (sceneRef.current) {
           setTimeout(() => {
             sceneRef.current?.playIdle();
-          }, 500);
+          }, TIMEOUTS.IDLE_TRANSITION);
         }
       } catch (error) {
-        console.error('Recording error:', error);
-        dispatch(setStatus('Ошибка' as VoiceStatus));
+        log.error('Recording error:', error);
+        dispatch(setStatus(STATUS_MESSAGES.ERROR as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playIdle();
         }
       }
     } else {
       // Начать запись - очищаем предыдущие тексты
-      dispatch(setUserText('—'));
-      dispatch(setAssistantText('—'));
+      dispatch(setUserText(DEFAULTS.EMPTY_TEXT));
+      dispatch(setAssistantText(DEFAULTS.EMPTY_TEXT));
       dispatch(setIsRecording(true));
-      dispatch(setStatus('Слушаю...' as VoiceStatus));
+      dispatch(setStatus(STATUS_MESSAGES.LISTENING as VoiceStatus));
 
       // Анимация персонажа - прослушивание
       if (sceneRef.current) {
@@ -297,7 +292,7 @@ const MainScreen: React.FC = () => {
         <Box className={styles.loading}>
           <Box className={styles.loadingSpinner} />
           <Typography variant="h6" color="text.secondary">
-            Загрузка персонажа...
+            {UI_MESSAGES.LOADING_CHARACTER}
           </Typography>
         </Box>
       )}
@@ -307,7 +302,7 @@ const MainScreen: React.FC = () => {
         <Box className={styles.warning}>
           <Paper elevation={3} className={styles.warningPaper}>
             <Typography variant="body2" color="warning.main" sx={{ textAlign: 'center' }}>
-              ⚠️ Персонаж не загружен. Приложение работает в режиме без визуализации.
+              {UI_MESSAGES.CHARACTER_NOT_LOADED}
             </Typography>
           </Paper>
         </Box>
@@ -331,17 +326,17 @@ const MainScreen: React.FC = () => {
               variant="body1"
               sx={{ opacity: 0.5, textAlign: 'center', px: 2, fontFamily: "'Inter', sans-serif" }}
             >
-              Персонаж недоступен
+              {UI_MESSAGES.CHARACTER_UNAVAILABLE}
             </Typography>
           </Box>
         )}
       </Box>
 
       {/* Текстовые блоки - нижний левый угол (показываются только при наличии текста) */}
-      {(userText !== '—' || assistantText !== '—') && (
+      {(userText !== DEFAULTS.EMPTY_TEXT || assistantText !== DEFAULTS.EMPTY_TEXT) && (
         <Box className={styles.textBlocks}>
           {/* Показываем "Вы сказали" только если есть распознанный текст И нет ответа (во время обработки) */}
-          {userText !== '—' && assistantText === '—' && (
+          {userText !== DEFAULTS.EMPTY_TEXT && assistantText === DEFAULTS.EMPTY_TEXT && (
             <Paper elevation={3} className={styles.textBlock}>
               <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
                 Вы сказали:
@@ -356,7 +351,7 @@ const MainScreen: React.FC = () => {
           )}
 
           {/* Показываем "Ответ" только если есть ответ от ассистента */}
-          {assistantText !== '—' && (
+          {assistantText !== DEFAULTS.EMPTY_TEXT && (
             <Paper elevation={3} className={styles.textBlock}>
               <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
                 Ответ:

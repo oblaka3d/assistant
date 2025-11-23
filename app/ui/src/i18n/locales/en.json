@@ -1,0 +1,114 @@
+{
+  "status": {
+    "ready": "Ready to work",
+    "readyNoCharacter": "Ready to work (no character)",
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "recognizing": "Recognizing speech...",
+    "generating": "Generating response...",
+    "speaking": "Speaking...",
+    "notRecognized": "Speech not recognized",
+    "error": "Error",
+    "recording": "Recording..."
+  },
+  "ui": {
+    "loadingCharacter": "Loading character...",
+    "characterUnavailable": "Character unavailable",
+    "characterNotLoaded": "⚠️ Character not loaded. Application is running without visualization.",
+    "noModels": "No models found",
+    "noScenes": "No scenes found",
+    "loadingModels": "Loading model list...",
+    "loadingScenes": "Loading scene list...",
+    "sceneNotSelected": "Scene not selected",
+    "emptyHistory": "History is empty",
+    "startDialog": "Start a dialogue with the assistant",
+    "historyPlaceholder": "History will be available here in future versions",
+    "enterMessage": "Enter message...",
+    "errorMessage": "An error occurred while processing the request.",
+    "errorSorry": "Sorry, failed to get response.",
+    "youSaid": "You said",
+    "answer": "Answer"
+  },
+  "menu": {
+    "title": "Menu",
+    "settings": "Settings",
+    "apiKeys": "API Keys",
+    "history": "Dialogue History",
+    "logs": "Application Logs",
+    "about": "About"
+  },
+  "settings": {
+    "title": "Settings",
+    "volume": "Volume",
+    "modelAndScene": "Model and Scene",
+    "model": "Model",
+    "scene": "Scene",
+    "enableToonShader": "Enable toon shader",
+    "lightIntensity": "Light Intensity",
+    "cameraDistance": "Camera Distance",
+    "animationSpeed": "Animation Speed",
+    "language": "Language"
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "stt": "Speech Recognition (STT)",
+    "llm": "Language Model (LLM)",
+    "tts": "Speech Synthesis (TTS)",
+    "save": "Save",
+    "saved": "Keys saved successfully",
+    "error": "Error saving keys",
+    "apiKey": "API Key",
+    "folderId": "Folder ID",
+    "show": "Show",
+    "hide": "Hide"
+  },
+  "history": {
+    "title": "Dialogue History",
+    "empty": "History is empty",
+    "placeholder": "History will be available here in future versions",
+    "user": "User",
+    "assistant": "Assistant",
+    "clearHistory": "Clear History",
+    "confirmClear": "Are you sure you want to clear the dialogue history?",
+    "noMessages": "No messages in history",
+    "yesterday": "Yesterday"
+  },
+  "logs": {
+    "title": "Application Logs",
+    "fileSize": "File Size",
+    "lines": "Lines",
+    "path": "Path",
+    "refresh": "Refresh",
+    "clear": "Clear Logs",
+    "confirmClear": "Are you sure you want to clear the logs?",
+    "filter": "Filter by text...",
+    "shown": "Shown",
+    "of": "of",
+    "empty": "Logs are empty",
+    "error": "Error loading logs",
+    "clearError": "Error clearing logs"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version",
+    "description": "Voice assistant for BTT Pi 1.2 and other ARM devices",
+    "tech": "Developed using Electron, React, THREE.js and Redux Toolkit"
+  },
+  "user": {
+    "login": "Login",
+    "logout": "Logout",
+    "loginPrompt": "Sign in to your account",
+    "loginDescription": "For access to advanced features",
+    "loadError": "Error loading user",
+    "logoutError": "Error logging out"
+  },
+  "app": {
+    "name": "ARM Voice Assistant",
+    "version": "v1.0",
+    "language": "Language",
+    "russian": "Русский",
+    "english": "English",
+    "chinese": "中文"
+  }
+}
+

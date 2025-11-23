@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import apiKeysReducer from './slices/apiKeysSlice';
 import chatReducer from './slices/chatSlice';
 import settingsReducer from './slices/settingsSlice';
 import uiReducer from './slices/uiSlice';
+import userReducer from './slices/userSlice';
 import voiceReducer from './slices/voiceSlice';
 
 export const store = configureStore({
@@ -11,6 +13,8 @@ export const store = configureStore({
     voice: voiceReducer,
     chat: chatReducer,
     settings: settingsReducer,
+    user: userReducer,
+    apiKeys: apiKeysReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -30,5 +30,31 @@ contextBridge.exposeInMainWorld('api', {
   getSceneList: (): Promise<string[]> => {
     return ipcRenderer.invoke('getSceneList');
   },
+  getLogs: (maxLines?: number): Promise<string[]> => {
+    return ipcRenderer.invoke('getLogs', maxLines);
+  },
+  clearLogs: (): Promise<boolean> => {
+    return ipcRenderer.invoke('clearLogs');
+  },
+  getLogFileInfo: (): Promise<{ size: number; path: string | null; lineCount: number }> => {
+    return ipcRenderer.invoke('getLogFileInfo');
+  },
+  // Пользователь
+  login: (username: string, password: string): Promise<{ id: string; username: string; displayName?: string; email?: string }> => {
+    return ipcRenderer.invoke('login', username, password);
+  },
+  logout: (): Promise<boolean> => {
+    return ipcRenderer.invoke('logout');
+  },
+  getCurrentUser: (): Promise<{ id: string; username: string; displayName?: string; email?: string } | null> => {
+    return ipcRenderer.invoke('getCurrentUser');
+  },
+  // API ключи
+  getAPIKeys: (): Promise<Record<string, string>> => {
+    return ipcRenderer.invoke('getAPIKeys');
+  },
+  saveAPIKeys: (keys: Record<string, string>): Promise<boolean> => {
+    return ipcRenderer.invoke('saveAPIKeys', keys);
+  },
 });
 

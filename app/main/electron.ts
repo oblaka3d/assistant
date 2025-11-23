@@ -4,6 +4,7 @@ import { app, BrowserWindow, dialog } from 'electron';
 
 import { checkDependenciesOnStartup, checkDependencies } from '../backend/dependency-checker';
 
+import { initializeFileLogger } from './utils/fileLogger';
 import { setupIPC } from './ipc';
 
 // Устанавливаем переменную окружения для подавления предупреждений CSP
@@ -114,6 +115,10 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
+  // Инициализируем файловое логирование
+  initializeFileLogger();
+  console.log('[Electron] File logger initialized');
+
   // Проверка зависимостей при запуске
   console.log('Проверка зависимостей при запуске...');
   const dependenciesOK = await checkDependenciesOnStartup();
