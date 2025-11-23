@@ -29,10 +29,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const messageListRef = useRef<any>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Прокрутка к последнему сообщению
-    if (messageListRef.current) {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+    // Альтернативный способ через ref библиотеки, если доступен
+    if (messageListRef.current && typeof messageListRef.current.scrollToBottom === 'function') {
       messageListRef.current.scrollToBottom();
     }
   }, [messages]);
@@ -135,6 +140,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
           </Box>
         ) : (
           <Box
+            ref={scrollContainerRef}
             sx={{
               flex: 1,
               overflowY: 'auto',

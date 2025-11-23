@@ -29,22 +29,52 @@ function createWindow(): void {
   app.commandLine.appendSwitch('enable-gpu-rasterization');
   app.commandLine.appendSwitch('enable-zero-copy');
 
-  // Путь к UI файлам (работает и в dev, и в production)
-  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
-  const htmlPath = isDev
-    ? path.join(__dirname, '../../app/ui/index.html')
-    : path.join(__dirname, '../ui/index.html');
+  // Путь к UI файлам
+  // Всегда используем собранный файл из dist (работает и в dev, и в production)
+  const htmlPath = path.join(__dirname, '../ui/index.html');
   
-  mainWindow.loadFile(htmlPath);
+  console.log('Loading HTML from:', htmlPath);
+  console.log('__dirname:', __dirname);
+  console.log('File exists:', require('fs').existsSync(htmlPath));
+  
+  // Логирование ошибок загрузки
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error('Failed to load:', validatedURL);
+    console.error('Error code:', errorCode);
+    console.error('Error description:', errorDescription);
+  });
+  
+  // Логирование консоли рендерера
+  mainWindow.webContents.on('console-message', (_event, level, message) => {
+    console.log(`[Renderer ${level}]:`, message);
+  });
+  
+  // Логирование ошибок рендерера
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('Render process gone:', details);
+  });
+  
+  // В dev режиме можно использовать Vite dev server (раскомментировать если нужно):
+  // const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  // if (isDev) {
+  //   mainWindow.loadURL('http://localhost:3000');
+  // } else {
+  //   mainWindow.loadFile(htmlPath);
+  // }
+  
+  mainWindow.loadFile(htmlPath).catch((error) => {
+    console.error('Error loading file:', error);
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  // Открыть DevTools в режиме разработки (закомментировать для production)
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
+  // Всегда открываем DevTools для отладки (можно закомментировать для production)
+  mainWindow.webContents.once('did-finish-load', () => {
+    console.log('Page loaded successfully');
+    mainWindow?.webContents.openDevTools();
+  });
 }
 
 app.whenReady().then(() => {

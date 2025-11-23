@@ -35,7 +35,9 @@
   "exclude": [
     "node_modules",
     "dist",
-    "release"
+    "release",
+    "app/ui/src/**/*",
+    "**/*.tsx"
   ]
 }
 

@@ -5,6 +5,7 @@ import * as path from 'path';
 export default defineConfig({
   plugins: [react()],
   root: 'app/ui',
+  base: './', // Используем относительные пути для работы в Electron
   build: {
     outDir: '../../dist/app/ui',
     emptyOutDir: true,
