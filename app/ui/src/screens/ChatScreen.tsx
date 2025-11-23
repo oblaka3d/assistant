@@ -59,15 +59,20 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
     // Отправить запрос ассистенту
     if (window.api) {
       try {
-        const response = await window.api.getAssistantResponse(inputValue);
+        const response = await window.api.askLLM(inputValue);
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           position: 'left',
           type: 'text',
-          text: response.text || 'Извините, не удалось получить ответ.',
+          text: response || 'Извините, не удалось получить ответ.',
           date: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
+        
+        // Воспроизвести ответ голосом
+        if (response) {
+          await window.api.speak(response);
+        }
       } catch (error) {
         console.error('Failed to get assistant response:', error);
         const errorMessage: Message = {

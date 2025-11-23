@@ -3,6 +3,7 @@ import { startRecord, stopRecord } from '../backend/voice';
 import { transcribe } from '../backend/stt';
 import { generateResponse } from '../backend/llm';
 import { synthesize } from '../backend/tts';
+import { checkDependencies, DependencyCheckResult } from '../backend/dependency-checker';
 
 export function setupIPC(): void {
   ipcMain.handle('startRecord', async (): Promise<void> => {
@@ -49,6 +50,15 @@ export function setupIPC(): void {
       await synthesize(text);
     } catch (error) {
       console.error('Error synthesizing speech:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('checkDependencies', async (): Promise<DependencyCheckResult[]> => {
+    try {
+      return await checkDependencies();
+    } catch (error) {
+      console.error('Error checking dependencies:', error);
       throw error;
     }
   });

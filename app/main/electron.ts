@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import * as path from 'path';
 import { setupIPC } from './ipc';
+import { checkDependenciesOnStartup, checkDependencies } from '../backend/dependency-checker';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -24,10 +25,14 @@ function createWindow(): void {
     backgroundColor: '#1a1a1a',
   });
 
-  // ARM оптимизация: включение hardware acceleration
-  app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations');
+  // Hardware acceleration (работает на всех платформах)
   app.commandLine.appendSwitch('enable-gpu-rasterization');
-  app.commandLine.appendSwitch('enable-zero-copy');
+  
+  // Linux-специфичные настройки (только для Linux)
+  if (process.platform === 'linux') {
+    app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations');
+    app.commandLine.appendSwitch('enable-zero-copy');
+  }
 
   // Путь к UI файлам
   // Всегда используем собранный файл из dist (работает и в dev, и в production)
@@ -77,7 +82,38 @@ function createWindow(): void {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Проверка зависимостей при запуске
+  console.log('Проверка зависимостей при запуске...');
+  const dependenciesOK = await checkDependenciesOnStartup();
+  
+  // Если есть критические проблемы с зависимостями, показываем диалог
+  if (!dependenciesOK && mainWindow) {
+    const results = await checkDependencies();
+    const criticalErrors = results.filter((r) => r.required && !r.available);
+    
+    if (criticalErrors.length > 0) {
+      const message = criticalErrors
+        .map((r) => `${r.name}: ${r.message}\nУстановка: ${r.installInstructions || 'не указана'}`)
+        .join('\n\n');
+      
+      dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        title: 'Предупреждение о зависимостях',
+        message: 'Обнаружены проблемы с зависимостями',
+        detail: `Некоторые обязательные зависимости отсутствуют:\n\n${message}\n\nПриложение будет работать, но аудио функциональность может быть недоступна.`,
+        buttons: ['Продолжить', 'Показать в консоли'],
+      }).then((response) => {
+        if (response.response === 1) {
+          // Открываем DevTools для просмотра подробностей
+          mainWindow?.webContents.openDevTools();
+        }
+      }).catch((error) => {
+        console.error('Ошибка показа диалога:', error);
+      });
+    }
+  }
+  
   setupIPC();
   createWindow();
 

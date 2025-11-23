@@ -142,29 +142,43 @@ const MainScreen: React.FC = () => {
       }
 
       try {
-        const result = await window.api.stopRecording();
-        if (result.success) {
-          setUserText(result.text || '—');
-          
-          // Получить ответ от ассистента
-          setStatus('Генерация ответа...');
-          const response = await window.api.getAssistantResponse(result.text);
-          setAssistantText(response.text || '—');
-          
-          // Воспроизвести ответ
-          setStatus('Отвечаю...');
-          if (unityReady) {
-            unityWrapper.playTalking();
-          }
-          
-          if (response.audio) {
-            await window.api.playAudio(response.audio);
-          }
-          
-          setStatus('Готов к работе');
+        // Остановка записи и получение аудио буфера
+        const audioBuffer = await window.api.stopRecord();
+        
+        // Распознавание речи
+        setStatus('Распознавание речи...');
+        if (unityReady) {
+          unityWrapper.playThinking();
+        }
+        const transcribedText = await window.api.transcribe(audioBuffer);
+        setUserText(transcribedText || '—');
+        
+        if (!transcribedText || transcribedText.trim() === '') {
+          setStatus('Речь не распознана');
           if (unityReady) {
             unityWrapper.playIdle();
           }
+          return;
+        }
+        
+        // Получить ответ от ассистента
+        setStatus('Генерация ответа...');
+        const response = await window.api.askLLM(transcribedText);
+        setAssistantText(response || '—');
+        
+        // Воспроизвести ответ
+        setStatus('Отвечаю...');
+        if (unityReady) {
+          unityWrapper.playTalking();
+        }
+        
+        await window.api.speak(response);
+        
+        setStatus('Готов к работе');
+        if (unityReady) {
+          setTimeout(() => {
+            unityWrapper.playIdle();
+          }, 500);
         }
       } catch (error) {
         console.error('Recording error:', error);
@@ -182,7 +196,7 @@ const MainScreen: React.FC = () => {
       }
       
       try {
-        await window.api.startRecording();
+        await window.api.startRecord();
       } catch (error) {
         console.error('Failed to start recording:', error);
         setIsRecording(false);

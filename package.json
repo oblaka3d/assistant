@@ -15,7 +15,16 @@
     "electron:window": "cross-env WINDOW_MODE=true electron dist/app/main/electron.js",
     "rebuild": "electron-builder install-app-deps",
     "dist": "npm run build && electron-builder",
-    "dist:arm64": "npm run build && electron-builder --linux --arm64"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:linux:arm64": "npm run build && electron-builder --linux --arm64",
+    "dist:linux:x64": "npm run build && electron-builder --linux --x64",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:mac:arm64": "npm run build && electron-builder --mac --arm64",
+    "dist:mac:x64": "npm run build && electron-builder --mac --x64",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:win:x64": "npm run build && electron-builder --win --x64",
+    "dist:win:ia32": "npm run build && electron-builder --win --ia32",
+    "dist:all": "npm run build && electron-builder --mac --win --linux"
   },
   "keywords": [
     "voice-assistant",
@@ -54,8 +63,8 @@
     "react-swipeable": "^7.0.1"
   },
   "build": {
-    "appId": "com.voiceassistant.arm",
-    "productName": "Voice Assistant ARM",
+    "appId": "com.voiceassistant.app",
+    "productName": "Voice Assistant",
     "directories": {
       "output": "release"
     },
@@ -65,16 +74,74 @@
       "unity/**/*",
       "package.json"
     ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
     "linux": {
       "target": [
         {
           "target": "AppImage",
           "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64",
             "arm64"
           ]
         }
       ],
-      "category": "Utility"
+      "category": "Utility",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   }
 }
