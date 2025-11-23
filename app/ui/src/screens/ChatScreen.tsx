@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, IconButton, TextField, Typography, Paper, AppBar, Toolbar } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { MessageList, Input } from 'react-chat-elements';
+import { MessageList } from 'react-chat-elements';
 import 'react-chat-elements/dist/main.css';
+import styles from '../styles/screens/ChatScreen.module.css';
+import ScreenHeader from '../components/ScreenHeader';
 
 interface Message {
   id: string;
@@ -95,47 +96,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
   };
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#1a1a1a',
-      }}
-    >
+    <Box className={styles.container}>
       {/* Заголовок */}
-      <AppBar position="static" sx={{ backgroundColor: '#2d2d2d' }}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={onClose} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            История диалогов
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <ScreenHeader title="История диалогов" onBack={onClose} />
 
       {/* Список сообщений */}
-      <Box
-        sx={{
-          flex: 1,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <Box className={styles.messagesContainer}>
         {messages.length === 0 ? (
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
+          <Box className={styles.emptyState}>
             <Typography variant="h6" color="text.secondary">
               История пуста
             </Typography>
@@ -144,14 +112,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
             </Typography>
           </Box>
         ) : (
-          <Box
-            ref={scrollContainerRef}
-            sx={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: 2,
-            }}
-          >
+          <Box ref={scrollContainerRef} className={styles.messagesList}>
             <MessageList
               referance={messageListRef}
               className="message-list"
@@ -172,15 +133,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
       </Box>
 
       {/* Поле ввода */}
-      <Paper
-        elevation={3}
-        sx={{
-          padding: 1,
-          backgroundColor: '#2d2d2d',
-          borderRadius: 0,
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+      <Paper elevation={3} className={styles.inputContainer}>
+        <Box className={styles.inputWrapper}>
           <TextField
             fullWidth
             multiline
@@ -191,67 +145,20 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
             onKeyPress={handleKeyPress}
             variant="outlined"
             size="small"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: '#1a1a1a',
-                color: '#ffffff',
-                '& fieldset': {
-                  borderColor: '#4a90e2',
-                },
-                '&:hover fieldset': {
-                  borderColor: '#357abd',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#4a90e2',
-                },
-              },
-            }}
+            className={styles.inputField}
           />
           <IconButton
             color="primary"
             onClick={handleSend}
             disabled={!inputValue.trim()}
-            sx={{
-              backgroundColor: '#4a90e2',
-              color: '#ffffff',
-              '&:hover': {
-                backgroundColor: '#357abd',
-              },
-              '&:disabled': {
-                backgroundColor: '#2d2d2d',
-                color: '#666666',
-              },
-            }}
+            className={styles.sendButton}
           >
             <SendIcon />
           </IconButton>
         </Box>
       </Paper>
-
-      <style>{`
-        .message-list {
-          background-color: transparent !important;
-        }
-        .rce-mlist {
-          background-color: transparent !important;
-        }
-        .rce-container-mbox {
-          background-color: rgba(45, 45, 45, 0.9) !important;
-          backdrop-filter: blur(10px);
-        }
-        .rce-mbox {
-          background-color: rgba(45, 45, 45, 0.9) !important;
-        }
-        .rce-mbox-right {
-          background-color: rgba(74, 144, 226, 0.3) !important;
-        }
-        .rce-mbox-left {
-          background-color: rgba(45, 45, 45, 0.9) !important;
-        }
-      `}</style>
     </Box>
   );
 };
 
 export default ChatScreen;
-

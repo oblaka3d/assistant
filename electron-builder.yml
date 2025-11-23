@@ -5,7 +5,6 @@ directories:
 files:
   - dist/**/*
   - app/ui/**/*
-  - unity/**/*
   - package.json
 
 mac:

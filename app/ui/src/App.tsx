@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import MainScreen from './screens/MainScreen';

@@ -7,20 +7,17 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  AppBar,
-  Toolbar,
-  IconButton,
   Divider,
-  Switch,
   Slider,
   Paper,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import InfoIcon from '@mui/icons-material/Info';
 import LanguageIcon from '@mui/icons-material/Language';
+import styles from '../styles/screens/MenuScreen.module.css';
+import ScreenHeader from '../components/ScreenHeader';
 
 interface MenuScreenProps {
   onClose: () => void;
@@ -54,33 +51,16 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
   ];
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#1a1a1a',
-      }}
-    >
+    <Box className={styles.container}>
       {/* Заголовок */}
-      <AppBar position="static" sx={{ backgroundColor: '#2d2d2d' }}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={onClose} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {showSettings ? 'Настройки' : 'Меню'}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <ScreenHeader title={showSettings ? 'Настройки' : 'Меню'} onBack={onClose} />
 
       {showSettings ? (
         /* Экран настроек */
-        <Box sx={{ flex: 1, overflowY: 'auto', padding: 2 }}>
-          <Paper elevation={3} sx={{ padding: 2, mb: 2, backgroundColor: '#2d2d2d' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <VolumeUpIcon sx={{ mr: 2, color: '#4a90e2' }} />
+        <Box className={styles.content}>
+          <Paper elevation={3} className={styles.settingPaper}>
+            <Box className={styles.settingHeader}>
+              <VolumeUpIcon className={styles.settingIcon} />
               <Typography variant="h6">Громкость</Typography>
             </Box>
             <Box sx={{ px: 2 }}>
@@ -90,14 +70,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
                 min={0}
                 max={100}
                 valueLabelDisplay="auto"
-                sx={{
-                  color: '#4a90e2',
-                  '& .MuiSlider-thumb': {
-                    '&:hover, &.Mui-focusVisible': {
-                      boxShadow: '0 0 0 8px rgba(74, 144, 226, 0.16)',
-                    },
-                  },
-                }}
+                className={styles.slider}
               />
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
                 {volume}%
@@ -105,10 +78,10 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
             </Box>
           </Paper>
 
-          <Paper elevation={3} sx={{ padding: 2, mb: 2, backgroundColor: '#2d2d2d' }}>
+          <Paper elevation={3} className={styles.settingPaper}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <LanguageIcon sx={{ mr: 2, color: '#4a90e2' }} />
+                <LanguageIcon className={styles.settingIcon} />
                 <Typography variant="h6">Язык интерфейса</Typography>
               </Box>
             </Box>
@@ -117,10 +90,10 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
             </Typography>
           </Paper>
 
-          <Paper elevation={3} sx={{ padding: 2, backgroundColor: '#2d2d2d' }}>
+          <Paper elevation={3} className={styles.settingPaper}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <InfoIcon sx={{ mr: 2, color: '#4a90e2' }} />
+                <InfoIcon className={styles.settingIcon} />
                 <Box>
                   <Typography variant="h6">Версия</Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -133,24 +106,24 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
         </Box>
       ) : (
         /* Список меню */
-        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <Box className={styles.content}>
           <List>
             {menuItems.map((item, index) => (
               <React.Fragment key={index}>
                 <ListItem disablePadding>
                   <ListItemButton onClick={item.onClick}>
-                    <ListItemIcon sx={{ color: '#4a90e2' }}>{item.icon}</ListItemIcon>
+                    <ListItemIcon className={styles.listIcon}>{item.icon}</ListItemIcon>
                     <ListItemText primary={item.text} />
                   </ListItemButton>
                 </ListItem>
-                {index < menuItems.length - 1 && <Divider sx={{ backgroundColor: '#2d2d2d' }} />}
+                {index < menuItems.length - 1 && <Divider className={styles.divider} />}
               </React.Fragment>
             ))}
           </List>
 
           {/* Информация внизу */}
-          <Box sx={{ padding: 2, mt: 'auto' }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+          <Box className={styles.footer}>
+            <Typography variant="caption" color="text.secondary" className={styles.footerText}>
               ARM Voice Assistant v1.0
             </Typography>
           </Box>
@@ -161,4 +134,3 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
 };
 
 export default MenuScreen;
-

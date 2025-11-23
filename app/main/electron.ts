@@ -3,6 +3,14 @@ import * as path from 'path';
 import { setupIPC } from './ipc';
 import { checkDependenciesOnStartup, checkDependencies } from '../backend/dependency-checker';
 
+// Устанавливаем переменную окружения для подавления предупреждений CSP
+// unsafe-eval может потребоваться для некоторых библиотек (например, THREE.js)
+// В production можно включить предупреждения через: ELECTRON_ENABLE_SECURITY_WARNINGS=true
+// Но для разработки предупреждения можно отключить, так как мы явно устанавливаем CSP
+if (!process.env.ELECTRON_ENABLE_SECURITY_WARNINGS && !app.isPackaged) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
@@ -21,8 +29,8 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
-      // Отключаем предупреждение о CSP, так как мы добавляем его в HTML
-      // Для Unity WebGL требуется unsafe-eval
+      // WebSecurity включен для безопасности
+      // CSP устанавливается через session.webRequest
       webSecurity: true,
     },
     backgroundColor: '#1a1a1a',
@@ -77,6 +85,10 @@ function createWindow(): void {
   
   // Логирование консоли рендерера
   mainWindow.webContents.on('console-message', (_event, level, message) => {
+    // Игнорируем ошибки fetch из DevTools (они не критичны)
+    if (message.includes('devtools://') && message.includes('Failed to fetch')) {
+      return; // Не логируем эти ошибки
+    }
     console.log(`[Renderer ${level}]:`, message);
   });
   
@@ -104,7 +116,10 @@ function createWindow(): void {
   // Всегда открываем DevTools для отладки (можно закомментировать для production)
   mainWindow.webContents.once('did-finish-load', () => {
     console.log('Page loaded successfully');
-    mainWindow?.webContents.openDevTools();
+    // Открываем DevTools с задержкой, чтобы избежать ошибок загрузки
+    setTimeout(() => {
+      mainWindow?.webContents.openDevTools();
+    }, 500);
   });
 }
 

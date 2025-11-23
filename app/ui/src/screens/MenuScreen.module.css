@@ -1,0 +1,62 @@
+/* ========================================
+   Menu Screen Styles
+   ======================================== */
+
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #1a1a1a;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.settingPaper {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #2d2d2d;
+}
+
+.settingHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.settingIcon {
+  margin-right: 1rem;
+  color: #4a90e2;
+}
+
+.slider {
+  color: #4a90e2;
+}
+
+.slider :global(.MuiSlider-thumb:hover),
+.slider :global(.MuiSlider-thumb.Mui-focusVisible) {
+  box-shadow: 0 0 0 8px rgba(74, 144, 226, 0.16);
+}
+
+.listIcon {
+  color: #4a90e2;
+}
+
+.divider {
+  background-color: #2d2d2d;
+}
+
+.footer {
+  padding: 1rem;
+  margin-top: auto;
+}
+
+.footerText {
+  display: block;
+  text-align: center;
+}
+

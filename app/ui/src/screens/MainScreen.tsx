@@ -1,166 +1,142 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, Typography, Paper, keyframes } from '@mui/material';
-import { initUnity, UnityInstance } from '../../unity-loader';
-import { unityWrapper } from '../../unity-wrapper';
-
-// Анимации для кнопки записи
-const pulseAnimation = keyframes`
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 20px rgba(231, 76, 60, 0);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
-  }
-`;
-
-const recordingRipple = keyframes`
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-`;
-
-const microphoneWave = keyframes`
-  0%, 100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(1.5);
-  }
-`;
+import { Box, Button, Typography, Paper } from '@mui/material';
+import { initCharacterScene, CharacterScene } from '../renderer/main';
+import styles from '../styles/screens/MainScreen.module.css';
 
 const MainScreen: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [unityReady, setUnityReady] = useState(false);
+  const sceneRef = useRef<CharacterScene | null>(null);
+  const [sceneReady, setSceneReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [unityLoadError, setUnityLoadError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [status, setStatus] = useState('Готов к работе');
   const [userText, setUserText] = useState('—');
   const [assistantText, setAssistantText] = useState('—');
   const [isRecording, setIsRecording] = useState(false);
-  const unityInstanceRef = useRef<UnityInstance | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const forceHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) {
-      // Если canvas недоступен, сразу показываем UI без Unity
       setIsLoading(false);
-      setUnityLoadError(true);
+      setLoadError(true);
       setStatus('Готов к работе (без персонажа)');
       return;
     }
 
     let isMounted = true;
 
-    const loadUnity = async () => {
+    const loadScene = async () => {
       try {
         setIsLoading(true);
-        setUnityLoadError(false);
+        setLoadError(false);
         
-        // Принудительно скрываем индикатор через 3 секунды (гарантированно)
-        forceHideTimeoutRef.current = setTimeout(() => {
-          if (isMounted) {
-            console.warn('Force hiding loading indicator after 3 seconds');
-            setIsLoading(false);
-            // Если Unity еще не загружена, показываем ошибку
-            setUnityLoadError(true);
-            setStatus('Готов к работе (без персонажа)');
-          }
-        }, 3000);
-        
-        // Устанавливаем таймаут на 3 секунды для быстрого показа UI
+        // Таймаут для скрытия индикатора загрузки
         loadingTimeoutRef.current = setTimeout(() => {
           if (isMounted) {
-            console.warn('Unity loading timeout - continuing without Unity');
             setIsLoading(false);
-            setUnityLoadError(true);
+            setLoadError(true);
             setStatus('Готов к работе (без персонажа)');
           }
         }, 3000);
 
-        // Пытаемся загрузить Unity с таймаутом на сам промис
-        const unityPromise = initUnity(canvasRef.current!, (progress) => {
-          console.log('Unity loading progress:', progress);
-        });
+        // Определяем путь к модели персонажа
+        const modelPath = '/assets/models/character.glb';
         
-        // Добавляем таймаут на промис (на случай если он зависнет)
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('Unity loading timeout'));
-          }, 3000);
+        // Создаем THREE.js сцену
+        const scene = await initCharacterScene({
+          canvas: canvasRef.current!,
+          modelUrl: modelPath,
+          onProgress: (progress) => {
+            console.log('Character loading progress:', Math.round(progress * 100) + '%');
+          },
+          enableToonShader: true,
         });
 
-        const instance = await Promise.race([unityPromise, timeoutPromise]);
-        
-        // Проверяем, что компонент еще смонтирован
-        if (!isMounted) return;
-        
-        // Очищаем таймауты, если загрузка успешна
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = null;
+        if (!isMounted) {
+          scene.dispose();
+          return;
         }
-        if (forceHideTimeoutRef.current) {
-          clearTimeout(forceHideTimeoutRef.current);
-          forceHideTimeoutRef.current = null;
-        }
-        
-        unityInstanceRef.current = instance;
-        unityWrapper.setInstance(instance);
-        setUnityReady(true);
+
+        // Сохраняем ссылку на сцену
+        sceneRef.current = scene;
+        setSceneReady(scene.ready);
         setIsLoading(false);
         setStatus('Готов к работе');
-      } catch (error) {
-        // Проверяем, что компонент еще смонтирован
-        if (!isMounted) return;
         
-        // Очищаем таймауты при ошибке
+        // Очищаем таймаут
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
           loadingTimeoutRef.current = null;
         }
-        if (forceHideTimeoutRef.current) {
-          clearTimeout(forceHideTimeoutRef.current);
-          forceHideTimeoutRef.current = null;
-        }
         
-        // Логируем ошибку, но не блокируем UI
+        // Воспроизводим idle анимацию
+        scene.playIdle();
+        
+        console.log('Character scene loaded successfully');
+      } catch (error) {
+        if (!isMounted) return;
+        
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn('Unity failed to load, continuing without it:', errorMessage);
+        console.warn('Failed to load character scene, continuing without it:', errorMessage);
         
-        setUnityLoadError(true);
+        setLoadError(true);
         setIsLoading(false);
         setStatus('Готов к работе (без персонажа)');
+        
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = null;
+        }
       }
     };
 
-    loadUnity();
+    loadScene();
 
-    // Очистка таймаутов при размонтировании
+    // Настройка ResizeObserver для изменения размера канваса
+    if (containerRef.current && canvasRef.current) {
+      resizeObserverRef.current = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          if (sceneRef.current && width > 0 && height > 0) {
+            sceneRef.current.resize(width, height);
+          }
+        }
+      });
+      
+      resizeObserverRef.current.observe(containerRef.current);
+    }
+
+    // Очистка при размонтировании
     return () => {
       isMounted = false;
+      
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
-      if (forceHideTimeoutRef.current) {
-        clearTimeout(forceHideTimeoutRef.current);
-        forceHideTimeoutRef.current = null;
+      
+      if (resizeObserverRef.current && containerRef.current) {
+        resizeObserverRef.current.unobserve(containerRef.current);
+        resizeObserverRef.current.disconnect();
+      }
+      
+      if (sceneRef.current) {
+        sceneRef.current.dispose();
+        sceneRef.current = null;
       }
     };
   }, []);
+
+  const getStatusClassName = () => {
+    if (status === 'Готов к работе') return styles.statusReady;
+    if (status === 'Слушаю...') return styles.statusListening;
+    if (status === 'Обработка...' || status === 'Генерация ответа...' || status === 'Отвечаю...' || status === 'Распознавание речи...') {
+      return styles.statusProcessing;
+    }
+    return styles.statusError;
+  };
 
   const handleRecord = async () => {
     if (!window.api) {
@@ -172,9 +148,10 @@ const MainScreen: React.FC = () => {
       // Остановить запись
       setIsRecording(false);
       setStatus('Обработка...');
-      // Пытаемся воспроизвести анимацию только если Unity загружена
-      if (unityReady) {
-        unityWrapper.playThinking();
+      
+      // Анимация персонажа - размышление
+      if (sceneRef.current) {
+        sceneRef.current.playThinking();
       }
 
       try {
@@ -183,16 +160,16 @@ const MainScreen: React.FC = () => {
         
         // Распознавание речи
         setStatus('Распознавание речи...');
-        if (unityReady) {
-          unityWrapper.playThinking();
+        if (sceneRef.current) {
+          sceneRef.current.playThinking();
         }
         const transcribedText = await window.api.transcribe(audioBuffer);
         setUserText(transcribedText || '—');
         
         if (!transcribedText || transcribedText.trim() === '') {
           setStatus('Речь не распознана');
-          if (unityReady) {
-            unityWrapper.playIdle();
+          if (sceneRef.current) {
+            sceneRef.current.playIdle();
           }
           return;
         }
@@ -204,31 +181,35 @@ const MainScreen: React.FC = () => {
         
         // Воспроизвести ответ
         setStatus('Отвечаю...');
-        if (unityReady) {
-          unityWrapper.playTalking();
+        if (sceneRef.current) {
+          sceneRef.current.playTalking();
         }
         
         await window.api.speak(response);
         
         setStatus('Готов к работе');
-        if (unityReady) {
+        if (sceneRef.current) {
           setTimeout(() => {
-            unityWrapper.playIdle();
+            sceneRef.current?.playIdle();
           }, 500);
         }
       } catch (error) {
         console.error('Recording error:', error);
         setStatus('Ошибка');
-        if (unityReady) {
-          unityWrapper.playIdle();
+        if (sceneRef.current) {
+          sceneRef.current.playIdle();
         }
       }
     } else {
       // Начать запись
       setIsRecording(true);
       setStatus('Слушаю...');
-      if (unityReady) {
-        unityWrapper.playListening();
+      
+      // Анимация персонажа - прослушивание
+      if (sceneRef.current) {
+        sceneRef.current.playListening();
+        // Небольшая анимация головы при начале записи
+        sceneRef.current.playHeadNod();
       }
       
       try {
@@ -237,79 +218,29 @@ const MainScreen: React.FC = () => {
         console.error('Failed to start recording:', error);
         setIsRecording(false);
         setStatus('Ошибка');
-        if (unityReady) {
-          unityWrapper.playIdle();
+        if (sceneRef.current) {
+          sceneRef.current.playIdle();
         }
       }
     }
   };
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        backgroundColor: '#1a1a1a',
-      }}
-    >
-      {/* Индикатор загрузки Unity (показывается максимум 3 секунды) */}
+    <Box className={styles.container}>
+      {/* Индикатор загрузки */}
       {isLoading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#1a1a1a',
-            zIndex: 1000,
-          }}
-        >
-          <Box
-            sx={{
-              width: 60,
-              height: 60,
-              border: '4px solid #2d2d2d',
-              borderTopColor: '#4a90e2',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mb: 2,
-            }}
-          />
+        <Box className={styles.loading}>
+          <Box className={styles.loadingSpinner} />
           <Typography variant="h6" color="text.secondary">
             Загрузка персонажа...
           </Typography>
         </Box>
       )}
 
-      {/* Предупреждение, если Unity не загрузилась */}
-      {unityLoadError && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '1rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100,
-            maxWidth: '90%',
-          }}
-        >
-          <Paper
-            elevation={3}
-            sx={{
-              padding: 1.5,
-              backgroundColor: 'rgba(231, 76, 60, 0.2)',
-              border: '1px solid rgba(231, 76, 60, 0.5)',
-              borderRadius: 2,
-            }}
-          >
+      {/* Предупреждение, если персонаж не загрузился */}
+      {loadError && (
+        <Box className={styles.warning}>
+          <Paper elevation={3} className={styles.warningPaper}>
             <Typography variant="body2" color="warning.main" sx={{ textAlign: 'center' }}>
               ⚠️ Персонаж не загружен. Приложение работает в режиме без визуализации.
             </Typography>
@@ -317,69 +248,21 @@ const MainScreen: React.FC = () => {
         </Box>
       )}
 
-      {/* Unity контейнер */}
-      <Box
-        ref={containerRef}
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          minHeight: 0,
-        }}
-      >
-        {unityReady ? (
+      {/* THREE.js контейнер */}
+      <Box ref={containerRef} className={styles.sceneContainer}>
+        {sceneReady ? (
           <>
-            <canvas
-              ref={canvasRef}
-              style={{
-                width: '100%',
-                height: '100%',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                display: 'block',
-                position: 'relative',
-                zIndex: 1,
-              }}
-            />
+            <canvas ref={canvasRef} className={styles.canvas} />
             {/* Подсветка вокруг персонажа */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '80%',
-                height: '80%',
-                maxWidth: 800,
-                maxHeight: 800,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(74, 144, 226, 0.5) 0%, rgba(74, 144, 226, 0.3) 40%, transparent 70%)',
-                animation: 'glow-pulse 3s ease-in-out infinite',
-                pointerEvents: 'none',
-                zIndex: 0,
-              }}
-            />
+            <Box className={styles.glow} />
           </>
         ) : (
-          // Placeholder, если Unity не загрузилась
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'text.secondary',
-              gap: 2,
-            }}
-          >
-            <Typography variant="h4" sx={{ opacity: 0.3 }}>
+          // Placeholder, если персонаж не загрузился
+          <Box className={styles.placeholder}>
+            <Typography variant="h4" sx={{ opacity: 0.3, fontFamily: "'Inter', sans-serif" }}>
               🎭
             </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.5, textAlign: 'center', px: 2 }}>
+            <Typography variant="body1" sx={{ opacity: 0.5, textAlign: 'center', px: 2, fontFamily: "'Inter', sans-serif" }}>
               Персонаж недоступен
             </Typography>
           </Box>
@@ -387,108 +270,22 @@ const MainScreen: React.FC = () => {
       </Box>
 
       {/* Блок управления */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: { xs: '2rem 1.5rem', md: '3rem 2rem' },
-          paddingBottom: { xs: '2.5rem', md: '3rem' },
-          background: 'linear-gradient(to top, rgba(26, 26, 26, 0.98) 0%, rgba(26, 26, 26, 0.85) 40%, transparent 100%)',
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: { xs: 2, md: 2.5 },
-        }}
-      >
+      <Box className={styles.controls}>
         {/* Статус */}
-        <Paper
-          elevation={8}
-          sx={{
-            padding: { xs: '0.75rem 1.5rem', md: '0.875rem 2rem' },
-            backgroundColor: 'rgba(45, 45, 45, 0.95)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: 3,
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          }}
-        >
-          <Typography
-            variant="body1"
-            sx={{
-              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-              fontSize: { xs: '0.875rem', md: '1rem' },
-              fontWeight: 600,
-              letterSpacing: '0.02em',
-              color:
-                status === 'Готов к работе'
-                  ? '#27ae60'
-                  : status === 'Слушаю...'
-                  ? '#e74c3c'
-                  : status === 'Обработка...' || status === 'Генерация ответа...' || status === 'Распознавание речи...' || status === 'Отвечаю...' || status === 'Синтез речи...'
-                  ? '#4a90e2'
-                  : '#e74c3c',
-              textAlign: 'center',
-              textTransform: 'none',
-            }}
-          >
+        <Paper elevation={3} className={styles.statusPaper}>
+          <Typography variant="body2" className={`${styles.statusText} ${getStatusClassName()}`}>
             {status}
           </Typography>
         </Paper>
 
         {/* Анимированная кнопка записи */}
-        <Box
-          sx={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+        <Box className={styles.recordButtonContainer}>
           {/* Ripple эффекты при записи */}
           {isRecording && (
             <>
-              <Box
-                sx={{
-                  position: 'absolute',
-                  width: { xs: 120, md: 140 },
-                  height: { xs: 120, md: 140 },
-                  borderRadius: '50%',
-                  border: '2px solid rgba(231, 76, 60, 0.4)',
-                  animation: `${recordingRipple} 2s ease-out infinite`,
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  width: { xs: 120, md: 140 },
-                  height: { xs: 120, md: 140 },
-                  borderRadius: '50%',
-                  border: '2px solid rgba(231, 76, 60, 0.3)',
-                  animation: `${recordingRipple} 2s ease-out 0.5s infinite`,
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  width: { xs: 120, md: 140 },
-                  height: { xs: 120, md: 140 },
-                  borderRadius: '50%',
-                  border: '2px solid rgba(231, 76, 60, 0.2)',
-                  animation: `${recordingRipple} 2s ease-out 1s infinite`,
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
+              <Box className={styles.recordRipple} />
+              <Box className={styles.recordRipple} />
+              <Box className={styles.recordRipple} />
             </>
           )}
 
@@ -496,195 +293,39 @@ const MainScreen: React.FC = () => {
             onClick={handleRecord}
             variant="contained"
             disableRipple
-            sx={{
-              position: 'relative',
-              width: { xs: 120, md: 140 },
-              height: { xs: 120, md: 140 },
-              minWidth: { xs: 120, md: 140 },
-              borderRadius: '50%',
-              backgroundColor: isRecording ? '#e74c3c' : '#4a90e2',
-              background: isRecording
-                ? 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)'
-                : 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
-              '&:hover': {
-                backgroundColor: isRecording ? '#c0392b' : '#357abd',
-                background: isRecording
-                  ? 'linear-gradient(135deg, #c0392b 0%, #a93226 100%)'
-                  : 'linear-gradient(135deg, #357abd 0%, #2e6da4 100%)',
-                transform: 'scale(1.05)',
-              },
-              '&:active': {
-                transform: 'scale(0.95)',
-              },
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: { xs: 0.5, md: 0.75 },
-              fontSize: '1.25rem',
-              fontWeight: 700,
-              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-              boxShadow: isRecording
-                ? '0 8px 32px rgba(231, 76, 60, 0.6), 0 0 0 0 rgba(231, 76, 60, 0.7)'
-                : '0 8px 32px rgba(74, 144, 226, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3)',
-              animation: isRecording ? `${pulseAnimation} 1.5s ease-in-out infinite` : 'none',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              border: '3px solid rgba(255, 255, 255, 0.1)',
-              zIndex: 2,
-              padding: 0,
-            }}
+            className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
           >
             {/* Иконка микрофона с анимацией */}
-            <Box
-              component="span"
-              sx={{
-                fontSize: { xs: '2.5rem', md: '3rem' },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                lineHeight: 1,
-                animation: isRecording ? `${microphoneWave} 0.5s ease-in-out infinite` : 'none',
-                transformOrigin: 'center bottom',
-              }}
-            >
+            <Box component="span" className={`${styles.recordButtonIcon} ${isRecording ? styles.recordButtonIconRecording : ''}`}>
               🎤
             </Box>
-            <Typography
-              component="span"
-              sx={{
-                fontSize: { xs: '0.875rem', md: '1rem' },
-                fontWeight: 600,
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-                letterSpacing: '0.03em',
-                textTransform: 'none',
-                color: 'white',
-                lineHeight: 1.2,
-              }}
-            >
+            <Typography component="span" className={styles.recordButtonText}>
               {isRecording ? 'Запись...' : 'Говорить'}
             </Typography>
           </Button>
         </Box>
 
         {/* Текстовые блоки */}
-        <Box
-          sx={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: { xs: 1.5, md: 2 },
-            maxWidth: { xs: '100%', md: 700 },
-            maxHeight: { xs: 180, md: 220 },
-            overflowY: 'auto',
-            padding: { xs: '0 1rem', md: '0 2rem' },
-            '&::-webkit-scrollbar': {
-              width: '6px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'rgba(45, 45, 45, 0.3)',
-              borderRadius: '3px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'rgba(74, 144, 226, 0.5)',
-              borderRadius: '3px',
-              '&:hover': {
-                background: 'rgba(74, 144, 226, 0.7)',
-              },
-            },
-          }}
-        >
-          {/* Вы сказали */}
-          <Paper
-            elevation={6}
-            sx={{
-              padding: { xs: '1.25rem', md: '1.5rem' },
-              backgroundColor: 'rgba(45, 45, 45, 0.95)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: 3,
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 4px 24px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.12)',
-                boxShadow: '0 6px 32px rgba(0, 0, 0, 0.4)',
-              },
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-                fontSize: { xs: '0.75rem', md: '0.8125rem' },
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                color: 'rgba(255, 255, 255, 0.6)',
-                textTransform: 'uppercase',
-                mb: 1,
-                display: 'block',
-              }}
-            >
+        <Box className={styles.textBlocks}>
+          <Paper elevation={3} className={styles.textBlock}>
+            <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
               Вы сказали:
             </Typography>
             <Typography
               variant="body1"
-              sx={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-                fontSize: { xs: '0.9375rem', md: '1.0625rem' },
-                fontWeight: 400,
-                lineHeight: 1.6,
-                color: 'rgba(255, 255, 255, 0.95)',
-                wordBreak: 'break-word',
-                minHeight: { xs: '1.5rem', md: '1.75rem' },
-              }}
+              className={`${styles.textBlockContent} ${userText !== '—' ? styles.textBlockContentFadeIn : ''}`}
             >
               {userText}
             </Typography>
           </Paper>
 
-          {/* Ответ */}
-          <Paper
-            elevation={6}
-            sx={{
-              padding: { xs: '1.25rem', md: '1.5rem' },
-              backgroundColor: 'rgba(74, 144, 226, 0.15)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: 3,
-              border: '1px solid rgba(74, 144, 226, 0.2)',
-              boxShadow: '0 4px 24px rgba(74, 144, 226, 0.2)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                borderColor: 'rgba(74, 144, 226, 0.3)',
-                boxShadow: '0 6px 32px rgba(74, 144, 226, 0.3)',
-              },
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-                fontSize: { xs: '0.75rem', md: '0.8125rem' },
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                color: 'rgba(74, 144, 226, 0.9)',
-                textTransform: 'uppercase',
-                mb: 1,
-                display: 'block',
-              }}
-            >
+          <Paper elevation={3} className={styles.textBlock}>
+            <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
               Ответ:
             </Typography>
             <Typography
               variant="body1"
-              sx={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-                fontSize: { xs: '0.9375rem', md: '1.0625rem' },
-                fontWeight: 400,
-                lineHeight: 1.6,
-                color: 'rgba(255, 255, 255, 0.95)',
-                wordBreak: 'break-word',
-                minHeight: { xs: '1.5rem', md: '1.75rem' },
-                animation: assistantText !== '—' ? 'fadeIn 0.5s ease-in' : 'none',
-              }}
+              className={`${styles.textBlockContent} ${assistantText !== '—' ? styles.textBlockContentFadeIn : ''}`}
             >
               {assistantText}
             </Typography>
@@ -693,44 +334,11 @@ const MainScreen: React.FC = () => {
       </Box>
 
       {/* Футер */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: { xs: '0.75rem', md: '1rem' },
-          right: { xs: '1rem', md: '1.5rem' },
-          color: 'rgba(255, 255, 255, 0.4)',
-          fontSize: { xs: '0.6875rem', md: '0.75rem' },
-          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-          fontWeight: 500,
-          letterSpacing: '0.02em',
-          zIndex: 5,
-        }}
-      >
-        Voice Assistant v1.0
+      <Box className={styles.footer}>
+        ARM Voice Assistant v1.0
       </Box>
-
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes glow-pulse {
-          0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </Box>
   );
 };
 
 export default MainScreen;
-
