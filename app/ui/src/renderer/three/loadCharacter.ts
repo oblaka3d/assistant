@@ -128,10 +128,13 @@ export async function loadCharacterGLB(
                     if (mat.map && mat.map instanceof THREE.Texture) {
                       mat.map.flipY = false; // GLTF использует flipY = false
                       mat.map.needsUpdate = true;
-                      if (mat.map.image && !mat.map.image.complete) {
+                      const textureImage = mat.map.image as HTMLImageElement | undefined;
+                      if (textureImage && !textureImage.complete) {
                         // Если изображение еще загружается, ждем его
-                        mat.map.image.onload = () => {
-                          mat.map!.needsUpdate = true;
+                        textureImage.onload = () => {
+                          if (mat.map) {
+                            mat.map.needsUpdate = true;
+                          }
                           mat.needsUpdate = true;
                           console.log(`[loadCharacterGLB] Texture loaded for mesh "${child.name}"`);
                         };
@@ -159,28 +162,52 @@ export async function loadCharacterGLB(
           if (animations.length > 0) {
             mixer = new THREE.AnimationMixer(scene);
 
-            // Находим idle анимацию
-            const idleAnimation = animations.find(
-              (clip) =>
-                clip.name.toLowerCase().includes('idle') ||
-                clip.name.toLowerCase().includes('wait') ||
-                animations.indexOf(clip) === 0 // Используем первую, если нет idle
-            );
-
-            if (idleAnimation) {
-              actions['idle'] = mixer.clipAction(idleAnimation);
-              actions['idle']?.setEffectiveTimeScale(1);
-              actions['idle']?.setEffectiveWeight(1);
-              actions['idle']?.play();
-            }
-
-            // Создаем действия для всех анимаций
+            // Создаем действия для всех анимаций и логируем их
+            const availableAnimations: string[] = [];
             animations.forEach((clip) => {
               const actionName = clip.name.toLowerCase();
               if (!actions[actionName]) {
                 actions[actionName] = mixer!.clipAction(clip);
+                availableAnimations.push(clip.name);
               }
             });
+            
+            console.log('[loadCharacterGLB] Available animations:', availableAnimations);
+            console.log('[loadCharacterGLB] Animation actions created:', Object.keys(actions));
+
+            // Находим T-pose анимацию (приоритет) или idle анимацию
+            const tposeAnimation = animations.find(
+              (clip) =>
+                clip.name.toLowerCase().includes('tpose') ||
+                clip.name.toLowerCase().includes('t-pose') ||
+                clip.name.toLowerCase().includes('t_pose') ||
+                clip.name.toLowerCase() === 'pose'
+            );
+
+            const idleAnimation = animations.find(
+              (clip) =>
+                clip.name.toLowerCase().includes('idle') ||
+                clip.name.toLowerCase().includes('wait')
+            );
+
+            // Используем T-pose если найден, иначе idle, иначе первую анимацию
+            const defaultAnimation = tposeAnimation || idleAnimation || animations[0];
+
+            if (defaultAnimation) {
+              actions['default'] = mixer.clipAction(defaultAnimation);
+              actions['default']?.setEffectiveTimeScale(1);
+              actions['default']?.setEffectiveWeight(1);
+              actions['default']?.play();
+              
+              // Также устанавливаем как idle для совместимости
+              if (!actions['idle']) {
+                actions['idle'] = actions['default'];
+              }
+              
+              console.log(`[loadCharacterGLB] Playing default animation: "${defaultAnimation.name}" (T-pose: ${!!tposeAnimation})`);
+            }
+          } else {
+            console.warn('[loadCharacterGLB] No animations found in GLB file. Model will be static.');
           }
 
           resolve({
@@ -245,21 +272,98 @@ export class CharacterAnimationController {
   private actions: { [key: string]: THREE.AnimationAction | null };
   private currentAction: THREE.AnimationAction | null = null;
   private clock: THREE.Clock;
+  private model: CharacterModel;
+  private programmaticAnimation: {
+    type: 'talking' | 'listening' | 'thinking' | null;
+    animationId: number | null;
+    startTime: number;
+    boneNodes: THREE.Bone[] | null;
+  } = {
+    type: null,
+    animationId: null,
+    startTime: 0,
+    boneNodes: null,
+  };
 
   constructor(model: CharacterModel) {
     this.mixer = model.mixer;
     this.actions = model.actions;
     this.clock = new THREE.Clock();
+    this.model = model;
+    this.findBoneNodes();
+  }
+
+  /**
+   * Находит важные кости для анимаций (голова, шея, челюсть)
+   */
+  private findBoneNodes(): void {
+    const bones: THREE.Bone[] = [];
+    this.model.scene.traverse((child) => {
+      if (child instanceof THREE.Bone) {
+        const nameLower = child.name.toLowerCase();
+        // Ищем кости связанные с головой, шеей, челюстью
+        if (
+          nameLower.includes('head') ||
+          nameLower.includes('neck') ||
+          nameLower.includes('jaw') ||
+          nameLower.includes('face')
+        ) {
+          bones.push(child);
+        }
+      }
+    });
+    this.programmaticAnimation.boneNodes = bones;
+    if (bones.length > 0) {
+      console.log('[CharacterAnimationController] Found bone nodes for animations:', bones.map(b => b.name));
+    }
   }
 
   /**
    * Воспроизводит анимацию по имени
+   * @returns [action, wasFound] - action и флаг, была ли найдена реальная анимация из GLB
    */
-  playAnimation(name: string, fadeIn: number = 0.3): void {
-    if (!this.mixer) return;
+  playAnimation(name: string, fadeIn: number = 0.3): [THREE.AnimationAction | null, boolean] {
+    if (!this.mixer) {
+      console.warn('[CharacterAnimationController] No mixer available, cannot play animation:', name);
+      return [null, false];
+    }
 
-    const action = this.actions[name] || this.actions['idle'];
-    if (!action || action === this.currentAction) return;
+    // Пытаемся найти анимацию по точному имени или частичному совпадению
+    let action = this.actions[name.toLowerCase()];
+    let wasFound = false;
+    
+    // Если не найдено, ищем по частичному совпадению
+    if (!action) {
+      const matchingKey = Object.keys(this.actions).find(key => 
+        key.toLowerCase().includes(name.toLowerCase()) || 
+        name.toLowerCase().includes(key.toLowerCase())
+      );
+      if (matchingKey) {
+        action = this.actions[matchingKey];
+        wasFound = true;
+        console.log(`[CharacterAnimationController] Found animation "${matchingKey}" for request "${name}"`);
+      }
+    } else {
+      wasFound = true;
+    }
+    
+    // Если все еще не найдено, используем default или idle
+    if (!action) {
+      action = this.actions['default'] || this.actions['idle'];
+      if (action) {
+        console.warn(`[CharacterAnimationController] Animation "${name}" not found, using default/idle`);
+        wasFound = false; // Это fallback, а не реальная анимация
+      } else {
+        console.warn(`[CharacterAnimationController] No animation found for "${name}" and no default animation available`);
+        console.log('[CharacterAnimationController] Available animations:', Object.keys(this.actions));
+        return [null, false];
+      }
+    }
+
+    if (action === this.currentAction) {
+      console.log(`[CharacterAnimationController] Animation "${name}" is already playing`);
+      return [action, wasFound];
+    }
 
     // Плавный переход между анимациями
     if (this.currentAction) {
@@ -268,23 +372,192 @@ export class CharacterAnimationController {
 
     action.reset().fadeIn(fadeIn).play();
     this.currentAction = action;
+    console.log(`[CharacterAnimationController] Playing animation: ${name} (from GLB: ${wasFound})`);
+    return [action, wasFound];
+  }
+  
+  /**
+   * Воспроизводит анимацию по имени (обратная совместимость)
+   */
+  playAnimationLegacy(name: string, fadeIn: number = 0.3): THREE.AnimationAction | null {
+    const [action] = this.playAnimation(name, fadeIn);
+    return action;
+  }
+  
+  /**
+   * Получить текущую активную анимацию
+   */
+  getCurrentAction(): THREE.AnimationAction | null {
+    return this.currentAction;
+  }
+  
+  /**
+   * Получить список всех доступных анимаций
+   */
+  getAvailableAnimations(): string[] {
+    return Object.keys(this.actions).filter(key => this.actions[key] !== null);
   }
 
   /**
    * Воспроизводит idle анимацию
    */
   playIdle(): void {
-    this.playAnimation('idle');
+    this.stopProgrammaticAnimation(); // Останавливаем программные анимации
+    this.playAnimationLegacy('idle');
+    console.log('[CharacterAnimationController] Playing idle animation');
+  }
+
+  /**
+   * Останавливает программную анимацию
+   */
+  private stopProgrammaticAnimation(): void {
+    if (this.programmaticAnimation.animationId !== null) {
+      cancelAnimationFrame(this.programmaticAnimation.animationId);
+      this.programmaticAnimation.animationId = null;
+    }
+    this.programmaticAnimation.type = null;
+
+    // Возвращаем кости в исходное состояние
+    if (this.programmaticAnimation.boneNodes) {
+      this.programmaticAnimation.boneNodes.forEach((bone) => {
+        bone.rotation.set(0, 0, 0);
+      });
+    }
+  }
+
+  /**
+   * Программная анимация разговора (покачивание головы вверх-вниз)
+   */
+  private animateTalking(): void {
+    this.stopProgrammaticAnimation();
+    this.programmaticAnimation.type = 'talking';
+    this.programmaticAnimation.startTime = Date.now();
+    console.log('[CharacterAnimationController] Starting programmatic talking animation');
+
+    const animate = () => {
+      if (this.programmaticAnimation.type !== 'talking') {
+        return;
+      }
+
+      const elapsed = (Date.now() - this.programmaticAnimation.startTime) / 1000;
+      const frequency = 3; // 3 раза в секунду
+      const amplitude = 0.1; // Небольшой наклон
+
+      // Небольшое покачивание головы
+      if (this.programmaticAnimation.boneNodes && this.programmaticAnimation.boneNodes.length > 0) {
+        const headBone = this.programmaticAnimation.boneNodes.find((b) =>
+          b.name.toLowerCase().includes('head')
+        );
+        if (headBone) {
+          const offset = Math.sin(elapsed * frequency * Math.PI * 2) * amplitude;
+          headBone.rotation.x = offset * 0.5;
+        } else {
+          // Если кости головы не найдены, используем движение всей модели
+          const offset = Math.sin(elapsed * frequency * Math.PI * 2) * amplitude;
+          if (this.model.scene) {
+            this.model.scene.position.y = 0 + offset * 0.02; // Небольшое вертикальное движение
+          }
+        }
+      } else if (this.model.scene) {
+        // Если кости не найдены, просто двигаем всю модель
+        const offset = Math.sin(elapsed * frequency * Math.PI * 2) * amplitude;
+        this.model.scene.position.y = 0 + offset * 0.02;
+      }
+
+      this.programmaticAnimation.animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+  }
+
+  /**
+   * Программная анимация прослушивания (легкий наклон головы в сторону)
+   */
+  private animateListening(): void {
+    this.stopProgrammaticAnimation();
+    this.programmaticAnimation.type = 'listening';
+    this.programmaticAnimation.startTime = Date.now();
+
+    const animate = () => {
+      if (this.programmaticAnimation.type !== 'listening') {
+        return;
+      }
+
+      const elapsed = (Date.now() - this.programmaticAnimation.startTime) / 1000;
+      const targetTilt = 0.15; // Наклон головы в радианах
+
+      // Наклон головы в сторону
+      if (this.programmaticAnimation.boneNodes && this.programmaticAnimation.boneNodes.length > 0) {
+        const headBone = this.programmaticAnimation.boneNodes.find((b) =>
+          b.name.toLowerCase().includes('head')
+        );
+        if (headBone) {
+          // Плавный переход к наклону
+          const progress = Math.min(elapsed * 2, 1);
+          headBone.rotation.z = targetTilt * progress;
+        }
+      }
+
+      this.programmaticAnimation.animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+  }
+
+  /**
+   * Программная анимация размышления (рука к подбородку или наклон головы)
+   */
+  private animateThinking(): void {
+    this.stopProgrammaticAnimation();
+    this.programmaticAnimation.type = 'thinking';
+    this.programmaticAnimation.startTime = Date.now();
+
+    const animate = () => {
+      if (this.programmaticAnimation.type !== 'thinking') {
+        return;
+      }
+
+      const elapsed = (Date.now() - this.programmaticAnimation.startTime) / 1000;
+      const frequency = 0.5; // Медленное покачивание
+      const amplitude = 0.08;
+
+      // Легкое покачивание головы вверх-вниз
+      if (this.programmaticAnimation.boneNodes && this.programmaticAnimation.boneNodes.length > 0) {
+        const headBone = this.programmaticAnimation.boneNodes.find((b) =>
+          b.name.toLowerCase().includes('head')
+        );
+        if (headBone) {
+          const offset = Math.sin(elapsed * frequency * Math.PI * 2) * amplitude;
+          headBone.rotation.x = offset;
+        }
+      }
+
+      this.programmaticAnimation.animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
   }
 
   /**
    * Воспроизводит анимацию прослушивания
    */
   playListening(): void {
-    this.playAnimation('listening');
-    // Если нет listening, используем idle с небольшим движением
-    if (!this.actions['listening']) {
-      this.playIdle();
+    const [, wasFound] = this.playAnimation('listening');
+    // Если нет listening анимации в GLB, используем программную
+    if (!wasFound) {
+      console.log('[CharacterAnimationController] Using programmatic listening animation');
+      // Останавливаем любые предыдущие программные анимации
+      this.stopProgrammaticAnimation();
+      // Возвращаемся к idle позе (без остановки программных анимаций)
+      const [idleAction] = this.playAnimation('idle');
+      if (idleAction) {
+        // Небольшая задержка перед запуском программной анимации для плавности
+        setTimeout(() => {
+          this.animateListening();
+        }, 100);
+      } else {
+        this.animateListening();
+      }
     }
   }
 
@@ -292,9 +565,21 @@ export class CharacterAnimationController {
    * Воспроизводит анимацию размышления
    */
   playThinking(): void {
-    this.playAnimation('thinking');
-    if (!this.actions['thinking']) {
-      this.playIdle();
+    const [, wasFound] = this.playAnimation('thinking');
+    // Если нет thinking анимации в GLB, используем программную
+    if (!wasFound) {
+      console.log('[CharacterAnimationController] Using programmatic thinking animation');
+      // Останавливаем любые предыдущие программные анимации
+      this.stopProgrammaticAnimation();
+      // Возвращаемся к idle позе
+      const [idleAction] = this.playAnimation('idle');
+      if (idleAction) {
+        setTimeout(() => {
+          this.animateThinking();
+        }, 100);
+      } else {
+        this.animateThinking();
+      }
     }
   }
 
@@ -302,9 +587,21 @@ export class CharacterAnimationController {
    * Воспроизводит анимацию разговора
    */
   playTalking(): void {
-    this.playAnimation('talking');
-    if (!this.actions['talking']) {
-      this.playIdle();
+    const [, wasFound] = this.playAnimation('talking');
+    // Если нет talking анимации в GLB, используем программную
+    if (!wasFound) {
+      console.log('[CharacterAnimationController] Using programmatic talking animation');
+      // Останавливаем любые предыдущие программные анимации
+      this.stopProgrammaticAnimation();
+      // Возвращаемся к idle позе
+      const [idleAction] = this.playAnimation('idle');
+      if (idleAction) {
+        setTimeout(() => {
+          this.animateTalking();
+        }, 100);
+      } else {
+        this.animateTalking();
+      }
     }
   }
 

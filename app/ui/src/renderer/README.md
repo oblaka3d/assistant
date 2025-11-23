@@ -1,13 +1,13 @@
 # THREE.js Renderer
 
-Этот модуль содержит реализацию 3D сцены с персонажем на основе THREE.js.
+Модуль для рендеринга 3D сцены с персонажем на основе THREE.js.
 
 ## Структура
 
-- `three/CharacterScene.ts` - Основной класс для управления THREE.js сценой
-- `three/ToonShader.ts` - Toon шейдер для стилизации персонажа
-- `three/loadCharacter.ts` - Загрузчик GLB/VRM моделей и контроллер анимаций
-- `main.ts` - Инициализация и экспорт сцены
+- `main.ts` - точка входа, экспорт `initCharacterScene`
+- `three/CharacterScene.ts` - основной класс управления сценой
+- `three/loadCharacter.ts` - загрузка GLB моделей и управление анимациями
+- `three/ToonShader.ts` - toon шейдер для стилизации персонажа
 
 ## Использование
 
@@ -16,9 +16,8 @@ import { initCharacterScene } from '../renderer/main';
 
 const scene = await initCharacterScene({
   canvas: canvasElement,
-  modelUrl: '/assets/models/character.glb',
-  onProgress: (progress) => console.log(progress),
-  enableToonShader: true,
+  modelUrl: './assets/models/character.glb',
+  enableToonShader: false,
 });
 
 // Управление анимациями
@@ -27,27 +26,33 @@ scene.playListening();
 scene.playThinking();
 scene.playTalking();
 scene.playHeadNod();
+
+// Получение списка доступных анимаций
+const animations = scene.getAvailableAnimations();
 ```
 
-## Модели персонажа
+## Модели
 
-Поместите GLB модель персонажа в:
+GLB модели должны находиться в `app/ui/public/assets/models/`.
 
-- `app/ui/public/assets/models/character.glb`
+При загрузке:
+1. Ищется T-pose анимация (приоритет)
+2. Если нет - используется idle анимация
+3. Если нет - используется первая доступная анимация
 
-Если модель не найдена, будет использован простой placeholder.
+## Анимации
+
+**Встроенные из GLB:**
+- Автоматически загружаются при загрузке модели
+- Ищутся по имени: `idle`, `talking`, `listening`, `thinking`, `tpose`
+
+**Программные:**
+- Автоматически используются, если встроенные анимации не найдены
+- Работают через изменение костей персонажа
 
 ## Оптимизации для ARM
 
-- `antialias: false` - отключено для производительности
-- `pixelRatio: 1` - фиксированный pixel ratio
-- `shadows: false` - тени отключены
+- `antialias: false`
+- `pixelRatio: 1`
+- `shadows: false`
 - Простое освещение (HemisphereLight + DirectionalLight)
-
-## Toon Shader
-
-Применяется автоматически к модели персонажа. Создает:
-
-- 2-3 ступени яркости
-- Outline эффект
-- Стилизованный внешний вид

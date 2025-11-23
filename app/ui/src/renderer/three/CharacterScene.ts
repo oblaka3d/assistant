@@ -308,7 +308,15 @@ export class CharacterScene {
       // Создаем контроллер анимаций
       if (model.mixer) {
         this.animationController = new CharacterAnimationController(model);
-        this.animationController.playIdle();
+        // Пробуем воспроизвести T-pose, если доступен, иначе используем default/idle
+        const [tposeAction] = this.animationController.playAnimation('tpose');
+        if (!tposeAction) {
+          // Если T-pose не найден, используем default или idle
+          const [defaultAction] = this.animationController.playAnimation('default');
+          if (!defaultAction) {
+            this.animationController.playIdle();
+          }
+        }
       }
 
       // Запускаем анимационный цикл
@@ -430,8 +438,17 @@ export class CharacterScene {
   /**
    * Воспроизводит анимацию
    */
-  public playAnimation(animation: CharacterAnimation): void {
-    if (!this.animationController) return;
+  public playAnimation(animation: CharacterAnimation | string): void {
+    if (!this.animationController) {
+      console.warn('[CharacterScene] No animation controller available');
+      return;
+    }
+
+    if (typeof animation === 'string') {
+      // Если передана строка, пробуем воспроизвести анимацию по имени
+      this.animationController.playAnimation(animation);
+      return;
+    }
 
     switch (animation) {
       case 'idle':
@@ -447,6 +464,16 @@ export class CharacterScene {
         this.animationController.playTalking();
         break;
     }
+  }
+  
+  /**
+   * Получить список всех доступных анимаций
+   */
+  public getAvailableAnimations(): string[] {
+    if (!this.animationController) {
+      return [];
+    }
+    return this.animationController.getAvailableAnimations();
   }
 
   /**

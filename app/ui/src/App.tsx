@@ -4,9 +4,9 @@ import { useSwipeable } from 'react-swipeable';
 
 import NavigationIndicators from './components/NavigationIndicators';
 import StatusBar from './components/StatusBar';
-import ChatScreen from './screens/ChatScreen';
-import MainScreen from './screens/MainScreen';
-import MenuScreen from './screens/MenuScreen';
+import ChatScreen from './screens/ChatScreen/ChatScreen';
+import MainScreen from './screens/MainScreen/MainScreen';
+import MenuScreen from './screens/MenuScreen/MenuScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { navigateNext, navigatePrev, setTransitioning } from './store/slices/uiSlice';
 

@@ -5,9 +5,9 @@ import { MessageList } from 'react-chat-elements';
 
 import 'react-chat-elements/dist/main.css';
 
-import ScreenHeader from '../components/ScreenHeader';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addMessage, clearInput, setInputValue } from '../store/slices/chatSlice';
+import ScreenHeader from '../../components/ScreenHeader';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { addMessage, clearInput, setInputValue } from '../../store/slices/chatSlice';
 
 import styles from './ChatScreen.module.css';
 

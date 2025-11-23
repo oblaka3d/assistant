@@ -13,14 +13,14 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import ScreenHeader from '../components/ScreenHeader';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { goBack, openSubScreen } from '../store/slices/uiSlice';
+import ScreenHeader from '../../components/ScreenHeader';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { goBack, openSubScreen } from '../../store/slices/uiSlice';
 
 import styles from './MenuScreen.module.css';
-import AboutScreen from './subscreens/AboutScreen';
-import HistoryScreen from './subscreens/HistoryScreen';
-import SettingsScreen from './subscreens/SettingsScreen';
+import AboutScreen from './subscreens/AboutScreen/AboutScreen';
+import HistoryScreen from './subscreens/HistoryScreen/HistoryScreen';
+import SettingsScreen from './subscreens/SettingsScreen/SettingsScreen';
 
 const MenuScreen: React.FC = () => {
   const dispatch = useAppDispatch();

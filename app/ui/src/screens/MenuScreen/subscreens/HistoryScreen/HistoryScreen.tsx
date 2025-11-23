@@ -1,8 +1,8 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import ScreenHeader from '../../components/ScreenHeader';
-import styles from '../MenuScreen.module.css';
+import ScreenHeader from '../../../../components/ScreenHeader';
+import styles from '../../MenuScreen.module.css';
 
 interface HistoryScreenProps {
   onBack: () => void;

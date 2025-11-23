@@ -24,5 +24,11 @@ contextBridge.exposeInMainWorld('api', {
   checkDependencies: (): Promise<Array<{ name: string; available: boolean; required: boolean; message?: string; installInstructions?: string }>> => {
     return ipcRenderer.invoke('checkDependencies');
   },
+  getModelList: (): Promise<string[]> => {
+    return ipcRenderer.invoke('getModelList');
+  },
+  getSceneList: (): Promise<string[]> => {
+    return ipcRenderer.invoke('getSceneList');
+  },
 });
 

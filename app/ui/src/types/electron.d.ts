@@ -15,6 +15,8 @@ declare global {
       askLLM: (text: string) => Promise<string>;
       speak: (text: string) => Promise<void>;
       checkDependencies: () => Promise<DependencyCheckResult[]>;
+      getModelList: () => Promise<string[]>;
+      getSceneList: () => Promise<string[]>;
     };
   }
 }

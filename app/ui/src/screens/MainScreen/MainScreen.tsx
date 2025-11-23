@@ -2,9 +2,9 @@ import { Box, Button, Typography, Paper } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import React, { useEffect, useRef } from 'react';
 
-import { initCharacterScene, CharacterScene } from '../renderer/main';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addMessage } from '../store/slices/chatSlice';
+import { initCharacterScene, CharacterScene } from '../../renderer/main';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { addMessage } from '../../store/slices/chatSlice';
 import {
   setAssistantText,
   setIsLoading,
@@ -14,7 +14,7 @@ import {
   setStatus,
   setUserText,
   VoiceStatus,
-} from '../store/slices/voiceSlice';
+} from '../../store/slices/voiceSlice';
 
 import styles from './MainScreen.module.css';
 
@@ -177,20 +177,6 @@ const MainScreen: React.FC = () => {
     };
   }, [dispatch]);
 
-  const getStatusClassName = () => {
-    if (status === 'Готов к работе') return styles.statusReady;
-    if (status === 'Слушаю...') return styles.statusListening;
-    if (
-      status === 'Обработка...' ||
-      status === 'Генерация ответа...' ||
-      status === 'Отвечаю...' ||
-      status === 'Распознавание речи...'
-    ) {
-      return styles.statusProcessing;
-    }
-    return styles.statusError;
-  };
-
   const handleRecord = async () => {
     if (!window.api) {
       console.error('Electron API not available');
@@ -350,15 +336,6 @@ const MainScreen: React.FC = () => {
           </Box>
         )}
       </Box>
-
-      {/* Статус - верхний правый угол (скрыт) */}
-      {/* <Box className={styles.statusContainer}>
-        <Paper elevation={3} className={styles.statusPaper}>
-          <Typography variant="body2" className={`${styles.statusText} ${getStatusClassName()}`}>
-            {status}
-          </Typography>
-        </Paper>
-      </Box> */}
 
       {/* Текстовые блоки - нижний левый угол (показываются только при наличии текста) */}
       {(userText !== '—' || assistantText !== '—') && (
