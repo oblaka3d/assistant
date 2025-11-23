@@ -1,6 +1,7 @@
+import MenuIcon from '@mui/icons-material/Menu';
 import SendIcon from '@mui/icons-material/Send';
 import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { MessageList } from 'react-chat-elements';
 import { useTranslation } from 'react-i18next';
 
@@ -8,42 +9,44 @@ import 'react-chat-elements/dist/main.css';
 
 import ScreenHeader from '../../components/ScreenHeader';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { addMessage, clearInput, setInputValue } from '../../store/slices/chatSlice';
-import { setLLMProviderName } from '../../store/slices/settingsSlice';
+import { clearInput, setInputValue, toggleDialogPanel } from '../../store/slices/chatSlice';
+import { loadLLMProviderInfo, sendMessage } from '../../store/thunks/chatThunks';
 import { createLogger } from '../../utils/logger';
 
 import styles from './ChatScreen.module.css';
+import DialogPanel from './components/DialogPanel/DialogPanel';
 
 const log = createLogger('ChatScreen');
+
+interface MessageListRef {
+  scrollToBottom?: () => void;
+}
 
 const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const messages = useAppSelector((state) => state.chat.messages);
-  const inputValue = useAppSelector((state) => state.chat.inputValue);
+  const { dialogs, currentDialogId, inputValue } = useAppSelector((state) => state.chat);
   const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
-  const messageListRef = useRef<unknown>(null);
+  const messageListRef = useRef<MessageListRef | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Получаем текущий диалог и сообщения
+  const messages = useMemo(() => {
+    const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+    return currentDialog?.messages || [];
+  }, [dialogs, currentDialogId]);
 
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
-    const loadLLMProviderInfo = async () => {
-      if (!window.api) {
-        log.warn('Electron API not available');
-        return;
-      }
-
-      try {
-        const info = await window.api.getLLMProviderInfo();
-        dispatch(setLLMProviderName(info.name));
-        log.debug('LLM provider info loaded:', info);
-      } catch (error) {
-        log.error('Failed to load LLM provider info:', error);
-      }
-    };
-
     if (!llmProviderName) {
-      loadLLMProviderInfo();
+      dispatch(loadLLMProviderInfo())
+        .unwrap()
+        .then((info) => {
+          log.debug('LLM provider info loaded:', info);
+        })
+        .catch((error) => {
+          log.error('Failed to load LLM provider info:', error);
+        });
     }
   }, [dispatch, llmProviderName]);
 
@@ -53,7 +56,7 @@ const ChatScreen: React.FC = () => {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
     // Альтернативный способ через ref библиотеки, если доступен
-    if (messageListRef.current && typeof messageListRef.current.scrollToBottom === 'function') {
+    if (messageListRef.current?.scrollToBottom) {
       messageListRef.current.scrollToBottom();
     }
   }, [messages]);
@@ -61,45 +64,13 @@ const ChatScreen: React.FC = () => {
   const handleSend = async () => {
     if (!inputValue.trim()) return;
 
-    const userMessage = {
-      id: Date.now().toString(),
-      position: 'right' as const,
-      type: 'text' as const,
-      text: inputValue,
-      date: new Date(),
-    };
-
-    dispatch(addMessage(userMessage));
+    const text = inputValue;
     dispatch(clearInput());
 
-    // Отправить запрос ассистенту
-    if (window.api) {
-      try {
-        const response = await window.api.askLLM(inputValue);
-        const assistantMessage = {
-          id: (Date.now() + 1).toString(),
-          position: 'left' as const,
-          type: 'text' as const,
-          text: response || t('ui.errorSorry'),
-          date: new Date(),
-        };
-        dispatch(addMessage(assistantMessage));
-
-        // Воспроизвести ответ голосом
-        if (response) {
-          await window.api.speak(response);
-        }
-      } catch (error) {
-        log.error('Failed to get assistant response:', error);
-        const errorMessage = {
-          id: (Date.now() + 1).toString(),
-          position: 'left' as const,
-          type: 'text' as const,
-          text: t('ui.errorMessage'),
-          date: new Date(),
-        };
-        dispatch(addMessage(errorMessage));
-      }
+    try {
+      await dispatch(sendMessage({ text, t })).unwrap();
+    } catch (error) {
+      log.error('Failed to send message:', error);
     }
   };
 
@@ -113,10 +84,24 @@ const ChatScreen: React.FC = () => {
   // Формируем заголовок с названием LLM модели
   const chatTitle = llmProviderName ? `${t('chat.title')} - ${llmProviderName}` : t('chat.title');
 
+  const handleTogglePanel = () => {
+    dispatch(toggleDialogPanel());
+  };
+
   return (
     <Box className={styles.container}>
+      {/* Панель диалогов */}
+      <DialogPanel />
+
       {/* Заголовок */}
-      <ScreenHeader title={chatTitle} />
+      <ScreenHeader
+        title={chatTitle}
+        action={
+          <IconButton onClick={handleTogglePanel} className={styles.menuButton} color="inherit">
+            <MenuIcon />
+          </IconButton>
+        }
+      />
 
       {/* Список сообщений */}
       <Box className={styles.messagesContainer}>
@@ -136,15 +121,20 @@ const ChatScreen: React.FC = () => {
               className="message-list"
               lockable={true}
               toBottomHeight={'100%'}
-              dataSource={messages.map((msg) => ({
-                id: msg.id,
-                position: msg.position,
-                type: msg.type,
-                text: msg.text,
-                date: msg.date,
-                title: msg.position === 'right' ? t('chat.user') : t('chat.assistant'),
-                titleColor: msg.position === 'right' ? '#4a90e2' : '#27ae60',
-              }))}
+              dataSource={
+                // Type assertion needed due to react-chat-elements incomplete types
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                messages.map((msg) => ({
+                  id: msg.id,
+                  position: msg.position,
+                  type: msg.type,
+                  text: msg.text,
+                  date: msg.date,
+                  title: msg.position === 'right' ? t('chat.user') : t('chat.assistant'),
+                  titleColor: msg.position === 'right' ? '#4a90e2' : '#27ae60',
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                })) as unknown as any
+              }
             />
           </Box>
         )}

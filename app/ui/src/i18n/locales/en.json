@@ -43,7 +43,9 @@
     "empty": "History is empty",
     "noMessages": "No messages in history",
     "user": "User",
-    "assistant": "Assistant"
+    "assistant": "Assistant",
+    "dialogs": "Dialogs",
+    "newDialog": "New dialog"
   },
   "settings": {
     "title": "Settings",

@@ -65,6 +65,14 @@
   color: #666666;
 }
 
+.menuButton {
+  color: #ffffff;
+}
+
+.menuButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Material-UI TextField styles */
 .inputField :global(.MuiOutlinedInput-root) {
   background-color: #1a1a1a;

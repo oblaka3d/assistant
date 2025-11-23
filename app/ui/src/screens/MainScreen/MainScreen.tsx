@@ -3,20 +3,11 @@ import { Box, Button, Typography, Paper } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { TIMEOUTS, DEFAULTS } from '../../constants/app';
-import { initCharacterScene, CharacterScene } from '../../renderer/main';
+import { DEFAULTS, TIMEOUTS } from '../../constants/app';
+import type { CharacterScene } from '../../renderer/main';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { addMessage } from '../../store/slices/chatSlice';
-import {
-  setAssistantText,
-  setIsLoading,
-  setIsRecording,
-  setLoadError,
-  setSceneReady,
-  setStatus,
-  setUserText,
-  VoiceStatusType,
-} from '../../store/slices/voiceSlice';
+import { initScene } from '../../store/thunks/sceneThunks';
+import { stopRecordingAndProcess, startRecording } from '../../store/thunks/voiceThunks';
 import { createLogger } from '../../utils/logger';
 
 import styles from './MainScreen.module.css';
@@ -29,7 +20,6 @@ const MainScreen: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CharacterScene | null>(null);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const { sceneReady, isLoading, loadError, userText, assistantText, isRecording } = useAppSelector(
@@ -37,7 +27,9 @@ const MainScreen: React.FC = () => {
   );
 
   // Получаем последний ответ ассистента из чата для отображения на главном экране
-  const messages = useAppSelector((state) => state.chat.messages);
+  const { dialogs, currentDialogId } = useAppSelector((state) => state.chat);
+  const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+  const messages = currentDialog?.messages || [];
   const lastAssistantMessage = messages.filter((msg) => msg.position === 'left').slice(-1)[0];
 
   useEffect(() => {
@@ -48,9 +40,6 @@ const MainScreen: React.FC = () => {
 
     if (!canvasRef.current) {
       log.warn('Canvas element not found');
-      dispatch(setIsLoading(false));
-      dispatch(setLoadError(true));
-      dispatch(setStatus(VoiceStatusType.READY_NO_CHARACTER));
       return;
     }
 
@@ -58,36 +47,21 @@ const MainScreen: React.FC = () => {
 
     const loadScene = async () => {
       try {
-        dispatch(setIsLoading(true));
-        dispatch(setLoadError(false));
-
-        // Таймаут для скрытия индикатора загрузки
-        loadingTimeoutRef.current = setTimeout(() => {
-          if (isMounted) {
-            dispatch(setIsLoading(false));
-            dispatch(setLoadError(true));
-            dispatch(setStatus(VoiceStatusType.READY_NO_CHARACTER));
-          }
-        }, TIMEOUTS.SCENE_LOAD);
-
-        // Используем путь к модели по умолчанию из настроек или констант
-        const modelPath = DEFAULTS.MODEL_PATH;
-
         log.debug('Starting character scene initialization', {
-          modelPath,
           windowLocation: window.location.href,
           protocol: window.location.protocol,
         });
 
-        // Создаем THREE.js сцену
-        const scene = await initCharacterScene({
-          canvas: canvasRef.current!,
-          modelUrl: modelPath,
-          onProgress: (progress) => {
-            log.debug('Character loading progress:', Math.round(progress * 100) + '%');
-          },
-          enableToonShader: false, // Отключаем toon shader, используем оригинальные материалы модели
-        });
+        // Создаем THREE.js сцену через thunk
+        const scene = await dispatch(
+          initScene({
+            canvas: canvasRef.current!,
+            onProgress: (progress) => {
+              log.debug('Character loading progress:', Math.round(progress * 100) + '%');
+            },
+            enableToonShader: false, // Отключаем toon shader, используем оригинальные материалы модели
+          })
+        ).unwrap();
 
         if (!isMounted) {
           scene.dispose();
@@ -96,15 +70,6 @@ const MainScreen: React.FC = () => {
 
         // Сохраняем ссылку на сцену
         sceneRef.current = scene;
-        dispatch(setSceneReady(scene.ready));
-        dispatch(setIsLoading(false));
-        dispatch(setStatus(VoiceStatusType.READY));
-
-        // Очищаем таймаут
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = null;
-        }
 
         // Воспроизводим idle анимацию
         scene.playIdle();
@@ -112,18 +77,7 @@ const MainScreen: React.FC = () => {
         log.log('Character scene loaded successfully');
       } catch (error) {
         if (!isMounted) return;
-
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn('Failed to load character scene, continuing without it:', errorMessage);
-
-        dispatch(setLoadError(true));
-        dispatch(setIsLoading(false));
-        dispatch(setStatus(VoiceStatusType.READY_NO_CHARACTER));
-
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = null;
-        }
+        log.error('Failed to load character scene:', error);
       }
     };
 
@@ -164,11 +118,6 @@ const MainScreen: React.FC = () => {
     return () => {
       isMounted = false;
 
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-
       if (resizeObserver && containerElement) {
         resizeObserver.unobserve(containerElement);
         resizeObserver.disconnect();
@@ -182,111 +131,47 @@ const MainScreen: React.FC = () => {
   }, [dispatch]);
 
   const handleRecord = async () => {
-    if (!window.api) {
-      console.error('Electron API not available');
-      return;
-    }
-
     if (isRecording) {
-      // Остановить запись
-      dispatch(setIsRecording(false));
-      dispatch(setStatus(VoiceStatusType.PROCESSING));
-
-      // Анимация персонажа - размышление
-      if (sceneRef.current) {
-        sceneRef.current.playThinking();
-      }
-
+      // Остановить запись и обработать
       try {
-        // Остановка записи и получение аудио буфера
-        const audioBuffer = await window.api.stopRecord();
-
-        // Распознавание речи
-        dispatch(setStatus(VoiceStatusType.RECOGNIZING));
-        if (sceneRef.current) {
-          sceneRef.current.playThinking();
-        }
-        const transcribedText = await window.api.transcribe(audioBuffer);
-        dispatch(setUserText(transcribedText || DEFAULTS.EMPTY_TEXT));
-
-        if (!transcribedText || transcribedText.trim() === '') {
-          dispatch(setStatus(VoiceStatusType.NOT_RECOGNIZED));
-          if (sceneRef.current) {
-            sceneRef.current.playIdle();
-          }
-          return;
-        }
-
-        // Добавляем сообщение пользователя в чат
-        dispatch(
-          addMessage({
-            id: Date.now().toString(),
-            position: 'right',
-            type: 'text',
-            text: transcribedText,
-            date: new Date(),
+        await dispatch(
+          stopRecordingAndProcess({
+            onThinking: () => {
+              if (sceneRef.current) {
+                sceneRef.current.playThinking();
+              }
+            },
+            onIdle: () => {
+              if (sceneRef.current) {
+                sceneRef.current.playIdle();
+              }
+            },
+            onTalking: () => {
+              if (sceneRef.current) {
+                sceneRef.current.playTalking();
+              }
+            },
           })
-        );
-
-        // Получить ответ от ассистента
-        dispatch(setStatus(VoiceStatusType.GENERATING));
-        const response = await window.api.askLLM(transcribedText);
-        dispatch(setAssistantText(response || DEFAULTS.EMPTY_TEXT));
-
-        // Добавляем ответ ассистента в чат
-        if (response) {
-          dispatch(
-            addMessage({
-              id: (Date.now() + 1).toString(),
-              position: 'left',
-              type: 'text',
-              text: response,
-              date: new Date(),
-            })
-          );
-        }
-
-        // Воспроизвести ответ
-        dispatch(setStatus(VoiceStatusType.SPEAKING));
-        if (sceneRef.current) {
-          sceneRef.current.playTalking();
-        }
-
-        await window.api.speak(response);
-
-        dispatch(setStatus(VoiceStatusType.READY));
-        if (sceneRef.current) {
-          setTimeout(() => {
-            sceneRef.current?.playIdle();
-          }, TIMEOUTS.IDLE_TRANSITION);
-        }
+        ).unwrap();
       } catch (error) {
         log.error('Recording error:', error);
-        dispatch(setStatus(VoiceStatusType.ERROR));
         if (sceneRef.current) {
           sceneRef.current.playIdle();
         }
       }
     } else {
-      // Начать запись - очищаем предыдущие тексты
-      dispatch(setUserText(DEFAULTS.EMPTY_TEXT));
-      dispatch(setAssistantText(DEFAULTS.EMPTY_TEXT));
-      dispatch(setIsRecording(true));
-      dispatch(setStatus(VoiceStatusType.LISTENING));
-
-      // Анимация персонажа - прослушивание
-      if (sceneRef.current) {
-        sceneRef.current.playListening();
-        // Небольшая анимация головы при начале записи
-        sceneRef.current.playHeadNod();
-      }
-
+      // Начать запись
       try {
-        await window.api.startRecord();
+        await dispatch(startRecording()).unwrap();
+
+        // Анимация персонажа - прослушивание
+        if (sceneRef.current) {
+          sceneRef.current.playListening();
+          // Небольшая анимация головы при начале записи
+          sceneRef.current.playHeadNod();
+        }
       } catch (error) {
-        console.error('Failed to start recording:', error);
-        dispatch(setIsRecording(false));
-        dispatch(setStatus(VoiceStatusType.ERROR));
+        log.error('Failed to start recording:', error);
         if (sceneRef.current) {
           sceneRef.current.playIdle();
         }

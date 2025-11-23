@@ -43,7 +43,9 @@
     "empty": "历史记录为空",
     "noMessages": "历史记录中没有消息",
     "user": "用户",
-    "assistant": "助手"
+    "assistant": "助手",
+    "dialogs": "对话",
+    "newDialog": "新建对话"
   },
   "settings": {
     "title": "设置",

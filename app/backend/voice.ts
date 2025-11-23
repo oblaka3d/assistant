@@ -82,7 +82,3 @@ export async function stopRecord(): Promise<Buffer> {
     process.kill('SIGINT');
   });
 }
-
-export function isRecording(): boolean {
-  return recordingProcess !== null;
-}

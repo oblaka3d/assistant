@@ -1,0 +1,123 @@
+.drawer {
+  width: 320px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.toolbar {
+  background-color: #2d2d2d;
+  min-height: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.closeButton {
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.listContainer {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.list {
+  padding: 0;
+}
+
+.listItemButton {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.listItemButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.activeItem .listItemButton {
+  background-color: rgba(74, 144, 226, 0.2);
+  border-left: 3px solid #4a90e2;
+}
+
+.activeItem .listItemButton:hover {
+  background-color: rgba(74, 144, 226, 0.3);
+}
+
+.dialogContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.dialogTitle {
+  color: #ffffff;
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialogPreview {
+  color: rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialogDate {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+}
+
+.deleteButton {
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0.25rem;
+}
+
+.deleteButton:hover {
+  color: #ff4444;
+  background-color: rgba(255, 68, 68, 0.1);
+}
+
+.deleteButton:disabled {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.fabContainer {
+  position: relative;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  background-color: #1a1a1a;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.addButton {
+  background-color: #4a90e2;
+  color: #ffffff;
+}
+
+.addButton:hover {
+  background-color: #357abd;
+}
