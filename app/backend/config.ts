@@ -43,4 +43,3 @@ export const config: Config = {
     voice: process.env.TTS_VOICE || 'jane',
   },
 };
-

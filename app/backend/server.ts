@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+
 import { config } from './config';
 
 const app: Express = express();
@@ -30,4 +31,3 @@ export function startServer(): void {
 if (require.main === module) {
   startServer();
 }
-

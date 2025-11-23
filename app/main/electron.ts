@@ -1,7 +1,10 @@
-import { app, BrowserWindow, dialog } from 'electron';
 import * as path from 'path';
-import { setupIPC } from './ipc';
+
+import { app, BrowserWindow, dialog } from 'electron';
+
 import { checkDependenciesOnStartup, checkDependencies } from '../backend/dependency-checker';
+
+import { setupIPC } from './ipc';
 
 // Устанавливаем переменную окружения для подавления предупреждений CSP
 // unsafe-eval может потребоваться для некоторых библиотек (например, THREE.js)
@@ -16,7 +19,7 @@ let mainWindow: BrowserWindow | null = null;
 function createWindow(): void {
   // Проверка режима окна через переменную окружения
   const windowMode = process.env.WINDOW_MODE === 'true' || process.env.WINDOWED === 'true';
-  
+
   mainWindow = new BrowserWindow({
     width: windowMode ? 1280 : 1920,
     height: windowMode ? 720 : 1080,
@@ -44,16 +47,16 @@ function createWindow(): void {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self'; " +
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; " +
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-          "font-src 'self' https://fonts.gstatic.com data:; " +
-          "img-src 'self' data: blob:; " +
-          "connect-src 'self' https://api.openai.com https://tts.api.cloud.yandex.net https://*.yandex.net; " +
-          "worker-src 'self' blob:; " +
-          "child-src 'self' blob:; " +
-          "object-src 'none'; " +
-          "base-uri 'self'; " +
-          "form-action 'none';"
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; " +
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            "font-src 'self' https://fonts.gstatic.com data:; " +
+            "img-src 'self' data: blob:; " +
+            "connect-src 'self' https://api.openai.com https://tts.api.cloud.yandex.net https://*.yandex.net; " +
+            "worker-src 'self' blob:; " +
+            "child-src 'self' blob:; " +
+            "object-src 'none'; " +
+            "base-uri 'self'; " +
+            "form-action 'none';",
         ],
       },
     });
@@ -61,7 +64,7 @@ function createWindow(): void {
 
   // Hardware acceleration (работает на всех платформах)
   app.commandLine.appendSwitch('enable-gpu-rasterization');
-  
+
   // Linux-специфичные настройки (только для Linux)
   if (process.platform === 'linux') {
     app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations');
@@ -71,18 +74,21 @@ function createWindow(): void {
   // Путь к UI файлам
   // Всегда используем собранный файл из dist (работает и в dev, и в production)
   const htmlPath = path.join(__dirname, '../ui/index.html');
-  
+
   console.log('Loading HTML from:', htmlPath);
   console.log('__dirname:', __dirname);
   console.log('File exists:', require('fs').existsSync(htmlPath));
-  
+
   // Логирование ошибок загрузки
-  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    console.error('Failed to load:', validatedURL);
-    console.error('Error code:', errorCode);
-    console.error('Error description:', errorDescription);
-  });
-  
+  mainWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL) => {
+      console.error('Failed to load:', validatedURL);
+      console.error('Error code:', errorCode);
+      console.error('Error description:', errorDescription);
+    }
+  );
+
   // Логирование консоли рендерера
   mainWindow.webContents.on('console-message', (_event, level, message) => {
     // Игнорируем ошибки fetch из DevTools (они не критичны)
@@ -91,12 +97,12 @@ function createWindow(): void {
     }
     console.log(`[Renderer ${level}]:`, message);
   });
-  
+
   // Логирование ошибок рендерера
   mainWindow.webContents.on('render-process-gone', (_event, details) => {
     console.error('Render process gone:', details);
   });
-  
+
   // В dev режиме можно использовать Vite dev server (раскомментировать если нужно):
   // const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   // if (isDev) {
@@ -104,7 +110,7 @@ function createWindow(): void {
   // } else {
   //   mainWindow.loadFile(htmlPath);
   // }
-  
+
   mainWindow.loadFile(htmlPath).catch((error) => {
     console.error('Error loading file:', error);
   });
@@ -127,34 +133,37 @@ app.whenReady().then(async () => {
   // Проверка зависимостей при запуске
   console.log('Проверка зависимостей при запуске...');
   const dependenciesOK = await checkDependenciesOnStartup();
-  
+
   // Если есть критические проблемы с зависимостями, показываем диалог
   if (!dependenciesOK && mainWindow) {
     const results = await checkDependencies();
     const criticalErrors = results.filter((r) => r.required && !r.available);
-    
+
     if (criticalErrors.length > 0) {
       const message = criticalErrors
         .map((r) => `${r.name}: ${r.message}\nУстановка: ${r.installInstructions || 'не указана'}`)
         .join('\n\n');
-      
-      dialog.showMessageBox(mainWindow, {
-        type: 'warning',
-        title: 'Предупреждение о зависимостях',
-        message: 'Обнаружены проблемы с зависимостями',
-        detail: `Некоторые обязательные зависимости отсутствуют:\n\n${message}\n\nПриложение будет работать, но аудио функциональность может быть недоступна.`,
-        buttons: ['Продолжить', 'Показать в консоли'],
-      }).then((response) => {
-        if (response.response === 1) {
-          // Открываем DevTools для просмотра подробностей
-          mainWindow?.webContents.openDevTools();
-        }
-      }).catch((error) => {
-        console.error('Ошибка показа диалога:', error);
-      });
+
+      dialog
+        .showMessageBox(mainWindow, {
+          type: 'warning',
+          title: 'Предупреждение о зависимостях',
+          message: 'Обнаружены проблемы с зависимостями',
+          detail: `Некоторые обязательные зависимости отсутствуют:\n\n${message}\n\nПриложение будет работать, но аудио функциональность может быть недоступна.`,
+          buttons: ['Продолжить', 'Показать в консоли'],
+        })
+        .then((response) => {
+          if (response.response === 1) {
+            // Открываем DevTools для просмотра подробностей
+            mainWindow?.webContents.openDevTools();
+          }
+        })
+        .catch((error) => {
+          console.error('Ошибка показа диалога:', error);
+        });
     }
   }
-  
+
   setupIPC();
   createWindow();
 
@@ -176,4 +185,3 @@ app.on('before-quit', () => {
     mainWindow.removeAllListeners('close');
   }
 });
-

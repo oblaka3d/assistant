@@ -1,8 +1,9 @@
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { useState, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
-import MainScreen from './screens/MainScreen';
+
 import ChatScreen from './screens/ChatScreen';
+import MainScreen from './screens/MainScreen';
 import MenuScreen from './screens/MenuScreen';
 
 type Screen = 'main' | 'chat' | 'menu';
@@ -118,4 +119,3 @@ function App() {
 }
 
 export default App;
-

@@ -1,14 +1,16 @@
-import { config } from './config';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+
 import FormData from 'form-data';
+
+import { config } from './config';
 
 export async function transcribe(audioBuffer: Buffer): Promise<string> {
   try {
     // Заглушка для Whisper API
     // В реальном проекте здесь будет вызов API (OpenAI Whisper, Yandex SpeechKit и т.д.)
-    
+
     if (!config.stt.apiKey) {
       console.warn('STT API key not configured. Using mock response.');
       return 'Привет, это тестовая транскрипция голосового сообщения.';
@@ -32,10 +34,10 @@ export async function transcribe(audioBuffer: Buffer): Promise<string> {
       const response = await fetch(config.stt.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.stt.apiKey}`,
+          Authorization: `Bearer ${config.stt.apiKey}`,
           ...formData.getHeaders(),
         },
-        // @ts-ignore - form-data stream совместим с fetch body
+        // @ts-expect-error - form-data stream совместим с fetch body
         body: formData,
       });
 
@@ -43,7 +45,7 @@ export async function transcribe(audioBuffer: Buffer): Promise<string> {
         throw new Error(`STT API error: ${response.statusText}`);
       }
 
-      const data = await response.json() as { text: string };
+      const data = (await response.json()) as { text: string };
       return data.text;
     } finally {
       // Удаляем временный файл
@@ -59,4 +61,3 @@ export async function transcribe(audioBuffer: Buffer): Promise<string> {
     return 'Не удалось распознать речь. Попробуйте еще раз.';
   }
 }
-

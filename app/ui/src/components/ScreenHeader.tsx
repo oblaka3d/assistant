@@ -1,6 +1,7 @@
-import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { AppBar, Toolbar, IconButton, Typography } from '@mui/material';
+import React from 'react';
+
 import commonStyles from '../styles/common.module.css';
 
 interface ScreenHeaderProps {
@@ -24,4 +25,3 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack }) => {
 };
 
 export default ScreenHeader;
-

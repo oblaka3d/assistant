@@ -1,6 +1,7 @@
+import { platform } from 'os';
+
 import { createAplayProcess, checkAudioCommands } from './audio-utils';
 import { config } from './config';
-import { platform } from 'os';
 
 let audioCommandsChecked = false;
 
@@ -18,7 +19,8 @@ async function ensureAudioCommands(): Promise<void> {
       } else if (os === 'darwin') {
         message += 'Please install: brew install sox';
       } else if (os === 'win32') {
-        message += 'Please install sox: choco install sox or download from http://sox.sourceforge.net/';
+        message +=
+          'Please install sox: choco install sox or download from http://sox.sourceforge.net/';
       }
       throw new Error(message);
     }
@@ -30,7 +32,7 @@ export async function synthesize(text: string): Promise<void> {
   try {
     // Заглушка для TTS API
     // Поддерживает Yandex TTS, Silero TTS и другие
-    
+
     if (!config.tts.apiKey) {
       console.warn('TTS API key not configured. Using mock synthesis.');
       // В реальном проекте можно использовать локальный синтез (espeak, festival)
@@ -41,7 +43,7 @@ export async function synthesize(text: string): Promise<void> {
     const response = await fetch(config.tts.apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Api-Key ${config.tts.apiKey}`,
+        Authorization: `Api-Key ${config.tts.apiKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
@@ -86,4 +88,3 @@ export async function synthesize(text: string): Promise<void> {
     throw error;
   }
 }
-

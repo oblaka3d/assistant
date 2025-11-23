@@ -22,14 +22,14 @@ export async function loadCharacterGLB(
 ): Promise<CharacterModel> {
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
-    
+
     loader.load(
       url,
       (gltf) => {
         try {
           const scene = gltf.scene;
           const animations = gltf.animations;
-          
+
           // Настраиваем сцену
           scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -37,28 +37,29 @@ export async function loadCharacterGLB(
               child.receiveShadow = false;
             }
           });
-          
+
           // Создаем mixer для анимаций
           let mixer: THREE.AnimationMixer | null = null;
           const actions: { [key: string]: THREE.AnimationAction | null } = {};
-          
+
           if (animations.length > 0) {
             mixer = new THREE.AnimationMixer(scene);
-            
+
             // Находим idle анимацию
-            const idleAnimation = animations.find((clip) => 
-              clip.name.toLowerCase().includes('idle') || 
-              clip.name.toLowerCase().includes('wait') ||
-              animations.indexOf(clip) === 0 // Используем первую, если нет idle
+            const idleAnimation = animations.find(
+              (clip) =>
+                clip.name.toLowerCase().includes('idle') ||
+                clip.name.toLowerCase().includes('wait') ||
+                animations.indexOf(clip) === 0 // Используем первую, если нет idle
             );
-            
+
             if (idleAnimation) {
               actions['idle'] = mixer.clipAction(idleAnimation);
               actions['idle']?.setEffectiveTimeScale(1);
               actions['idle']?.setEffectiveWeight(1);
               actions['idle']?.play();
             }
-            
+
             // Создаем действия для всех анимаций
             animations.forEach((clip) => {
               const actionName = clip.name.toLowerCase();
@@ -67,7 +68,7 @@ export async function loadCharacterGLB(
               }
             });
           }
-          
+
           resolve({
             scene,
             animations,
@@ -75,7 +76,11 @@ export async function loadCharacterGLB(
             actions,
           });
         } catch (error) {
-          reject(new Error(`Failed to process character model: ${error instanceof Error ? error.message : String(error)}`));
+          reject(
+            new Error(
+              `Failed to process character model: ${error instanceof Error ? error.message : String(error)}`
+            )
+          );
         }
       },
       (progress) => {
@@ -96,18 +101,18 @@ export async function loadCharacterGLB(
  */
 export function createPlaceholderCharacter(): CharacterModel {
   const group = new THREE.Group();
-  
+
   // Создаем простую геометрию
   const geometry = new THREE.BoxGeometry(1, 2, 1);
-  const material = new THREE.MeshStandardMaterial({ 
+  const material = new THREE.MeshStandardMaterial({
     color: 0x8a8a9a,
     metalness: 0.3,
     roughness: 0.7,
   });
-  
+
   const mesh = new THREE.Mesh(geometry, material);
   group.add(mesh);
-  
+
   return {
     scene: group,
     animations: [],
@@ -124,38 +129,38 @@ export class CharacterAnimationController {
   private actions: { [key: string]: THREE.AnimationAction | null };
   private currentAction: THREE.AnimationAction | null = null;
   private clock: THREE.Clock;
-  
+
   constructor(model: CharacterModel) {
     this.mixer = model.mixer;
     this.actions = model.actions;
     this.clock = new THREE.Clock();
   }
-  
+
   /**
    * Воспроизводит анимацию по имени
    */
   playAnimation(name: string, fadeIn: number = 0.3): void {
     if (!this.mixer) return;
-    
+
     const action = this.actions[name] || this.actions['idle'];
     if (!action || action === this.currentAction) return;
-    
+
     // Плавный переход между анимациями
     if (this.currentAction) {
       this.currentAction.fadeOut(fadeIn);
     }
-    
+
     action.reset().fadeIn(fadeIn).play();
     this.currentAction = action;
   }
-  
+
   /**
    * Воспроизводит idle анимацию
    */
   playIdle(): void {
     this.playAnimation('idle');
   }
-  
+
   /**
    * Воспроизводит анимацию прослушивания
    */
@@ -166,7 +171,7 @@ export class CharacterAnimationController {
       this.playIdle();
     }
   }
-  
+
   /**
    * Воспроизводит анимацию размышления
    */
@@ -176,7 +181,7 @@ export class CharacterAnimationController {
       this.playIdle();
     }
   }
-  
+
   /**
    * Воспроизводит анимацию разговора
    */
@@ -186,7 +191,7 @@ export class CharacterAnimationController {
       this.playIdle();
     }
   }
-  
+
   /**
    * Обновляет анимации (должен вызываться в каждом кадре)
    */
@@ -195,7 +200,7 @@ export class CharacterAnimationController {
       this.mixer.update(delta);
     }
   }
-  
+
   /**
    * Обновляет анимации на основе clock
    */
@@ -205,7 +210,7 @@ export class CharacterAnimationController {
       this.mixer.update(delta);
     }
   }
-  
+
   /**
    * Применяет простое движение головы (nod или wave)
    */
@@ -223,4 +228,3 @@ export class CharacterAnimationController {
     }
   }
 }
-

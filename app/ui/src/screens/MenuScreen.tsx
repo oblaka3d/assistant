@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import HistoryIcon from '@mui/icons-material/History';
+import InfoIcon from '@mui/icons-material/Info';
+import LanguageIcon from '@mui/icons-material/Language';
+import SettingsIcon from '@mui/icons-material/Settings';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import {
   Box,
   List,
@@ -11,13 +15,11 @@ import {
   Slider,
   Paper,
 } from '@mui/material';
-import SettingsIcon from '@mui/icons-material/Settings';
-import HistoryIcon from '@mui/icons-material/History';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import InfoIcon from '@mui/icons-material/Info';
-import LanguageIcon from '@mui/icons-material/Language';
-import styles from '../styles/screens/MenuScreen.module.css';
+import React, { useState } from 'react';
+
 import ScreenHeader from '../components/ScreenHeader';
+
+import styles from './MenuScreen.module.css';
 
 interface MenuScreenProps {
   onClose: () => void;
@@ -72,14 +74,20 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1, textAlign: 'center' }}
+              >
                 {volume}%
               </Typography>
             </Box>
           </Paper>
 
           <Paper elevation={3} className={styles.settingPaper}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <LanguageIcon className={styles.settingIcon} />
                 <Typography variant="h6">Язык интерфейса</Typography>

@@ -8,7 +8,9 @@ import * as THREE from 'three';
 /**
  * Создает toon шейдер материал
  */
-export function createToonMaterial(color: THREE.Color = new THREE.Color(0.8, 0.8, 0.9)): THREE.ShaderMaterial {
+export function createToonMaterial(
+  color: THREE.Color = new THREE.Color(0.8, 0.8, 0.9)
+): THREE.ShaderMaterial {
   const uniforms: { [uniform: string]: THREE.IUniform<any> } = {
     uColor: { value: color },
     uLightIntensity: { value: 1.0 },
@@ -61,7 +63,10 @@ export function createToonMaterial(color: THREE.Color = new THREE.Color(0.8, 0.8
 /**
  * Создает outline материал через обратный кейлинг
  */
-export function createOutlineMaterial(thickness: number = 0.01, color: THREE.Color = new THREE.Color(0, 0, 0)): THREE.ShaderMaterial {
+export function createOutlineMaterial(
+  thickness: number = 0.01,
+  color: THREE.Color = new THREE.Color(0, 0, 0)
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
     uniforms: {
@@ -102,10 +107,10 @@ export function applyToonShader(
     if (child instanceof THREE.Mesh) {
       // Сохраняем оригинальный материал
       const originalMaterial = child.material;
-      
+
       // Создаем toon материал
       const toonMaterial = createToonMaterial(toonColor);
-      
+
       // Если оригинальный материал имеет цвет, используем его
       if (originalMaterial instanceof THREE.MeshStandardMaterial && originalMaterial.map) {
         toonMaterial.uniforms.uColor.value = new THREE.Color(1, 1, 1);
@@ -113,18 +118,17 @@ export function applyToonShader(
       } else if (originalMaterial instanceof THREE.MeshStandardMaterial) {
         toonMaterial.uniforms.uColor.value = originalMaterial.color.clone();
       }
-      
+
       child.material = toonMaterial;
-      
+
       // Создаем outline mesh
       const outlineMesh = child.clone();
       outlineMesh.material = createOutlineMaterial(outlineThickness, outlineColor);
       outlineMesh.scale.multiplyScalar(1.02); // Небольшое увеличение для outline
       outlineMesh.renderOrder = -1; // Рендерим outline первым
-      
+
       // Добавляем outline как дочерний элемент
       child.add(outlineMesh);
     }
   });
 }
-

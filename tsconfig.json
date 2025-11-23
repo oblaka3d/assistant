@@ -28,16 +28,6 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["node"]
   },
-  "include": [
-    "app/**/*",
-    "types/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "release",
-    "app/ui/src/**/*",
-    "**/*.tsx"
-  ]
+  "include": ["app/**/*", "types/**/*"],
+  "exclude": ["node_modules", "dist", "release", "app/ui/src/**/*", "**/*.tsx"]
 }
-

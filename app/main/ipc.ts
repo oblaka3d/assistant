@@ -1,9 +1,10 @@
 import { ipcMain } from 'electron';
-import { startRecord, stopRecord } from '../backend/voice';
-import { transcribe } from '../backend/stt';
-import { generateResponse } from '../backend/llm';
-import { synthesize } from '../backend/tts';
+
 import { checkDependencies, DependencyCheckResult } from '../backend/dependency-checker';
+import { generateResponse } from '../backend/llm';
+import { transcribe } from '../backend/stt';
+import { synthesize } from '../backend/tts';
+import { startRecord, stopRecord } from '../backend/voice';
 
 export function setupIPC(): void {
   ipcMain.handle('startRecord', async (): Promise<void> => {
@@ -63,4 +64,3 @@ export function setupIPC(): void {
     }
   });
 }
-

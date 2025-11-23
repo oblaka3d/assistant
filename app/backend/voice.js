@@ -18,12 +18,12 @@ export function startRecording() {
   return new Promise((resolve, reject) => {
     try {
       audioChunks = [];
-      
+
       const options = {
         sampleRate: config.audio.sampleRate,
         channels: config.audio.channels,
         device: config.audio.device,
-        verbose: false
+        verbose: false,
       };
 
       recordingStream = record.record(options);
@@ -82,4 +82,3 @@ export function stopRecording() {
 export function isRecording() {
   return recordingStream !== null;
 }
-

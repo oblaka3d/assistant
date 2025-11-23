@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process';
 import { platform } from 'os';
+
 import { config } from './config';
 
 export interface AudioProcess {
@@ -14,7 +15,7 @@ function getRecordCommand(): { command: string; args: string[] } {
   const os = platform();
   const sampleRate = config.audio.sampleRate.toString();
   const channels = config.audio.channels.toString();
-  
+
   if (os === 'linux') {
     // Попробуем использовать arecord (ALSA), если доступен
     // Fallback на sox, если arecord недоступен
@@ -239,4 +240,3 @@ export async function checkAudioCommands(): Promise<{ record: boolean; play: boo
 
   return { record: recordAvailable, play: playAvailable };
 }
-

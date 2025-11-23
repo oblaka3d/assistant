@@ -1,5 +1,11 @@
-import { createArecordProcess, combineBuffers, AudioProcess, checkAudioCommands } from './audio-utils';
 import { platform } from 'os';
+
+import {
+  createArecordProcess,
+  combineBuffers,
+  AudioProcess,
+  checkAudioCommands,
+} from './audio-utils';
 
 let recordingProcess: AudioProcess | null = null;
 let audioCommandsChecked = false;
@@ -18,7 +24,8 @@ async function ensureAudioCommands(): Promise<void> {
       } else if (os === 'darwin') {
         message += 'Please install: brew install sox';
       } else if (os === 'win32') {
-        message += 'Please install sox: choco install sox or download from http://sox.sourceforge.net/';
+        message +=
+          'Please install sox: choco install sox or download from http://sox.sourceforge.net/';
       }
       throw new Error(message);
     }
@@ -79,4 +86,3 @@ export async function stopRecord(): Promise<Buffer> {
 export function isRecording(): boolean {
   return recordingProcess !== null;
 }
-

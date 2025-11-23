@@ -1,10 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
+import React, { useState, useRef, useEffect } from 'react';
 import { MessageList } from 'react-chat-elements';
+
 import 'react-chat-elements/dist/main.css';
-import styles from '../styles/screens/ChatScreen.module.css';
+
 import ScreenHeader from '../components/ScreenHeader';
+
+import styles from './ChatScreen.module.css';
 
 interface Message {
   id: string;
@@ -69,7 +72,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
           date: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
-        
+
         // Воспроизвести ответ голосом
         if (response) {
           await window.api.speak(response);

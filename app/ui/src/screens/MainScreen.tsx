@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { initCharacterScene, CharacterScene } from '../renderer/main';
-import styles from '../styles/screens/MainScreen.module.css';
+
+import styles from './MainScreen.module.css';
 
 const MainScreen: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,7 +33,7 @@ const MainScreen: React.FC = () => {
       try {
         setIsLoading(true);
         setLoadError(false);
-        
+
         // Таймаут для скрытия индикатора загрузки
         loadingTimeoutRef.current = setTimeout(() => {
           if (isMounted) {
@@ -43,7 +45,7 @@ const MainScreen: React.FC = () => {
 
         // Определяем путь к модели персонажа
         const modelPath = '/assets/models/character.glb';
-        
+
         // Создаем THREE.js сцену
         const scene = await initCharacterScene({
           canvas: canvasRef.current!,
@@ -64,27 +66,27 @@ const MainScreen: React.FC = () => {
         setSceneReady(scene.ready);
         setIsLoading(false);
         setStatus('Готов к работе');
-        
+
         // Очищаем таймаут
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
           loadingTimeoutRef.current = null;
         }
-        
+
         // Воспроизводим idle анимацию
         scene.playIdle();
-        
+
         console.log('Character scene loaded successfully');
       } catch (error) {
         if (!isMounted) return;
-        
+
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn('Failed to load character scene, continuing without it:', errorMessage);
-        
+
         setLoadError(true);
         setIsLoading(false);
         setStatus('Готов к работе (без персонажа)');
-        
+
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
           loadingTimeoutRef.current = null;
@@ -104,24 +106,24 @@ const MainScreen: React.FC = () => {
           }
         }
       });
-      
+
       resizeObserverRef.current.observe(containerRef.current);
     }
 
     // Очистка при размонтировании
     return () => {
       isMounted = false;
-      
+
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
-      
+
       if (resizeObserverRef.current && containerRef.current) {
         resizeObserverRef.current.unobserve(containerRef.current);
         resizeObserverRef.current.disconnect();
       }
-      
+
       if (sceneRef.current) {
         sceneRef.current.dispose();
         sceneRef.current = null;
@@ -132,7 +134,12 @@ const MainScreen: React.FC = () => {
   const getStatusClassName = () => {
     if (status === 'Готов к работе') return styles.statusReady;
     if (status === 'Слушаю...') return styles.statusListening;
-    if (status === 'Обработка...' || status === 'Генерация ответа...' || status === 'Отвечаю...' || status === 'Распознавание речи...') {
+    if (
+      status === 'Обработка...' ||
+      status === 'Генерация ответа...' ||
+      status === 'Отвечаю...' ||
+      status === 'Распознавание речи...'
+    ) {
       return styles.statusProcessing;
     }
     return styles.statusError;
@@ -148,7 +155,7 @@ const MainScreen: React.FC = () => {
       // Остановить запись
       setIsRecording(false);
       setStatus('Обработка...');
-      
+
       // Анимация персонажа - размышление
       if (sceneRef.current) {
         sceneRef.current.playThinking();
@@ -157,7 +164,7 @@ const MainScreen: React.FC = () => {
       try {
         // Остановка записи и получение аудио буфера
         const audioBuffer = await window.api.stopRecord();
-        
+
         // Распознавание речи
         setStatus('Распознавание речи...');
         if (sceneRef.current) {
@@ -165,7 +172,7 @@ const MainScreen: React.FC = () => {
         }
         const transcribedText = await window.api.transcribe(audioBuffer);
         setUserText(transcribedText || '—');
-        
+
         if (!transcribedText || transcribedText.trim() === '') {
           setStatus('Речь не распознана');
           if (sceneRef.current) {
@@ -173,20 +180,20 @@ const MainScreen: React.FC = () => {
           }
           return;
         }
-        
+
         // Получить ответ от ассистента
         setStatus('Генерация ответа...');
         const response = await window.api.askLLM(transcribedText);
         setAssistantText(response || '—');
-        
+
         // Воспроизвести ответ
         setStatus('Отвечаю...');
         if (sceneRef.current) {
           sceneRef.current.playTalking();
         }
-        
+
         await window.api.speak(response);
-        
+
         setStatus('Готов к работе');
         if (sceneRef.current) {
           setTimeout(() => {
@@ -204,14 +211,14 @@ const MainScreen: React.FC = () => {
       // Начать запись
       setIsRecording(true);
       setStatus('Слушаю...');
-      
+
       // Анимация персонажа - прослушивание
       if (sceneRef.current) {
         sceneRef.current.playListening();
         // Небольшая анимация головы при начале записи
         sceneRef.current.playHeadNod();
       }
-      
+
       try {
         await window.api.startRecord();
       } catch (error) {
@@ -262,7 +269,10 @@ const MainScreen: React.FC = () => {
             <Typography variant="h4" sx={{ opacity: 0.3, fontFamily: "'Inter', sans-serif" }}>
               🎭
             </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.5, textAlign: 'center', px: 2, fontFamily: "'Inter', sans-serif" }}>
+            <Typography
+              variant="body1"
+              sx={{ opacity: 0.5, textAlign: 'center', px: 2, fontFamily: "'Inter', sans-serif" }}
+            >
               Персонаж недоступен
             </Typography>
           </Box>
@@ -296,7 +306,10 @@ const MainScreen: React.FC = () => {
             className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
           >
             {/* Иконка микрофона с анимацией */}
-            <Box component="span" className={`${styles.recordButtonIcon} ${isRecording ? styles.recordButtonIconRecording : ''}`}>
+            <Box
+              component="span"
+              className={`${styles.recordButtonIcon} ${isRecording ? styles.recordButtonIconRecording : ''}`}
+            >
               🎤
             </Box>
             <Typography component="span" className={styles.recordButtonText}>
@@ -334,9 +347,7 @@ const MainScreen: React.FC = () => {
       </Box>
 
       {/* Футер */}
-      <Box className={styles.footer}>
-        ARM Voice Assistant v1.0
-      </Box>
+      <Box className={styles.footer}>ARM Voice Assistant v1.0</Box>
     </Box>
   );
 };

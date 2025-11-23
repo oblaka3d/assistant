@@ -10,7 +10,7 @@ import { CharacterScene, CharacterSceneOptions } from './three/CharacterScene';
  */
 export async function initCharacterScene(options: CharacterSceneOptions): Promise<CharacterScene> {
   const scene = new CharacterScene(options);
-  
+
   // Ждем загрузки персонажа
   return new Promise((resolve) => {
     const checkReady = setInterval(() => {
@@ -19,7 +19,7 @@ export async function initCharacterScene(options: CharacterSceneOptions): Promis
         resolve(scene);
       }
     }, 100);
-    
+
     // Таймаут на случай, если загрузка не удалась
     setTimeout(() => {
       clearInterval(checkReady);
@@ -33,4 +33,3 @@ export async function initCharacterScene(options: CharacterSceneOptions): Promis
  */
 export type { CharacterScene } from './three/CharacterScene';
 export type { CharacterAnimation } from './three/CharacterScene';
-

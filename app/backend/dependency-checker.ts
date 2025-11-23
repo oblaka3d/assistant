@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import { platform } from 'os';
+
 import { checkAudioCommands } from './audio-utils';
 
 export interface DependencyCheckResult {
@@ -32,7 +33,7 @@ function checkCommand(command: string, args: string[] = ['--version']): Promise<
  */
 function getInstallInstructions(tool: string): string {
   const os = platform();
-  
+
   if (tool === 'sox') {
     if (os === 'linux') {
       return 'sudo apt install sox libsox-fmt-all';
@@ -46,7 +47,7 @@ function getInstallInstructions(tool: string): string {
       return 'sudo apt install alsa-utils alsa-base';
     }
   }
-  
+
   return 'Проверьте документацию для вашей платформы';
 }
 
@@ -56,16 +57,16 @@ function getInstallInstructions(tool: string): string {
 export async function checkDependencies(): Promise<DependencyCheckResult[]> {
   const os = platform();
   const results: DependencyCheckResult[] = [];
-  
+
   // Проверка аудио команд
   const audioCommands = await checkAudioCommands();
-  
+
   if (os === 'linux') {
     // На Linux проверяем arecord/aplay или sox
     const hasArecord = await checkCommand('arecord');
     const hasAplay = await checkCommand('aplay');
     const hasSox = await checkCommand('sox');
-    
+
     if (hasArecord && hasAplay) {
       results.push({
         name: 'ALSA (arecord/aplay)',
@@ -82,7 +83,7 @@ export async function checkDependencies(): Promise<DependencyCheckResult[]> {
         installInstructions: getInstallInstructions('arecord'),
       });
     }
-    
+
     if (hasSox) {
       results.push({
         name: 'sox',
@@ -95,33 +96,34 @@ export async function checkDependencies(): Promise<DependencyCheckResult[]> {
         name: 'sox',
         available: false,
         required: !hasArecord || !hasAplay,
-        message: hasArecord && hasAplay 
-          ? 'sox не найден (не требуется, так как ALSA доступен)'
-          : 'sox не найден (требуется для работы аудио)',
+        message:
+          hasArecord && hasAplay
+            ? 'sox не найден (не требуется, так как ALSA доступен)'
+            : 'sox не найден (требуется для работы аудио)',
         installInstructions: getInstallInstructions('sox'),
       });
     }
   } else {
     // На macOS и Windows проверяем только sox
     const hasSox = await checkCommand('sox');
-    
+
     results.push({
       name: 'sox',
       available: hasSox,
       required: true,
-      message: hasSox 
+      message: hasSox
         ? 'sox доступен для записи и воспроизведения аудио'
         : 'sox не найден (требуется для работы аудио)',
       installInstructions: hasSox ? undefined : getInstallInstructions('sox'),
     });
   }
-  
+
   // Проверяем, есть ли хотя бы одна доступная команда для записи и воспроизведения
   if (!audioCommands.record || !audioCommands.play) {
     const missingCommands = [];
     if (!audioCommands.record) missingCommands.push('записи');
     if (!audioCommands.play) missingCommands.push('воспроизведения');
-    
+
     results.push({
       name: 'Аудио функциональность',
       available: false,
@@ -130,7 +132,7 @@ export async function checkDependencies(): Promise<DependencyCheckResult[]> {
       installInstructions: `Установите sox или ALSA утилиты согласно инструкциям выше`,
     });
   }
-  
+
   return results;
 }
 
@@ -139,10 +141,10 @@ export async function checkDependencies(): Promise<DependencyCheckResult[]> {
  */
 export function printDependencyResults(results: DependencyCheckResult[]): void {
   console.log('\n=== Проверка зависимостей ===');
-  
+
   let hasErrors = false;
   let hasWarnings = false;
-  
+
   results.forEach((result) => {
     if (result.required && !result.available) {
       hasErrors = true;
@@ -163,7 +165,7 @@ export function printDependencyResults(results: DependencyCheckResult[]): void {
       console.log(`   ${result.message}`);
     }
   });
-  
+
   if (hasErrors) {
     console.error('\n⚠️  ВНИМАНИЕ: Некоторые обязательные зависимости отсутствуют!');
     console.error('   Аудио функциональность может не работать.');
@@ -173,7 +175,7 @@ export function printDependencyResults(results: DependencyCheckResult[]): void {
   } else {
     console.log('\n✅ Все зависимости в порядке!');
   }
-  
+
   console.log('=============================\n');
 }
 
@@ -184,19 +186,18 @@ export async function checkDependenciesOnStartup(): Promise<boolean> {
   try {
     const results = await checkDependencies();
     printDependencyResults(results);
-    
+
     // Проверяем, есть ли критические ошибки
     const criticalErrors = results.filter((r) => r.required && !r.available);
-    
+
     if (criticalErrors.length > 0) {
       console.error(`\n❌ Найдено ${criticalErrors.length} критических ошибок зависимостей`);
       return false;
     }
-    
+
     return true;
   } catch (error) {
     console.error('Ошибка при проверке зависимостей:', error);
     return false;
   }
 }
-
