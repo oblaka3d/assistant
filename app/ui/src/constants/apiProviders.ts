@@ -128,4 +128,3 @@ export const API_PROVIDERS: APIProvider[] = [
 export const getProvidersByCategory = (category: 'stt' | 'llm' | 'tts'): APIProvider[] => {
   return API_PROVIDERS.filter((provider) => provider.category === category);
 };
-

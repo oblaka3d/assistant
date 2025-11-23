@@ -29,4 +29,3 @@ export function createIPCHandler<T extends unknown[] = [], R = unknown>(
     }
   };
 }
-

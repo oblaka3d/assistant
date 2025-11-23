@@ -50,4 +50,3 @@ export const ASSETS_PATHS = {
   MODELS: './assets/models/',
   SCENES: './assets/scenes/',
 } as const;
-

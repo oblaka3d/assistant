@@ -1,9 +1,9 @@
 import ImageIcon from '@mui/icons-material/Image';
 import LanguageIcon from '@mui/icons-material/Language';
-import PaletteIcon from '@mui/icons-material/Palette';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import VideocamIcon from '@mui/icons-material/Videocam';
+import PaletteIcon from '@mui/icons-material/Palette';
 import SpeedIcon from '@mui/icons-material/Speed';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import {
   Box,
@@ -19,12 +19,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-
 import { useTranslation } from 'react-i18next';
 
-import { SETTINGS_RANGES, ASSETS_PATHS } from '../../../../constants/app';
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
+import { SETTINGS_RANGES, ASSETS_PATHS } from '../../../../constants/app';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setVolume,
@@ -77,7 +76,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           if (!models.includes(currentModelName)) {
             const firstModel = models[0];
             dispatch(setModelPath(`${ASSETS_PATHS.MODELS}${firstModel}`));
-            log.debug(`Current model "${currentModelName}" not found, switching to "${firstModel}"`);
+            log.debug(
+              `Current model "${currentModelName}" not found, switching to "${firstModel}"`
+            );
           }
         }
       } catch (error) {
@@ -125,15 +126,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Typography variant="h6">{t('settings.volume')}</Typography>
           </Box>
           <Box sx={{ px: 2 }}>
-              <Slider
-                value={volume}
-                onChange={(_, value) => dispatch(setVolume(value as number))}
-                min={SETTINGS_RANGES.VOLUME.min}
-                max={SETTINGS_RANGES.VOLUME.max}
-                step={SETTINGS_RANGES.VOLUME.step}
-                valueLabelDisplay="auto"
-                className={styles.slider}
-              />
+            <Slider
+              value={volume}
+              onChange={(_, value) => dispatch(setVolume(value as number))}
+              min={SETTINGS_RANGES.VOLUME.min}
+              max={SETTINGS_RANGES.VOLUME.max}
+              step={SETTINGS_RANGES.VOLUME.step}
+              valueLabelDisplay="auto"
+              className={styles.slider}
+            />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
               {volume}%
             </Typography>
@@ -312,7 +313,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1, textAlign: 'center' }}
+              >
                 {modelScene.lightIntensity.toFixed(1)}
               </Typography>
             </Box>
@@ -332,7 +337,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1, textAlign: 'center' }}
+              >
                 {modelScene.cameraDistance.toFixed(1)}
               </Typography>
             </Box>
@@ -352,7 +361,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 valueLabelDisplay="auto"
                 className={styles.slider}
               />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1, textAlign: 'center' }}
+              >
                 {modelScene.animationSpeed.toFixed(1)}x
               </Typography>
             </Box>

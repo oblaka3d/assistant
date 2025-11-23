@@ -21,7 +21,15 @@ contextBridge.exposeInMainWorld('api', {
   speak: (text: string): Promise<void> => {
     return ipcRenderer.invoke('speak', text);
   },
-  checkDependencies: (): Promise<Array<{ name: string; available: boolean; required: boolean; message?: string; installInstructions?: string }>> => {
+  checkDependencies: (): Promise<
+    Array<{
+      name: string;
+      available: boolean;
+      required: boolean;
+      message?: string;
+      installInstructions?: string;
+    }>
+  > => {
     return ipcRenderer.invoke('checkDependencies');
   },
   getModelList: (): Promise<string[]> => {
@@ -40,13 +48,21 @@ contextBridge.exposeInMainWorld('api', {
     return ipcRenderer.invoke('getLogFileInfo');
   },
   // Пользователь
-  login: (username: string, password: string): Promise<{ id: string; username: string; displayName?: string; email?: string }> => {
+  login: (
+    username: string,
+    password: string
+  ): Promise<{ id: string; username: string; displayName?: string; email?: string }> => {
     return ipcRenderer.invoke('login', username, password);
   },
   logout: (): Promise<boolean> => {
     return ipcRenderer.invoke('logout');
   },
-  getCurrentUser: (): Promise<{ id: string; username: string; displayName?: string; email?: string } | null> => {
+  getCurrentUser: (): Promise<{
+    id: string;
+    username: string;
+    displayName?: string;
+    email?: string;
+  } | null> => {
     return ipcRenderer.invoke('getCurrentUser');
   },
   // API ключи
@@ -56,5 +72,8 @@ contextBridge.exposeInMainWorld('api', {
   saveAPIKeys: (keys: Record<string, string>): Promise<boolean> => {
     return ipcRenderer.invoke('saveAPIKeys', keys);
   },
+  // LLM провайдер
+  getLLMProviderInfo: (): Promise<{ provider: string; model: string | null; name: string }> => {
+    return ipcRenderer.invoke('getLLMProviderInfo');
+  },
 });
-

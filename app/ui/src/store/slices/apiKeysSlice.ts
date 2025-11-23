@@ -51,14 +51,7 @@ const apiKeysSlice = createSlice({
   },
 });
 
-export const {
-  setAPIKey,
-  removeAPIKey,
-  setAPIKeys,
-  setLoading,
-  setError,
-  clearError,
-} = apiKeysSlice.actions;
+export const { setAPIKey, removeAPIKey, setAPIKeys, setLoading, setError, clearError } =
+  apiKeysSlice.actions;
 
 export default apiKeysSlice.reducer;
-

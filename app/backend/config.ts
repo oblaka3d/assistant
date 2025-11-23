@@ -31,20 +31,20 @@ type VoskConfig = {
   sampleRate: number;
 };
 
-type OpenAIConfig = {
+export type OpenAIConfig = {
   apiKey: string;
   endpoint: string;
   model: string;
   systemPrompt: string;
 };
 
-type YandexGPTConfig = {
+export type YandexGPTConfig = {
   apiKey: string;
   endpoint: string;
   folderId: string;
 };
 
-type AnthropicConfig = {
+export type AnthropicConfig = {
   apiKey: string;
   endpoint: string;
   model: string;

@@ -1,10 +1,8 @@
-import { useTranslation } from 'react-i18next';
-import DescriptionIcon from '@mui/icons-material/Description';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DescriptionIcon from '@mui/icons-material/Description';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
   Box,
-  Button,
   CircularProgress,
   IconButton,
   Paper,
@@ -13,6 +11,7 @@ import {
   Alert,
 } from '@mui/material';
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
@@ -87,6 +86,7 @@ const LogsScreen: React.FC<LogsScreenProps> = ({ onBack }) => {
 
   useEffect(() => {
     loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Автопрокрутка к концу при загрузке новых логов
@@ -124,7 +124,11 @@ const LogsScreen: React.FC<LogsScreenProps> = ({ onBack }) => {
                   {t('logs.lines')}: {logInfo.lineCount.toLocaleString()}
                 </Typography>
                 {logInfo.path && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
                     {t('logs.path')}: {logInfo.path}
                   </Typography>
                 )}
@@ -170,7 +174,14 @@ const LogsScreen: React.FC<LogsScreenProps> = ({ onBack }) => {
         {/* Логи */}
         <Paper elevation={2} sx={{ p: 2, height: 'calc(100vh - 400px)', overflow: 'auto' }}>
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
               <CircularProgress />
             </Box>
           ) : filteredLogs.length === 0 ? (
@@ -228,4 +239,3 @@ const LogsScreen: React.FC<LogsScreenProps> = ({ onBack }) => {
 };
 
 export default LogsScreen;
-

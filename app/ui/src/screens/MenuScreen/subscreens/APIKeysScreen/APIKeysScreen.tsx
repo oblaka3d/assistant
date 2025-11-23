@@ -14,14 +14,12 @@ import {
   CircularProgress,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-
 import { useTranslation } from 'react-i18next';
 
-import { API_PROVIDERS, getProvidersByCategory, APIProvider } from '../../../../constants/apiProviders';
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
-import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { setAPIKeys, setLoading, setError, clearError } from '../../../../store/slices/apiKeysSlice';
+import { getProvidersByCategory, APIProvider } from '../../../../constants/apiProviders';
+import { useApiKeys } from '../../../../hooks/useApiKeys';
 import { createLogger } from '../../../../utils/logger';
 import styles from '../../MenuScreen.module.css';
 
@@ -33,50 +31,29 @@ interface APIKeysScreenProps {
 
 const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-  const { keys, isLoading, error } = useAppSelector((state) => state.apiKeys);
+  const { keys: _keys, isLoading, error, saveAPIKeys } = useApiKeys();
   const [localKeys, setLocalKeys] = useState<Record<string, string>>({});
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Загружаем API ключи при монтировании компонента
+  // Загружаем локальные ключи из Redux при монтировании
   useEffect(() => {
-    const loadAPIKeys = async () => {
+    const loadLocalKeys = async () => {
       if (!window.api) {
         log.warn('Electron API not available');
         return;
       }
 
       try {
-        dispatch(setLoading(true));
-        dispatch(clearError());
         const apiKeys = await window.api.getAPIKeys();
         setLocalKeys(apiKeys);
-        dispatch(setAPIKeys(
-          Object.keys(apiKeys).reduce((acc, key) => {
-            const provider = API_PROVIDERS.find((p) => p.apiKeyName === key);
-            if (provider) {
-              acc[provider.id] = {
-                provider: provider.id,
-                key: apiKeys[key],
-                name: provider.name,
-                description: provider.description,
-              };
-            }
-            return acc;
-          }, {} as Record<string, { provider: string; key: string; name?: string; description?: string }>)
-        ));
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        dispatch(setError(`${t('apiKeys.error')}: ${errorMessage}`));
-        log.error('Failed to load API keys:', err);
-      } finally {
-        dispatch(setLoading(false));
+        log.error('Failed to load local API keys:', err);
       }
     };
 
-    loadAPIKeys();
-  }, [dispatch]);
+    loadLocalKeys();
+  }, []);
 
   const handleKeyChange = (keyName: string, value: string) => {
     setLocalKeys((prev) => ({
@@ -87,41 +64,10 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
   };
 
   const handleSave = async () => {
-    if (!window.api) {
-      log.warn('Electron API not available');
-      return;
-    }
-
-    try {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-      await window.api.saveAPIKeys(localKeys);
-      
-      // Обновляем Redux store
-      dispatch(setAPIKeys(
-        Object.keys(localKeys).reduce((acc, key) => {
-          const provider = API_PROVIDERS.find((p) => p.apiKeyName === key);
-          if (provider && localKeys[key]) {
-            acc[provider.id] = {
-              provider: provider.id,
-              key: localKeys[key],
-              name: provider.name,
-              description: provider.description,
-            };
-          }
-          return acc;
-        }, {} as Record<string, { provider: string; key: string; name?: string; description?: string }>)
-      ));
-      
+    const success = await saveAPIKeys(localKeys);
+    if (success) {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-      log.log('API keys saved successfully');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      dispatch(setError(`${t('apiKeys.error')}: ${errorMessage}`));
-      log.error('Failed to save API keys:', err);
-    } finally {
-      dispatch(setLoading(false));
     }
   };
 
@@ -218,15 +164,15 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Управление API ключами для различных провайдеров. Ключи используются для доступа к сервисам
-            распознавания речи, генерации ответов и синтеза речи.
+            Управление API ключами для различных провайдеров. Ключи используются для доступа к
+            сервисам распознавания речи, генерации ответов и синтеза речи.
           </Typography>
           <Typography variant="caption" color="text.secondary">
             ⚠️ Ключи хранятся локально и используются только для работы приложения
@@ -234,7 +180,14 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
         </Box>
 
         {isLoading && !Object.keys(localKeys).length ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '200px',
+            }}
+          >
             <CircularProgress />
           </Box>
         ) : (
@@ -264,4 +217,3 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
 };
 
 export default APIKeysScreen;
-

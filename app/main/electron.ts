@@ -4,17 +4,8 @@ import { app, BrowserWindow, dialog } from 'electron';
 
 import { checkDependenciesOnStartup, checkDependencies } from '../backend/dependency-checker';
 
-import { initializeFileLogger } from './utils/fileLogger';
 import { setupIPC } from './ipc';
-
-// Устанавливаем переменную окружения для подавления предупреждений CSP
-// unsafe-eval может потребоваться для некоторых библиотек (например, THREE.js)
-// В production можно включить предупреждения через: ELECTRON_ENABLE_SECURITY_WARNINGS=true
-// Но для разработки предупреждения можно отключить, так как мы явно устанавливаем CSP
-// Устанавливаем переменную только если она не установлена вручную
-if (process.env.ELECTRON_ENABLE_SECURITY_WARNINGS !== 'true') {
-  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
-}
+import { initializeFileLogger } from './utils/fileLogger';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -34,14 +25,13 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
-      // Отключаем webSecurity для работы с локальными файлами (blob URLs для текстур THREE.js)
-      webSecurity: false,
-      // Дополнительно отключаем проверки безопасности для работы с blob URLs
-      allowRunningInsecureContent: true,
+      // Отключаем webSecurity только в dev режиме для работы с локальными файлами (blob URLs для текстур THREE.js)
+      // В production лучше использовать правильный CSP
+      webSecurity: process.env.NODE_ENV === 'development' || !app.isPackaged ? false : true,
+      allowRunningInsecureContent: process.env.NODE_ENV === 'development' || !app.isPackaged,
     },
     backgroundColor: '#1a1a1a',
   });
-  
 
   // Hardware acceleration (работает на всех платформах)
   app.commandLine.appendSwitch('enable-gpu-rasterization');
@@ -52,6 +42,9 @@ function createWindow(): void {
     app.commandLine.appendSwitch('enable-zero-copy');
   }
 
+  // Определяем dev режим
+  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
   // Путь к UI файлам
   // Всегда используем собранный файл из dist (работает и в dev, и в production)
   const htmlPath = path.join(__dirname, '../ui/index.html');
@@ -59,6 +52,7 @@ function createWindow(): void {
   console.log('Loading HTML from:', htmlPath);
   console.log('__dirname:', __dirname);
   console.log('File exists:', require('fs').existsSync(htmlPath));
+  console.log('Is dev mode:', isDev);
 
   // Логирование ошибок загрузки
   mainWindow.webContents.on(
@@ -85,7 +79,6 @@ function createWindow(): void {
   });
 
   // В dev режиме можно использовать Vite dev server (раскомментировать если нужно):
-  // const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   // if (isDev) {
   //   mainWindow.loadURL('http://localhost:3000');
   // } else {
@@ -96,22 +89,39 @@ function createWindow(): void {
     console.error('Error loading file:', error);
   });
 
-  // Открываем DevTools автоматически для отладки
-  // В production можно закомментировать или добавить проверку isDev
-  mainWindow.webContents.openDevTools();
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  // Всегда открываем DevTools для отладки (можно закомментировать для production)
-  mainWindow.webContents.once('did-finish-load', () => {
-    console.log('Page loaded successfully');
-    // Открываем DevTools с задержкой, чтобы избежать ошибок загрузки
-    setTimeout(() => {
-      mainWindow?.webContents.openDevTools();
-    }, 500);
-  });
+  // Открываем DevTools только в dev режиме
+  if (isDev) {
+    mainWindow.webContents.once('did-finish-load', () => {
+      console.log('Page loaded successfully');
+      // Открываем DevTools с задержкой, чтобы избежать ошибок загрузки
+      setTimeout(() => {
+        mainWindow?.webContents.openDevTools();
+      }, 500);
+    });
+  }
+}
+
+// Устанавливаем переменную окружения для подавления предупреждений CSP
+// unsafe-eval может потребоваться для некоторых библиотек (например, THREE.js)
+// В production можно включить предупреждения через: ELECTRON_ENABLE_SECURITY_WARNINGS=true
+// Но для разработки предупреждения можно отключить, так как мы явно устанавливаем CSP
+// Устанавливаем переменную только если она не установлена вручную
+if (process.env.ELECTRON_ENABLE_SECURITY_WARNINGS !== 'true') {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+}
+
+// Проверяем, что app доступен (код выполняется в контексте Electron)
+if (!app || typeof app.whenReady !== 'function') {
+  console.error('❌ Electron app is not available.');
+  console.error('   Make sure the script is run with Electron:');
+  console.error('   - npm start (uses electron dist/app/main/electron.js)');
+  console.error('   - npm run dev (uses ts-node, requires Electron runtime)');
+  console.error('   Do not run this file directly with node or ts-node without Electron.');
+  process.exit(1);
 }
 
 app.whenReady().then(async () => {
@@ -119,7 +129,10 @@ app.whenReady().then(async () => {
   initializeFileLogger();
   console.log('[Electron] File logger initialized');
 
-  // Проверка зависимостей при запуске
+  setupIPC();
+  createWindow();
+
+  // Проверка зависимостей при запуске (после создания окна, чтобы показать диалог)
   console.log('Проверка зависимостей при запуске...');
   const dependenciesOK = await checkDependenciesOnStartup();
 
@@ -142,9 +155,9 @@ app.whenReady().then(async () => {
           buttons: ['Продолжить', 'Показать в консоли'],
         })
         .then((response) => {
-          if (response.response === 1) {
+          if (response.response === 1 && mainWindow) {
             // Открываем DevTools для просмотра подробностей
-            mainWindow?.webContents.openDevTools();
+            mainWindow.webContents.openDevTools();
           }
         })
         .catch((error) => {
@@ -152,9 +165,6 @@ app.whenReady().then(async () => {
         });
     }
   }
-
-  setupIPC();
-  createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -250,15 +250,15 @@
   /* Размеры кнопки */
   --button-size: 80px;
   --button-border-width: 2px;
-  
+
   /* Прозрачность и цвета */
   --button-bg-opacity: 0.5;
   --button-border-opacity: 0.15;
   --button-shadow-opacity: 0.2;
-  
+
   /* Эффекты */
   --button-blur: 15px;
-  
+
   position: relative;
   width: var(--button-size) !important;
   height: var(--button-size) !important;
@@ -345,7 +345,11 @@
 }
 
 .recordButtonRecording {
-  background: linear-gradient(135deg, rgba(231, 76, 60, 0.6) 0%, rgba(192, 57, 43, 0.6) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(231, 76, 60, 0.6) 0%,
+    rgba(192, 57, 43, 0.6) 100%
+  ) !important;
   box-shadow:
     0 8px 32px rgba(231, 76, 60, 0.3),
     0 0 0 0 rgba(231, 76, 60, 0.7) !important;
@@ -353,7 +357,11 @@
 }
 
 .recordButtonRecording:hover {
-  background: linear-gradient(135deg, rgba(192, 57, 43, 0.7) 0%, rgba(169, 50, 38, 0.7) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(192, 57, 43, 0.7) 0%,
+    rgba(169, 50, 38, 0.7) 100%
+  ) !important;
 }
 
 .recordButtonIcon {

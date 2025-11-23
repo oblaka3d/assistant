@@ -16,8 +16,11 @@ export async function generateResponse(prompt: string): Promise<string> {
 
     // Для OpenAI провайдера
     if (provider === 'openai' && 'endpoint' in llmConfig && 'model' in llmConfig) {
-      const systemPrompt = 'systemPrompt' in llmConfig ? llmConfig.systemPrompt : 'Ты полезный голосовой ассистент. Отвечай кратко и по делу.';
-      
+      const systemPrompt =
+        'systemPrompt' in llmConfig
+          ? llmConfig.systemPrompt
+          : 'Ты полезный голосовой ассистент. Отвечай кратко и по делу.';
+
       const response = await fetch(llmConfig.endpoint, {
         method: 'POST',
         headers: {

@@ -1,12 +1,20 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, json, urlencoded } from 'express';
 
-import { config, getSTTConfig, getSTTProvider, getLLMConfig, getLLMProvider, getTTSConfig, getTTSProvider } from './config';
+import {
+  config,
+  getSTTConfig,
+  getSTTProvider,
+  getLLMConfig,
+  getLLMProvider,
+  getTTSConfig,
+  getTTSProvider,
+} from './config';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(json());
+app.use(urlencoded({ extended: true }));
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

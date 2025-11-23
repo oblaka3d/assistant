@@ -1,7 +1,7 @@
-import { useTranslation } from 'react-i18next';
 import InfoIcon from '@mui/icons-material/Info';
 import { Box, Paper, Typography } from '@mui/material';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';

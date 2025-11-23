@@ -1,17 +1,9 @@
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  Tooltip,
-  Divider,
-  Chip,
-} from '@mui/material';
-import React, { useMemo } from 'react';
+import { Box, Typography, Paper, IconButton, Tooltip, Divider, Chip } from '@mui/material';
 import { format } from 'date-fns';
 import { ru, enUS, zhCN } from 'date-fns/locale';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
@@ -30,6 +22,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
   const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
   const messages = useAppSelector((state) => state.chat.messages);
+  const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
 
   // Определяем локаль для форматирования даты
   const dateLocale = useMemo(() => {
@@ -61,7 +54,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
       if (diffInSeconds < 86400 && messageDate.getDate() === now.getDate()) {
         return format(messageDate, 'HH:mm', { locale: dateLocale });
       }
-      
+
       // Если сообщение вчера
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
@@ -77,20 +70,18 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
     }
   };
 
+  // Формируем заголовок с названием LLM модели
+  const chatTitle = llmProviderName ? `${t('chat.title')} - ${llmProviderName}` : t('chat.title');
+
   return (
     <Box className={styles.container}>
-      <ScreenHeader 
-        title={t('history.title')} 
+      <ScreenHeader
+        title={chatTitle}
         onBack={onBack}
         action={
           messages.length > 0 ? (
             <Tooltip title={t('history.clearHistory')}>
-              <IconButton
-                onClick={handleClearHistory}
-                color="error"
-                size="small"
-                edge="end"
-              >
+              <IconButton onClick={handleClearHistory} color="error" size="small" edge="end">
                 <DeleteIcon />
               </IconButton>
             </Tooltip>
@@ -111,20 +102,21 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
             }}
           >
             <Typography variant="h6" color="text.secondary">
-              {t('history.empty')}
+              {t('chat.empty')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t('history.noMessages')}
+              {t('chat.noMessages')}
             </Typography>
           </Box>
         ) : (
           <Box sx={{ py: 2 }}>
             {messages.map((message, index) => {
               const isUser = message.position === 'right';
-              const isFirstInGroup = 
-                index === 0 || 
+              const isFirstInGroup =
+                index === 0 ||
                 messages[index - 1].position !== message.position ||
-                new Date(message.date).getTime() - new Date(messages[index - 1].date).getTime() > 300000; // 5 минут
+                new Date(message.date).getTime() - new Date(messages[index - 1].date).getTime() >
+                  300000; // 5 минут
 
               return (
                 <Box key={message.id}>
@@ -140,7 +132,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
                       }}
                     >
                       <Typography variant="caption" color="text.secondary">
-                        {isUser ? t('history.user') : t('history.assistant')}
+                        {isUser ? t('chat.user') : t('chat.assistant')}
                       </Typography>
                       <Chip
                         label={formatMessageDate(message.date)}
@@ -161,9 +153,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
                       sx={{
                         maxWidth: '70%',
                         p: 1.5,
-                        backgroundColor: isUser
-                          ? 'primary.main'
-                          : 'background.paper',
+                        backgroundColor: isUser ? 'primary.main' : 'background.paper',
                         color: isUser ? 'primary.contrastText' : 'text.primary',
                         borderRadius: 2,
                       }}
@@ -179,10 +169,8 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
                       </Typography>
                     </Paper>
                   </Box>
-                  {index < messages.length - 1 && 
-                   messages[index + 1].position !== message.position && (
-                    <Divider sx={{ my: 1 }} />
-                  )}
+                  {index < messages.length - 1 &&
+                    messages[index + 1].position !== message.position && <Divider sx={{ my: 1 }} />}
                 </Box>
               );
             })}

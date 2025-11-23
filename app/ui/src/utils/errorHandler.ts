@@ -15,7 +15,7 @@ export interface ErrorInfo {
  */
 export function handleError(error: unknown, context?: string): ErrorInfo {
   const prefix = context ? `[${context}]` : '[Error]';
-  
+
   if (error instanceof Error) {
     logger.error(`${prefix} ${error.message}`, error.stack);
     return {
@@ -24,14 +24,14 @@ export function handleError(error: unknown, context?: string): ErrorInfo {
       details: error.stack,
     };
   }
-  
+
   if (typeof error === 'string') {
     logger.error(`${prefix} ${error}`);
     return {
       message: error,
     };
   }
-  
+
   const errorMessage = String(error);
   logger.error(`${prefix} ${errorMessage}`, error);
   return {
@@ -55,4 +55,3 @@ export async function withErrorHandling<T>(
     return fallback;
   }
 }
-

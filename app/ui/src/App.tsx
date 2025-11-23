@@ -2,15 +2,19 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { useEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
-import { TIMEOUTS, DEFAULTS } from './constants/app';
-import { useLanguage } from './hooks/useLanguage';
 import NavigationIndicators from './components/NavigationIndicators';
 import StatusBar from './components/StatusBar';
+import { TIMEOUTS, DEFAULTS } from './constants/app';
+import { useLanguage } from './hooks/useLanguage';
 import ChatScreen from './screens/ChatScreen/ChatScreen';
 import MainScreen from './screens/MainScreen/MainScreen';
 import MenuScreen from './screens/MenuScreen/MenuScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
+import { setLLMProviderName } from './store/slices/settingsSlice';
 import { navigateNext, navigatePrev, setTransitioning } from './store/slices/uiSlice';
+import { createLogger } from './utils/logger';
+
+const log = createLogger('App');
 
 const darkTheme = createTheme({
   palette: {
@@ -35,17 +39,36 @@ function App() {
   // Синхронизация языка из Redux с i18n
   useLanguage();
 
+  // Загружаем информацию о LLM провайдере при монтировании
+  useEffect(() => {
+    const loadLLMProviderInfo = async () => {
+      if (!window.api || !window.api.getLLMProviderInfo) {
+        return;
+      }
+
+      try {
+        const info = await window.api.getLLMProviderInfo();
+        dispatch(setLLMProviderName(info.name));
+        log.debug('LLM provider info loaded:', info);
+      } catch (error) {
+        log.error('Failed to load LLM provider info:', error);
+      }
+    };
+
+    loadLLMProviderInfo();
+  }, [dispatch]);
+
   // Отключаем свайпы, если открыт вложенный экран
   const canSwipe = subScreen === null;
 
   // Сброс isTransitioning после завершения анимации
   useEffect(() => {
-        if (isTransitioning) {
-          const timer = setTimeout(() => {
-            dispatch(setTransitioning(false));
-          }, TIMEOUTS.UI_TRANSITION);
-          return () => clearTimeout(timer);
-        }
+    if (isTransitioning) {
+      const timer = setTimeout(() => {
+        dispatch(setTransitioning(false));
+      }, TIMEOUTS.UI_TRANSITION);
+      return () => clearTimeout(timer);
+    }
   }, [isTransitioning, dispatch]);
 
   // Круговая навигация: влево = следующий экран справа, вправо = предыдущий экран слева

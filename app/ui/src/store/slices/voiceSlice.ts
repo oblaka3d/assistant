@@ -1,17 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { STATUS_MESSAGES } from '../../constants/messages';
+export enum VoiceStatusType {
+  READY = 'ready',
+  READY_NO_CHARACTER = 'ready_no_character',
+  LISTENING = 'listening',
+  PROCESSING = 'processing',
+  RECOGNIZING = 'recognizing',
+  GENERATING = 'generating',
+  SPEAKING = 'speaking',
+  NOT_RECOGNIZED = 'not_recognized',
+  ERROR = 'error',
+}
 
-export type VoiceStatus =
-  | 'Готов к работе'
-  | 'Готов к работе (без персонажа)'
-  | 'Слушаю...'
-  | 'Обработка...'
-  | 'Распознавание речи...'
-  | 'Генерация ответа...'
-  | 'Отвечаю...'
-  | 'Речь не распознана'
-  | 'Ошибка';
+export type VoiceStatus = VoiceStatusType;
 
 interface VoiceState {
   status: VoiceStatus;
@@ -24,7 +25,7 @@ interface VoiceState {
 }
 
 const initialState: VoiceState = {
-  status: 'Готов к работе',
+  status: VoiceStatusType.READY,
   isRecording: false,
   userText: '—',
   assistantText: '—',
@@ -59,7 +60,7 @@ const voiceSlice = createSlice({
       state.loadError = action.payload;
     },
     resetVoiceState: (state) => {
-      state.status = 'Готов к работе';
+      state.status = VoiceStatusType.READY;
       state.isRecording = false;
       state.userText = '—';
       state.assistantText = '—';

@@ -12,12 +12,14 @@ interface ModelSceneSettings {
 interface SettingsState {
   volume: number;
   language: string;
+  llmProviderName: string | null; // Название текущего LLM провайдера
   modelScene: ModelSceneSettings;
 }
 
 const initialState: SettingsState = {
   volume: 70,
   language: 'ru',
+  llmProviderName: null, // Будет загружено при инициализации
   modelScene: {
     modelPath: './assets/models/character.glb',
     sceneName: null, // Сцена не выбрана по умолчанию
@@ -56,12 +58,16 @@ const settingsSlice = createSlice({
     setAnimationSpeed: (state, action: PayloadAction<number>) => {
       state.modelScene.animationSpeed = action.payload;
     },
+    setLLMProviderName: (state, action: PayloadAction<string | null>) => {
+      state.llmProviderName = action.payload;
+    },
   },
 });
 
 export const {
   setVolume,
   setLanguage,
+  setLLMProviderName,
   setModelPath,
   setSceneName,
   setEnableToonShader,

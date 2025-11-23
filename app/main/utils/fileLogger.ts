@@ -122,15 +122,21 @@ function rotateLogIfNeeded(): void {
 
     // Если файл превысил максимальный размер, удаляем старые записи
     if (fileSize > MAX_LOG_SIZE) {
-      const lines = fs.readFileSync(logFilePath, 'utf8').split('\n').filter((line) => line.trim());
-      
+      const lines = fs
+        .readFileSync(logFilePath, 'utf8')
+        .split('\n')
+        .filter((line) => line.trim());
+
       // Оставляем только последние MAX_LOG_LINES строк
       const newLines = lines.slice(-MAX_LOG_LINES);
-      
+
       // Записываем обратно в файл
       fs.writeFileSync(logFilePath, newLines.join('\n') + '\n', 'utf8');
-      
-      writeLog(LogLevel.INFO, `Log rotated. Removed ${lines.length - newLines.length} old entries.`);
+
+      writeLog(
+        LogLevel.INFO,
+        `Log rotated. Removed ${lines.length - newLines.length} old entries.`
+      );
     }
   } catch (error) {
     originalConsoleError?.('Failed to rotate log:', error);
@@ -199,4 +205,3 @@ export function getLogFileSize(): number {
 export function getLogFilePath(): string | null {
   return logFilePath;
 }
-

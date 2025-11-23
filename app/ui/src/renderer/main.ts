@@ -23,7 +23,11 @@ export async function initCharacterScene(options: CharacterSceneOptions): Promis
         clearInterval(checkReady);
         resolve(scene);
       } else if (checksCount % 10 === 0) {
-        console.log('[initCharacterScene] Still waiting for scene to be ready... (check', checksCount, ')');
+        console.log(
+          '[initCharacterScene] Still waiting for scene to be ready... (check',
+          checksCount,
+          ')'
+        );
       }
     }, 100);
 

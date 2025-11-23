@@ -52,7 +52,13 @@ export async function synthesize(text: string): Promise<void> {
     }
 
     // Для Yandex TTS
-    if (provider === 'yandex_tts' && 'endpoint' in ttsConfig && 'apiKey' in ttsConfig && 'voice' in ttsConfig && 'lang' in ttsConfig) {
+    if (
+      provider === 'yandex_tts' &&
+      'endpoint' in ttsConfig &&
+      'apiKey' in ttsConfig &&
+      'voice' in ttsConfig &&
+      'lang' in ttsConfig
+    ) {
       const response = await fetch(ttsConfig.endpoint, {
         method: 'POST',
         headers: {

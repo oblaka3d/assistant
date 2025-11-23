@@ -19,9 +19,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Выделяем THREE.js в отдельный чанк
-          'three': ['three'],
+          three: ['three'],
           // Выделяем Material-UI в отдельный чанк
-          'mui': ['@mui/material', '@mui/icons-material'],
+          mui: ['@mui/material', '@mui/icons-material'],
           // Выделяем React в отдельный чанк
           'react-vendor': ['react', 'react-dom', 'react-redux'],
         },

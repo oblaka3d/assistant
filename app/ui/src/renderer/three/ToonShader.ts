@@ -11,7 +11,7 @@ import * as THREE from 'three';
 export function createToonMaterial(
   color: THREE.Color = new THREE.Color(0.8, 0.8, 0.9)
 ): THREE.ShaderMaterial {
-  const uniforms: { [uniform: string]: THREE.IUniform<any> } = {
+  const uniforms: { [uniform: string]: THREE.IUniform<unknown> } = {
     uColor: { value: color },
     uLightIntensity: { value: 1.0 },
     uSteps: { value: 3.0 }, // Количество ступеней яркости

@@ -3,7 +3,6 @@ import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Box, Button, Paper, Typography, Avatar, IconButton, Tooltip } from '@mui/material';
 import React, { useEffect } from 'react';
-
 import { useTranslation } from 'react-i18next';
 
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -44,7 +43,7 @@ const UserBar: React.FC<UserBarProps> = ({ onLoginClick }) => {
     };
 
     loadCurrentUser();
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   const handleLogout = async () => {
     if (!window.api) {
@@ -130,4 +129,3 @@ const UserBar: React.FC<UserBarProps> = ({ onLoginClick }) => {
 };
 
 export default UserBar;
-

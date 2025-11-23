@@ -1,16 +1,34 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { ipcMain } from 'electron';
 
+import type { OpenAIConfig, YandexGPTConfig, AnthropicConfig } from '../backend/config';
 import { checkDependencies } from '../backend/dependency-checker';
 import { generateResponse } from '../backend/llm';
 import { transcribe } from '../backend/stt';
 import { synthesize } from '../backend/tts';
 import { startRecord, stopRecord } from '../backend/voice';
 
+import { getAssetList } from './utils/assetList';
 import { readLogs, clearLogs, getLogFileSize, getLogFilePath } from './utils/fileLogger';
 import { createIPCHandler } from './utils/ipcHandler';
+import { getLLMProviderName } from './utils/llmProvider';
+
+// Динамические импорты для избежания циклических зависимостей
+let getLLMProviderFn: (() => string) | undefined;
+let getLLMConfigFn: (() => OpenAIConfig | YandexGPTConfig | AnthropicConfig) | undefined;
+
+const loadLLMFunctions = async () => {
+  if (!getLLMProviderFn || !getLLMConfigFn) {
+    const configModule = await import('../backend/config');
+    getLLMProviderFn = configModule.getLLMProvider;
+    getLLMConfigFn = configModule.getLLMConfig;
+  }
+
+  if (!getLLMProviderFn || !getLLMConfigFn) {
+    throw new Error('LLM configuration functions are not available');
+  }
+
+  return { getLLMProvider: getLLMProviderFn, getLLMConfig: getLLMConfigFn };
+};
 
 export function setupIPC(): void {
   ipcMain.handle(
@@ -55,86 +73,38 @@ export function setupIPC(): void {
     }, 'checkDependencies')
   );
 
-  ipcMain.handle('getModelList', async (): Promise<string[]> => {
-    try {
-      // Путь к папке с моделями
-      // В development: app/ui/public/assets/models
-      // В production: dist/app/ui/assets/models (куда копируются файлы из public)
-      // Пробуем оба варианта
-      const modelsPath1 = path.join(__dirname, '../ui/assets/models');
-      const modelsPath2 = path.join(__dirname, '../ui/public/assets/models');
-      
-      let modelsPath = modelsPath1;
-      if (!fs.existsSync(modelsPath1) && fs.existsSync(modelsPath2)) {
-        modelsPath = modelsPath2;
-      }
-      
-      // Проверяем существование папки
-      if (!fs.existsSync(modelsPath)) {
-        console.warn(`Models directory not found. Tried: ${modelsPath1} and ${modelsPath2}`);
-        return [];
-      }
+  ipcMain.handle(
+    'getLLMProviderInfo',
+    createIPCHandler(async () => {
+      const { getLLMProvider, getLLMConfig } = await loadLLMFunctions();
+      const provider = getLLMProvider();
+      const config = getLLMConfig();
+      const model = 'model' in config ? config.model : null;
+      return {
+        provider,
+        model,
+        name: getLLMProviderName(provider),
+      };
+    }, 'getLLMProviderInfo')
+  );
 
-      console.log(`Reading models from: ${modelsPath}`);
-
-      // Читаем список файлов в папке
-      const files = fs.readdirSync(modelsPath);
-      
-      // Фильтруем только GLB файлы
-      const glbFiles = files
-        .filter((file) => {
-          const fullPath = path.join(modelsPath, file);
-          const stats = fs.statSync(fullPath);
-          return stats.isFile() && file.toLowerCase().endsWith('.glb');
-        })
-        .sort(); // Сортируем по алфавиту
-
-      console.log(`Found ${glbFiles.length} model files:`, glbFiles);
-      return glbFiles;
-    } catch (error) {
-      console.error('Error getting model list:', error);
-      throw error;
-    }
-  });
+  ipcMain.handle(
+    'getModelList',
+    createIPCHandler(async (): Promise<string[]> => {
+      return getAssetList({
+        folder: 'models',
+        extensions: ['.glb'],
+      });
+    }, 'getModelList')
+  );
 
   ipcMain.handle(
     'getSceneList',
     createIPCHandler(async () => {
-      // Путь к папке со сценами
-      // В development: app/ui/public/assets/scenes
-      // В production: dist/app/ui/assets/scenes
-      const scenesPath1 = path.join(__dirname, '../ui/assets/scenes');
-      const scenesPath2 = path.join(__dirname, '../ui/public/assets/scenes');
-
-      let scenesPath = scenesPath1;
-      if (!fs.existsSync(scenesPath1) && fs.existsSync(scenesPath2)) {
-        scenesPath = scenesPath2;
-      }
-
-      // Проверяем существование папки
-      if (!fs.existsSync(scenesPath)) {
-        console.log(`[IPC] Scenes directory not found: ${scenesPath}`);
-        return [];
-      }
-
-      console.log(`[IPC] Reading scenes from: ${scenesPath}`);
-
-      // Читаем список файлов в папке
-      const files = fs.readdirSync(scenesPath);
-
-      // Фильтруем файлы сцен
-      const sceneExtensions = ['.json', '.gltf', '.glb', '.scene'];
-      const sceneFiles = files
-        .filter((file) => {
-          const fullPath = path.join(scenesPath, file);
-          const stats = fs.statSync(fullPath);
-          const ext = path.extname(file).toLowerCase();
-          return stats.isFile() && sceneExtensions.includes(ext);
-        })
-        .sort(); // Сортируем по алфавиту
-
-      console.log(`[IPC] Found ${sceneFiles.length} scene files:`, sceneFiles);
-      return sceneFiles;
+      return getAssetList({
+        folder: 'scenes',
+        extensions: ['.json', '.gltf', '.glb', '.scene'],
+      });
     }, 'getSceneList')
   );
 

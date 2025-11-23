@@ -43,4 +43,3 @@ export const createLogger = (prefix: string) => ({
   info: (...args: unknown[]) => logger.info(`[${prefix}]`, ...args),
   debug: (...args: unknown[]) => logger.debug(`[${prefix}]`, ...args),
 });
-

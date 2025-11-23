@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 
 import App from './App';
@@ -24,8 +24,8 @@ if (!rootElement) {
       readyState: document.readyState,
       electronAPI: window.api ? Object.keys(window.api) : null,
     });
-    
-    const root = ReactDOM.createRoot(rootElement);
+
+    const root = createRoot(rootElement);
 
     root.render(
       <React.StrictMode>

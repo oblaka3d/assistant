@@ -34,8 +34,16 @@
     "settings": "Settings",
     "apiKeys": "API Keys",
     "history": "Dialogue History",
+    "chat": "Chat",
     "logs": "Application Logs",
     "about": "About"
+  },
+  "chat": {
+    "title": "Chat",
+    "empty": "History is empty",
+    "noMessages": "No messages in history",
+    "user": "User",
+    "assistant": "Assistant"
   },
   "settings": {
     "title": "Settings",
@@ -111,4 +119,3 @@
     "chinese": "中文"
   }
 }
-

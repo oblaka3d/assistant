@@ -1,14 +1,15 @@
-import { useTranslation } from 'react-i18next';
 import SendIcon from '@mui/icons-material/Send';
 import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
 import React, { useRef, useEffect } from 'react';
 import { MessageList } from 'react-chat-elements';
+import { useTranslation } from 'react-i18next';
 
 import 'react-chat-elements/dist/main.css';
 
 import ScreenHeader from '../../components/ScreenHeader';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { addMessage, clearInput, setInputValue } from '../../store/slices/chatSlice';
+import { setLLMProviderName } from '../../store/slices/settingsSlice';
 import { createLogger } from '../../utils/logger';
 
 import styles from './ChatScreen.module.css';
@@ -20,8 +21,31 @@ const ChatScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const messages = useAppSelector((state) => state.chat.messages);
   const inputValue = useAppSelector((state) => state.chat.inputValue);
-  const messageListRef = useRef<any>(null);
+  const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
+  const messageListRef = useRef<unknown>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Загружаем информацию о LLM провайдере при монтировании
+  useEffect(() => {
+    const loadLLMProviderInfo = async () => {
+      if (!window.api) {
+        log.warn('Electron API not available');
+        return;
+      }
+
+      try {
+        const info = await window.api.getLLMProviderInfo();
+        dispatch(setLLMProviderName(info.name));
+        log.debug('LLM provider info loaded:', info);
+      } catch (error) {
+        log.error('Failed to load LLM provider info:', error);
+      }
+    };
+
+    if (!llmProviderName) {
+      loadLLMProviderInfo();
+    }
+  }, [dispatch, llmProviderName]);
 
   useEffect(() => {
     // Прокрутка к последнему сообщению
@@ -86,17 +110,20 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  // Формируем заголовок с названием LLM модели
+  const chatTitle = llmProviderName ? `${t('chat.title')} - ${llmProviderName}` : t('chat.title');
+
   return (
     <Box className={styles.container}>
       {/* Заголовок */}
-      <ScreenHeader title={t('menu.history')} />
+      <ScreenHeader title={chatTitle} />
 
       {/* Список сообщений */}
       <Box className={styles.messagesContainer}>
         {messages.length === 0 ? (
           <Box className={styles.emptyState}>
             <Typography variant="h6" color="text.secondary">
-              {t('history.empty')}
+              {t('chat.empty')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {t('ui.startDialog')}
@@ -115,7 +142,7 @@ const ChatScreen: React.FC = () => {
                 type: msg.type,
                 text: msg.text,
                 date: msg.date,
-                title: msg.position === 'right' ? t('history.user') : t('history.assistant'),
+                title: msg.position === 'right' ? t('chat.user') : t('chat.assistant'),
                 titleColor: msg.position === 'right' ? '#4a90e2' : '#27ae60',
               }))}
             />

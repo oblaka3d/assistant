@@ -21,18 +21,22 @@ export async function loadCharacterGLB(
   onProgress?: (progress: number) => void
 ): Promise<CharacterModel> {
   console.log('[loadCharacterGLB] Function called with URL:', url);
-  console.log('[loadCharacterGLB] Window location:', typeof window !== 'undefined' ? window.location.href : 'undefined');
-  
+  console.log(
+    '[loadCharacterGLB] Window location:',
+    typeof window !== 'undefined' ? window.location.href : 'undefined'
+  );
+
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
-    
+
     // Настройка загрузчика для работы с локальными файлами в Electron
     let finalUrl = url;
-    
+
     try {
       // Проверяем, является ли URL уже абсолютным (начинается с file:// или http://)
-      const isAbsoluteUrl = url.startsWith('file://') || url.startsWith('http://') || url.startsWith('https://');
-      
+      const isAbsoluteUrl =
+        url.startsWith('file://') || url.startsWith('http://') || url.startsWith('https://');
+
       if (isAbsoluteUrl) {
         // URL уже абсолютный, используем его как есть
         // НЕ устанавливаем setPath для абсолютных URL, чтобы избежать дублирования пути
@@ -42,7 +46,7 @@ export async function loadCharacterGLB(
         // Относительный URL, создаем абсолютный относительно текущего местоположения
         const urlObj = new URL(url, window.location.href);
         finalUrl = urlObj.href;
-        
+
         // Для GLB файлов не нужно устанавливать setPath, так как текстуры встроены
         // GLTFLoader сам правильно обработает относительный или абсолютный URL
         console.log('[loadCharacterGLB] Converted relative URL to absolute:', finalUrl);
@@ -51,7 +55,7 @@ export async function loadCharacterGLB(
       console.warn('[loadCharacterGLB] Could not parse URL, using original URL:', e);
       finalUrl = url;
     }
-    
+
     console.log('[loadCharacterGLB] GLTFLoader created, starting load from URL:', finalUrl);
 
     loader.load(
@@ -65,7 +69,7 @@ export async function loadCharacterGLB(
           materials: gltf.parser.json.materials ? gltf.parser.json.materials.length : 0,
           images: gltf.parser.json.images ? gltf.parser.json.images.length : 0,
         });
-        
+
         try {
           const scene = gltf.scene;
           const animations = gltf.animations;
@@ -76,7 +80,7 @@ export async function loadCharacterGLB(
           // Настраиваем сцену и убеждаемся, что все части видимы
           let meshCount = 0;
           let textureCount = 0;
-          
+
           // Сначала проверяем текстуры в самой gltf структуре
           if (gltf.parser.json.textures) {
             console.log('[loadCharacterGLB] Textures in GLB:', gltf.parser.json.textures.length);
@@ -84,46 +88,60 @@ export async function loadCharacterGLB(
           if (gltf.parser.json.images) {
             console.log('[loadCharacterGLB] Images in GLB:', gltf.parser.json.images.length);
           }
-          
+
           scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               child.castShadow = false;
               child.receiveShadow = false;
               child.visible = true;
               meshCount++;
-              
+
               // Убеждаемся, что материал существует и видимый, с правильными цветами
               if (child.material) {
                 const materials = Array.isArray(child.material) ? child.material : [child.material];
-                
+
                 materials.forEach((mat: THREE.Material) => {
                   mat.visible = true;
-                  
+
                   // Обрабатываем стандартные материалы с текстурами
-                  if (mat instanceof THREE.MeshStandardMaterial || 
-                      mat instanceof THREE.MeshPhysicalMaterial || 
-                      mat instanceof THREE.MeshBasicMaterial) {
+                  if (
+                    mat instanceof THREE.MeshStandardMaterial ||
+                    mat instanceof THREE.MeshPhysicalMaterial ||
+                    mat instanceof THREE.MeshBasicMaterial
+                  ) {
                     mat.needsUpdate = true;
-                    
+
                     // Проверяем и применяем все возможные текстуры
-                    const textureProps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'bumpMap', 'displacementMap'];
-                    
+                    const textureProps = [
+                      'map',
+                      'normalMap',
+                      'roughnessMap',
+                      'metalnessMap',
+                      'aoMap',
+                      'emissiveMap',
+                      'bumpMap',
+                      'displacementMap',
+                    ];
+
                     textureProps.forEach((prop) => {
-                      const texture = (mat as any)[prop];
+                      const texture = (mat as Record<string, unknown>)[prop];
                       if (texture && texture instanceof THREE.Texture) {
                         textureCount++;
                         texture.needsUpdate = true;
                         // Убеждаемся, что текстура загружена
                         if (texture.image) {
-                          console.log(`[loadCharacterGLB] Mesh "${child.name}" has ${prop} texture:`, {
-                            width: texture.image.width,
-                            height: texture.image.height,
-                            loaded: texture.image.complete,
-                          });
+                          console.log(
+                            `[loadCharacterGLB] Mesh "${child.name}" has ${prop} texture:`,
+                            {
+                              width: texture.image.width,
+                              height: texture.image.height,
+                              loaded: texture.image.complete,
+                            }
+                          );
                         }
                       }
                     });
-                    
+
                     // Если есть основная текстура (map), убеждаемся, что она правильно настроена
                     if (mat.map && mat.map instanceof THREE.Texture) {
                       mat.map.flipY = false; // GLTF использует flipY = false
@@ -140,17 +158,20 @@ export async function loadCharacterGLB(
                         };
                       }
                     }
-                    
+
                     // Логируем информацию о материале
                     if (mat.color) {
-                      console.log(`[loadCharacterGLB] Mesh "${child.name}" material color:`, mat.color.getHexString());
+                      console.log(
+                        `[loadCharacterGLB] Mesh "${child.name}" material color:`,
+                        mat.color.getHexString()
+                      );
                     }
                   }
                 });
               }
             }
           });
-          
+
           console.log(`[loadCharacterGLB] Total meshes found: ${meshCount}`);
           console.log(`[loadCharacterGLB] Total textures found: ${textureCount}`);
           console.log('[loadCharacterGLB] Scene materials check complete');
@@ -171,7 +192,7 @@ export async function loadCharacterGLB(
                 availableAnimations.push(clip.name);
               }
             });
-            
+
             console.log('[loadCharacterGLB] Available animations:', availableAnimations);
             console.log('[loadCharacterGLB] Animation actions created:', Object.keys(actions));
 
@@ -186,8 +207,7 @@ export async function loadCharacterGLB(
 
             const idleAnimation = animations.find(
               (clip) =>
-                clip.name.toLowerCase().includes('idle') ||
-                clip.name.toLowerCase().includes('wait')
+                clip.name.toLowerCase().includes('idle') || clip.name.toLowerCase().includes('wait')
             );
 
             // Используем T-pose если найден, иначе idle, иначе первую анимацию
@@ -198,16 +218,20 @@ export async function loadCharacterGLB(
               actions['default']?.setEffectiveTimeScale(1);
               actions['default']?.setEffectiveWeight(1);
               actions['default']?.play();
-              
+
               // Также устанавливаем как idle для совместимости
               if (!actions['idle']) {
                 actions['idle'] = actions['default'];
               }
-              
-              console.log(`[loadCharacterGLB] Playing default animation: "${defaultAnimation.name}" (T-pose: ${!!tposeAnimation})`);
+
+              console.log(
+                `[loadCharacterGLB] Playing default animation: "${defaultAnimation.name}" (T-pose: ${!!tposeAnimation})`
+              );
             }
           } else {
-            console.warn('[loadCharacterGLB] No animations found in GLB file. Model will be static.');
+            console.warn(
+              '[loadCharacterGLB] No animations found in GLB file. Model will be static.'
+            );
           }
 
           resolve({
@@ -314,7 +338,10 @@ export class CharacterAnimationController {
     });
     this.programmaticAnimation.boneNodes = bones;
     if (bones.length > 0) {
-      console.log('[CharacterAnimationController] Found bone nodes for animations:', bones.map(b => b.name));
+      console.log(
+        '[CharacterAnimationController] Found bone nodes for animations:',
+        bones.map((b) => b.name)
+      );
     }
   }
 
@@ -324,38 +351,51 @@ export class CharacterAnimationController {
    */
   playAnimation(name: string, fadeIn: number = 0.3): [THREE.AnimationAction | null, boolean] {
     if (!this.mixer) {
-      console.warn('[CharacterAnimationController] No mixer available, cannot play animation:', name);
+      console.warn(
+        '[CharacterAnimationController] No mixer available, cannot play animation:',
+        name
+      );
       return [null, false];
     }
 
     // Пытаемся найти анимацию по точному имени или частичному совпадению
     let action = this.actions[name.toLowerCase()];
     let wasFound = false;
-    
+
     // Если не найдено, ищем по частичному совпадению
     if (!action) {
-      const matchingKey = Object.keys(this.actions).find(key => 
-        key.toLowerCase().includes(name.toLowerCase()) || 
-        name.toLowerCase().includes(key.toLowerCase())
+      const matchingKey = Object.keys(this.actions).find(
+        (key) =>
+          key.toLowerCase().includes(name.toLowerCase()) ||
+          name.toLowerCase().includes(key.toLowerCase())
       );
       if (matchingKey) {
         action = this.actions[matchingKey];
         wasFound = true;
-        console.log(`[CharacterAnimationController] Found animation "${matchingKey}" for request "${name}"`);
+        console.log(
+          `[CharacterAnimationController] Found animation "${matchingKey}" for request "${name}"`
+        );
       }
     } else {
       wasFound = true;
     }
-    
+
     // Если все еще не найдено, используем default или idle
     if (!action) {
       action = this.actions['default'] || this.actions['idle'];
       if (action) {
-        console.warn(`[CharacterAnimationController] Animation "${name}" not found, using default/idle`);
+        console.warn(
+          `[CharacterAnimationController] Animation "${name}" not found, using default/idle`
+        );
         wasFound = false; // Это fallback, а не реальная анимация
       } else {
-        console.warn(`[CharacterAnimationController] No animation found for "${name}" and no default animation available`);
-        console.log('[CharacterAnimationController] Available animations:', Object.keys(this.actions));
+        console.warn(
+          `[CharacterAnimationController] No animation found for "${name}" and no default animation available`
+        );
+        console.log(
+          '[CharacterAnimationController] Available animations:',
+          Object.keys(this.actions)
+        );
         return [null, false];
       }
     }
@@ -372,10 +412,12 @@ export class CharacterAnimationController {
 
     action.reset().fadeIn(fadeIn).play();
     this.currentAction = action;
-    console.log(`[CharacterAnimationController] Playing animation: ${name} (from GLB: ${wasFound})`);
+    console.log(
+      `[CharacterAnimationController] Playing animation: ${name} (from GLB: ${wasFound})`
+    );
     return [action, wasFound];
   }
-  
+
   /**
    * Воспроизводит анимацию по имени (обратная совместимость)
    */
@@ -383,19 +425,19 @@ export class CharacterAnimationController {
     const [action] = this.playAnimation(name, fadeIn);
     return action;
   }
-  
+
   /**
    * Получить текущую активную анимацию
    */
   getCurrentAction(): THREE.AnimationAction | null {
     return this.currentAction;
   }
-  
+
   /**
    * Получить список всех доступных анимаций
    */
   getAvailableAnimations(): string[] {
-    return Object.keys(this.actions).filter(key => this.actions[key] !== null);
+    return Object.keys(this.actions).filter((key) => this.actions[key] !== null);
   }
 
   /**
