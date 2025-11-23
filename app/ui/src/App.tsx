@@ -26,11 +26,19 @@ function App() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSwipeLeft = () => {
+    // Свайп влево (справа налево)
     if (currentScreen === 'main' && !isTransitioning) {
+      // С главного экрана → открыть меню справа
       setIsTransitioning(true);
-      setCurrentScreen('chat');
+      setCurrentScreen('menu');
       setTimeout(() => setIsTransitioning(false), 300);
     } else if (currentScreen === 'menu' && !isTransitioning) {
+      // С меню → вернуться на главный экран
+      setIsTransitioning(true);
+      setCurrentScreen('main');
+      setTimeout(() => setIsTransitioning(false), 300);
+    } else if (currentScreen === 'chat' && !isTransitioning) {
+      // С чата → вернуться на главный экран
       setIsTransitioning(true);
       setCurrentScreen('main');
       setTimeout(() => setIsTransitioning(false), 300);
@@ -38,11 +46,19 @@ function App() {
   };
 
   const handleSwipeRight = () => {
+    // Свайп вправо (слева направо)
     if (currentScreen === 'main' && !isTransitioning) {
+      // С главного экрана → открыть чат слева
       setIsTransitioning(true);
-      setCurrentScreen('menu');
+      setCurrentScreen('chat');
       setTimeout(() => setIsTransitioning(false), 300);
     } else if (currentScreen === 'chat' && !isTransitioning) {
+      // С чата → вернуться на главный экран
+      setIsTransitioning(true);
+      setCurrentScreen('main');
+      setTimeout(() => setIsTransitioning(false), 300);
+    } else if (currentScreen === 'menu' && !isTransitioning) {
+      // С меню → вернуться на главный экран
       setIsTransitioning(true);
       setCurrentScreen('main');
       setTimeout(() => setIsTransitioning(false), 300);
@@ -82,7 +98,7 @@ function App() {
             display: 'flex',
             width: '300%',
             height: '100%',
-            transform: `translateX(-${currentScreen === 'main' ? 0 : currentScreen === 'chat' ? 33.333 : 66.666}%)`,
+            transform: `translateX(-${currentScreen === 'main' ? 33.333 : currentScreen === 'chat' ? 0 : 66.666}%)`,
             transition: isTransitioning ? 'transform 0.3s ease-in-out' : 'none',
           }}
         >

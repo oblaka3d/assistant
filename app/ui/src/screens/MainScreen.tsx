@@ -1,7 +1,43 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, keyframes } from '@mui/material';
 import { initUnity, UnityInstance } from '../../unity-loader';
 import { unityWrapper } from '../../unity-wrapper';
+
+// Анимации для кнопки записи
+const pulseAnimation = keyframes`
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(231, 76, 60, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+  }
+`;
+
+const recordingRipple = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+`;
+
+const microphoneWave = keyframes`
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+`;
 
 const MainScreen: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -357,71 +393,178 @@ const MainScreen: React.FC = () => {
           bottom: 0,
           left: 0,
           right: 0,
-          padding: 2,
-          background: 'linear-gradient(to top, #1a1a1a 0%, transparent 100%)',
+          padding: { xs: '2rem 1.5rem', md: '3rem 2rem' },
+          paddingBottom: { xs: '2.5rem', md: '3rem' },
+          background: 'linear-gradient(to top, rgba(26, 26, 26, 0.98) 0%, rgba(26, 26, 26, 0.85) 40%, transparent 100%)',
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 1.5,
+          gap: { xs: 2, md: 2.5 },
         }}
       >
         {/* Статус */}
         <Paper
-          elevation={3}
+          elevation={8}
           sx={{
-            padding: '0.5rem 1rem',
-            backgroundColor: 'rgba(45, 45, 45, 0.9)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: 2,
+            padding: { xs: '0.75rem 1.5rem', md: '0.875rem 2rem' },
+            backgroundColor: 'rgba(45, 45, 45, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: 3,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
           }}
         >
           <Typography
-            variant="body2"
+            variant="body1"
             sx={{
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+              fontSize: { xs: '0.875rem', md: '1rem' },
+              fontWeight: 600,
+              letterSpacing: '0.02em',
               color:
                 status === 'Готов к работе'
                   ? '#27ae60'
                   : status === 'Слушаю...'
                   ? '#e74c3c'
-                  : status === 'Обработка...' || status === 'Генерация ответа...'
+                  : status === 'Обработка...' || status === 'Генерация ответа...' || status === 'Распознавание речи...' || status === 'Отвечаю...' || status === 'Синтез речи...'
                   ? '#4a90e2'
                   : '#e74c3c',
+              textAlign: 'center',
+              textTransform: 'none',
             }}
           >
             {status}
           </Typography>
         </Paper>
 
-        {/* Кнопка записи */}
-        <Button
-          onClick={handleRecord}
-          variant="contained"
+        {/* Анимированная кнопка записи */}
+        <Box
           sx={{
-            width: 120,
-            height: 120,
-            borderRadius: '50%',
-            backgroundColor: isRecording ? '#e74c3c' : '#4a90e2',
-            '&:hover': {
-              backgroundColor: isRecording ? '#c0392b' : '#357abd',
-              transform: 'scale(1.1)',
-            },
+            position: 'relative',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 0.5,
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            boxShadow: isRecording
-              ? '0 0 0 0 rgba(231, 76, 60, 0.7), 0 0 0 30px rgba(231, 76, 60, 0)'
-              : '0 4px 20px rgba(0, 0, 0, 0.5)',
-            animation: isRecording ? 'recording-pulse 1s ease-in-out infinite' : 'none',
           }}
         >
-          <span style={{ fontSize: '2.5rem' }}>🎤</span>
-          <span style={{ fontSize: '1rem' }}>Говорить</span>
-        </Button>
+          {/* Ripple эффекты при записи */}
+          {isRecording && (
+            <>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  width: { xs: 120, md: 140 },
+                  height: { xs: 120, md: 140 },
+                  borderRadius: '50%',
+                  border: '2px solid rgba(231, 76, 60, 0.4)',
+                  animation: `${recordingRipple} 2s ease-out infinite`,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  width: { xs: 120, md: 140 },
+                  height: { xs: 120, md: 140 },
+                  borderRadius: '50%',
+                  border: '2px solid rgba(231, 76, 60, 0.3)',
+                  animation: `${recordingRipple} 2s ease-out 0.5s infinite`,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  width: { xs: 120, md: 140 },
+                  height: { xs: 120, md: 140 },
+                  borderRadius: '50%',
+                  border: '2px solid rgba(231, 76, 60, 0.2)',
+                  animation: `${recordingRipple} 2s ease-out 1s infinite`,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+            </>
+          )}
+
+          <Button
+            onClick={handleRecord}
+            variant="contained"
+            disableRipple
+            sx={{
+              position: 'relative',
+              width: { xs: 120, md: 140 },
+              height: { xs: 120, md: 140 },
+              minWidth: { xs: 120, md: 140 },
+              borderRadius: '50%',
+              backgroundColor: isRecording ? '#e74c3c' : '#4a90e2',
+              background: isRecording
+                ? 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)'
+                : 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
+              '&:hover': {
+                backgroundColor: isRecording ? '#c0392b' : '#357abd',
+                background: isRecording
+                  ? 'linear-gradient(135deg, #c0392b 0%, #a93226 100%)'
+                  : 'linear-gradient(135deg, #357abd 0%, #2e6da4 100%)',
+                transform: 'scale(1.05)',
+              },
+              '&:active': {
+                transform: 'scale(0.95)',
+              },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: { xs: 0.5, md: 0.75 },
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+              boxShadow: isRecording
+                ? '0 8px 32px rgba(231, 76, 60, 0.6), 0 0 0 0 rgba(231, 76, 60, 0.7)'
+                : '0 8px 32px rgba(74, 144, 226, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3)',
+              animation: isRecording ? `${pulseAnimation} 1.5s ease-in-out infinite` : 'none',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: '3px solid rgba(255, 255, 255, 0.1)',
+              zIndex: 2,
+              padding: 0,
+            }}
+          >
+            {/* Иконка микрофона с анимацией */}
+            <Box
+              component="span"
+              sx={{
+                fontSize: { xs: '2.5rem', md: '3rem' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+                animation: isRecording ? `${microphoneWave} 0.5s ease-in-out infinite` : 'none',
+                transformOrigin: 'center bottom',
+              }}
+            >
+              🎤
+            </Box>
+            <Typography
+              component="span"
+              sx={{
+                fontSize: { xs: '0.875rem', md: '1rem' },
+                fontWeight: 600,
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                letterSpacing: '0.03em',
+                textTransform: 'none',
+                color: 'white',
+                lineHeight: 1.2,
+              }}
+            >
+              {isRecording ? 'Запись...' : 'Говорить'}
+            </Typography>
+          </Button>
+        </Box>
 
         {/* Текстовые блоки */}
         <Box
@@ -429,43 +572,120 @@ const MainScreen: React.FC = () => {
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
-            gap: 1,
-            maxWidth: 600,
-            maxHeight: 200,
+            gap: { xs: 1.5, md: 2 },
+            maxWidth: { xs: '100%', md: 700 },
+            maxHeight: { xs: 180, md: 220 },
             overflowY: 'auto',
-            padding: '0 1rem',
+            padding: { xs: '0 1rem', md: '0 2rem' },
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(45, 45, 45, 0.3)',
+              borderRadius: '3px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(74, 144, 226, 0.5)',
+              borderRadius: '3px',
+              '&:hover': {
+                background: 'rgba(74, 144, 226, 0.7)',
+              },
+            },
           }}
         >
+          {/* Вы сказали */}
           <Paper
-            elevation={3}
+            elevation={6}
             sx={{
-              padding: 1,
-              backgroundColor: 'rgba(45, 45, 45, 0.9)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: 2,
+              padding: { xs: '1.25rem', md: '1.5rem' },
+              backgroundColor: 'rgba(45, 45, 45, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: 3,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 4px 24px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: 'rgba(255, 255, 255, 0.12)',
+                boxShadow: '0 6px 32px rgba(0, 0, 0, 0.4)',
+              },
             }}
           >
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                fontSize: { xs: '0.75rem', md: '0.8125rem' },
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                color: 'rgba(255, 255, 255, 0.6)',
+                textTransform: 'uppercase',
+                mb: 1,
+                display: 'block',
+              }}
+            >
               Вы сказали:
             </Typography>
-            <Typography variant="body2" color="text.primary">
+            <Typography
+              variant="body1"
+              sx={{
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                fontSize: { xs: '0.9375rem', md: '1.0625rem' },
+                fontWeight: 400,
+                lineHeight: 1.6,
+                color: 'rgba(255, 255, 255, 0.95)',
+                wordBreak: 'break-word',
+                minHeight: { xs: '1.5rem', md: '1.75rem' },
+              }}
+            >
               {userText}
             </Typography>
           </Paper>
 
+          {/* Ответ */}
           <Paper
-            elevation={3}
+            elevation={6}
             sx={{
-              padding: 1,
-              backgroundColor: 'rgba(45, 45, 45, 0.9)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: 2,
+              padding: { xs: '1.25rem', md: '1.5rem' },
+              backgroundColor: 'rgba(74, 144, 226, 0.15)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: 3,
+              border: '1px solid rgba(74, 144, 226, 0.2)',
+              boxShadow: '0 4px 24px rgba(74, 144, 226, 0.2)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: 'rgba(74, 144, 226, 0.3)',
+                boxShadow: '0 6px 32px rgba(74, 144, 226, 0.3)',
+              },
             }}
           >
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                fontSize: { xs: '0.75rem', md: '0.8125rem' },
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                color: 'rgba(74, 144, 226, 0.9)',
+                textTransform: 'uppercase',
+                mb: 1,
+                display: 'block',
+              }}
+            >
               Ответ:
             </Typography>
-            <Typography variant="body2" color="text.primary">
+            <Typography
+              variant="body1"
+              sx={{
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                fontSize: { xs: '0.9375rem', md: '1.0625rem' },
+                fontWeight: 400,
+                lineHeight: 1.6,
+                color: 'rgba(255, 255, 255, 0.95)',
+                wordBreak: 'break-word',
+                minHeight: { xs: '1.5rem', md: '1.75rem' },
+                animation: assistantText !== '—' ? 'fadeIn 0.5s ease-in' : 'none',
+              }}
+            >
               {assistantText}
             </Typography>
           </Paper>
@@ -476,14 +696,17 @@ const MainScreen: React.FC = () => {
       <Box
         sx={{
           position: 'absolute',
-          bottom: '0.5rem',
-          right: '1rem',
-          color: 'text.secondary',
-          fontSize: '0.75rem',
+          bottom: { xs: '0.75rem', md: '1rem' },
+          right: { xs: '1rem', md: '1.5rem' },
+          color: 'rgba(255, 255, 255, 0.4)',
+          fontSize: { xs: '0.6875rem', md: '0.75rem' },
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+          fontWeight: 500,
+          letterSpacing: '0.02em',
           zIndex: 5,
         }}
       >
-        ARM Voice Assistant v1.0
+        Voice Assistant v1.0
       </Box>
 
       <style>{`
@@ -494,9 +717,15 @@ const MainScreen: React.FC = () => {
           0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
           50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
         }
-        @keyframes recording-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-          50% { box-shadow: 0 0 0 30px rgba(231, 76, 60, 0); }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
     </Box>

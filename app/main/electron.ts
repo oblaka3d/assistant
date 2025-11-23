@@ -21,8 +21,34 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
+      // Отключаем предупреждение о CSP, так как мы добавляем его в HTML
+      // Для Unity WebGL требуется unsafe-eval
+      webSecurity: true,
     },
     backgroundColor: '#1a1a1a',
+  });
+
+  // Устанавливаем CSP через session после создания окна
+  // Это помогает избежать предупреждений Electron
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; " +
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+          "font-src 'self' https://fonts.gstatic.com data:; " +
+          "img-src 'self' data: blob:; " +
+          "connect-src 'self' https://api.openai.com https://tts.api.cloud.yandex.net https://*.yandex.net; " +
+          "worker-src 'self' blob:; " +
+          "child-src 'self' blob:; " +
+          "object-src 'none'; " +
+          "base-uri 'self'; " +
+          "form-action 'none';"
+        ],
+      },
+    });
   });
 
   // Hardware acceleration (работает на всех платформах)
