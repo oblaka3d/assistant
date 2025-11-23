@@ -31,7 +31,9 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
-    "check": "npm run lint && npm run format:check && npm run build"
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run format:check && npm run typecheck",
+    "prepare": "husky"
   },
   "keywords": [
     "voice-assistant",
@@ -63,6 +65,8 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
