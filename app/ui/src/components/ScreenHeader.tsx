@@ -6,16 +6,18 @@ import commonStyles from '../styles/common.module.css';
 
 interface ScreenHeaderProps {
   title: string;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack }) => {
   return (
     <AppBar position="static" className={commonStyles.appBar}>
       <Toolbar>
-        <IconButton edge="start" color="inherit" onClick={onBack} sx={{ mr: 2 }}>
-          <ArrowBackIcon />
-        </IconButton>
+        {onBack && (
+          <IconButton edge="start" color="inherit" onClick={onBack} sx={{ mr: 2 }}>
+            <ArrowBackIcon />
+          </IconButton>
+        )}
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           {title}
         </Typography>

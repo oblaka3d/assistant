@@ -1,0 +1,105 @@
+.container {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  background: linear-gradient(to top, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.8) 50%, transparent 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 16px 16px 0 0;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+/* На экране чата индикаторы располагаются выше, чтобы не перекрывать инпут */
+.container.chatScreen {
+  bottom: 72px;
+}
+
+.indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  position: relative;
+}
+
+.indicator:hover {
+  background-color: rgba(74, 144, 226, 0.1);
+}
+
+.indicator.active {
+  background-color: rgba(74, 144, 226, 0.15);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+}
+
+.indicator.active .icon {
+  color: #4a90e2;
+  transform: scale(1.15);
+}
+
+/* Анимация активного индикатора */
+.indicator.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.5px;
+  height: 2.5px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(1.3);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .container {
+    gap: 0.3rem;
+    padding: 0.3rem 0.5rem;
+    bottom: 6px;
+  }
+
+  .container.chatScreen {
+    bottom: 68px;
+  }
+
+  .indicator {
+    padding: 0.3rem;
+    width: 26px;
+    height: 26px;
+  }
+
+  .icon {
+    font-size: 0.9rem;
+  }
+}

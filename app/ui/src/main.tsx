@@ -1,8 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Provider } from 'react-redux';
 
 import App from './App';
 import './index.css';
+import { store } from './store';
 
 // Обработка ошибок React
 const rootElement = document.getElementById('root');
@@ -14,11 +16,21 @@ if (!rootElement) {
 } else {
   try {
     console.log('Initializing React app...');
+    
+    // Проверка доступности Electron API
+    if (window.api) {
+      console.log('Electron API is available:', Object.keys(window.api));
+    } else {
+      console.warn('Electron API is not available. Make sure preload script is loaded.');
+    }
+    
     const root = ReactDOM.createRoot(rootElement);
 
     root.render(
       <React.StrictMode>
-        <App />
+        <Provider store={store}>
+          <App />
+        </Provider>
       </React.StrictMode>
     );
 

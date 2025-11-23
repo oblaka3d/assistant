@@ -1,29 +1,37 @@
 import { Box, Button, Typography, Paper } from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { initCharacterScene, CharacterScene } from '../renderer/main';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  setAssistantText,
+  setIsLoading,
+  setIsRecording,
+  setLoadError,
+  setSceneReady,
+  setStatus,
+  setUserText,
+  VoiceStatus,
+} from '../store/slices/voiceSlice';
 
 import styles from './MainScreen.module.css';
 
 const MainScreen: React.FC = () => {
+  const dispatch = useAppDispatch();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CharacterScene | null>(null);
-  const [sceneReady, setSceneReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [status, setStatus] = useState('Готов к работе');
-  const [userText, setUserText] = useState('—');
-  const [assistantText, setAssistantText] = useState('—');
-  const [isRecording, setIsRecording] = useState(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
+  const { sceneReady, isLoading, loadError, status, userText, assistantText, isRecording } =
+    useAppSelector((state) => state.voice);
+
   useEffect(() => {
     if (!canvasRef.current) {
-      setIsLoading(false);
-      setLoadError(true);
-      setStatus('Готов к работе (без персонажа)');
+      dispatch(setIsLoading(false));
+      dispatch(setLoadError(true));
+      dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
       return;
     }
 
@@ -31,15 +39,15 @@ const MainScreen: React.FC = () => {
 
     const loadScene = async () => {
       try {
-        setIsLoading(true);
-        setLoadError(false);
+        dispatch(setIsLoading(true));
+        dispatch(setLoadError(false));
 
         // Таймаут для скрытия индикатора загрузки
         loadingTimeoutRef.current = setTimeout(() => {
           if (isMounted) {
-            setIsLoading(false);
-            setLoadError(true);
-            setStatus('Готов к работе (без персонажа)');
+            dispatch(setIsLoading(false));
+            dispatch(setLoadError(true));
+            dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
           }
         }, 3000);
 
@@ -63,9 +71,9 @@ const MainScreen: React.FC = () => {
 
         // Сохраняем ссылку на сцену
         sceneRef.current = scene;
-        setSceneReady(scene.ready);
-        setIsLoading(false);
-        setStatus('Готов к работе');
+        dispatch(setSceneReady(scene.ready));
+        dispatch(setIsLoading(false));
+        dispatch(setStatus('Готов к работе' as VoiceStatus));
 
         // Очищаем таймаут
         if (loadingTimeoutRef.current) {
@@ -83,9 +91,9 @@ const MainScreen: React.FC = () => {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn('Failed to load character scene, continuing without it:', errorMessage);
 
-        setLoadError(true);
-        setIsLoading(false);
-        setStatus('Готов к работе (без персонажа)');
+        dispatch(setLoadError(true));
+        dispatch(setIsLoading(false));
+        dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
 
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
@@ -129,7 +137,7 @@ const MainScreen: React.FC = () => {
         sceneRef.current = null;
       }
     };
-  }, []);
+  }, [dispatch]);
 
   const getStatusClassName = () => {
     if (status === 'Готов к работе') return styles.statusReady;
@@ -153,8 +161,8 @@ const MainScreen: React.FC = () => {
 
     if (isRecording) {
       // Остановить запись
-      setIsRecording(false);
-      setStatus('Обработка...');
+      dispatch(setIsRecording(false));
+      dispatch(setStatus('Обработка...' as VoiceStatus));
 
       // Анимация персонажа - размышление
       if (sceneRef.current) {
@@ -166,15 +174,15 @@ const MainScreen: React.FC = () => {
         const audioBuffer = await window.api.stopRecord();
 
         // Распознавание речи
-        setStatus('Распознавание речи...');
+        dispatch(setStatus('Распознавание речи...' as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playThinking();
         }
         const transcribedText = await window.api.transcribe(audioBuffer);
-        setUserText(transcribedText || '—');
+        dispatch(setUserText(transcribedText || '—'));
 
         if (!transcribedText || transcribedText.trim() === '') {
-          setStatus('Речь не распознана');
+          dispatch(setStatus('Речь не распознана' as VoiceStatus));
           if (sceneRef.current) {
             sceneRef.current.playIdle();
           }
@@ -182,19 +190,19 @@ const MainScreen: React.FC = () => {
         }
 
         // Получить ответ от ассистента
-        setStatus('Генерация ответа...');
+        dispatch(setStatus('Генерация ответа...' as VoiceStatus));
         const response = await window.api.askLLM(transcribedText);
-        setAssistantText(response || '—');
+        dispatch(setAssistantText(response || '—'));
 
         // Воспроизвести ответ
-        setStatus('Отвечаю...');
+        dispatch(setStatus('Отвечаю...' as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playTalking();
         }
 
         await window.api.speak(response);
 
-        setStatus('Готов к работе');
+        dispatch(setStatus('Готов к работе' as VoiceStatus));
         if (sceneRef.current) {
           setTimeout(() => {
             sceneRef.current?.playIdle();
@@ -202,15 +210,15 @@ const MainScreen: React.FC = () => {
         }
       } catch (error) {
         console.error('Recording error:', error);
-        setStatus('Ошибка');
+        dispatch(setStatus('Ошибка' as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playIdle();
         }
       }
     } else {
       // Начать запись
-      setIsRecording(true);
-      setStatus('Слушаю...');
+      dispatch(setIsRecording(true));
+      dispatch(setStatus('Слушаю...' as VoiceStatus));
 
       // Анимация персонажа - прослушивание
       if (sceneRef.current) {
@@ -223,8 +231,8 @@ const MainScreen: React.FC = () => {
         await window.api.startRecord();
       } catch (error) {
         console.error('Failed to start recording:', error);
-        setIsRecording(false);
-        setStatus('Ошибка');
+        dispatch(setIsRecording(false));
+        dispatch(setStatus('Ошибка' as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playIdle();
         }

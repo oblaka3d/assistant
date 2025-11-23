@@ -1,8 +1,6 @@
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
-import LanguageIcon from '@mui/icons-material/Language';
 import SettingsIcon from '@mui/icons-material/Settings';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import {
   Box,
   List,
@@ -12,131 +10,84 @@ import {
   ListItemText,
   Typography,
   Divider,
-  Slider,
-  Paper,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React from 'react';
 
 import ScreenHeader from '../components/ScreenHeader';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { goBack, openSubScreen } from '../store/slices/uiSlice';
 
 import styles from './MenuScreen.module.css';
+import AboutScreen from './subscreens/AboutScreen';
+import HistoryScreen from './subscreens/HistoryScreen';
+import SettingsScreen from './subscreens/SettingsScreen';
 
-interface MenuScreenProps {
-  onClose: () => void;
-}
-
-const MenuScreen: React.FC<MenuScreenProps> = ({ onClose }) => {
-  const [volume, setVolume] = useState(70);
-  const [showSettings, setShowSettings] = useState(false);
+const MenuScreen: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const subScreen = useAppSelector((state) => state.ui.subScreen);
 
   const menuItems = [
     {
       icon: <SettingsIcon />,
       text: 'Настройки',
-      onClick: () => setShowSettings(true),
+      onClick: () => dispatch(openSubScreen('settings')),
     },
     {
       icon: <HistoryIcon />,
       text: 'История диалогов',
-      onClick: () => {
-        // Переход к истории (можно реализовать позже)
-        console.log('History clicked');
-      },
+      onClick: () => dispatch(openSubScreen('history')),
     },
     {
       icon: <InfoIcon />,
       text: 'О приложении',
-      onClick: () => {
-        alert('Голосовой ассистент для BTT Pi 1.2\nВерсия 1.0');
-      },
+      onClick: () => dispatch(openSubScreen('about')),
     },
   ];
 
+  const handleBack = () => {
+    dispatch(goBack());
+  };
+
+  // Если открыт вложенный экран, показываем его
+  if (subScreen === 'settings') {
+    return <SettingsScreen onBack={handleBack} />;
+  }
+
+  if (subScreen === 'history') {
+    return <HistoryScreen onBack={handleBack} />;
+  }
+
+  if (subScreen === 'about') {
+    return <AboutScreen onBack={handleBack} />;
+  }
+
+  // Основной экран меню
   return (
     <Box className={styles.container}>
-      {/* Заголовок */}
-      <ScreenHeader title={showSettings ? 'Настройки' : 'Меню'} onBack={onClose} />
+      <ScreenHeader title="Меню" onBack={undefined} />
 
-      {showSettings ? (
-        /* Экран настроек */
-        <Box className={styles.content}>
-          <Paper elevation={3} className={styles.settingPaper}>
-            <Box className={styles.settingHeader}>
-              <VolumeUpIcon className={styles.settingIcon} />
-              <Typography variant="h6">Громкость</Typography>
-            </Box>
-            <Box sx={{ px: 2 }}>
-              <Slider
-                value={volume}
-                onChange={(_, value) => setVolume(value as number)}
-                min={0}
-                max={100}
-                valueLabelDisplay="auto"
-                className={styles.slider}
-              />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1, textAlign: 'center' }}
-              >
-                {volume}%
-              </Typography>
-            </Box>
-          </Paper>
+      <Box className={styles.content}>
+        <List>
+          {menuItems.map((item, index) => (
+            <React.Fragment key={index}>
+              <ListItem disablePadding>
+                <ListItemButton onClick={item.onClick}>
+                  <ListItemIcon className={styles.listIcon}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+              {index < menuItems.length - 1 && <Divider className={styles.divider} />}
+            </React.Fragment>
+          ))}
+        </List>
 
-          <Paper elevation={3} className={styles.settingPaper}>
-            <Box
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <LanguageIcon className={styles.settingIcon} />
-                <Typography variant="h6">Язык интерфейса</Typography>
-              </Box>
-            </Box>
-            <Typography variant="body2" color="text.secondary">
-              Русский
-            </Typography>
-          </Paper>
-
-          <Paper elevation={3} className={styles.settingPaper}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <InfoIcon className={styles.settingIcon} />
-                <Box>
-                  <Typography variant="h6">Версия</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    ARM Voice Assistant v1.0
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
+        {/* Информация внизу */}
+        <Box className={styles.footer}>
+          <Typography variant="caption" color="text.secondary" className={styles.footerText}>
+            ARM Voice Assistant v1.0
+          </Typography>
         </Box>
-      ) : (
-        /* Список меню */
-        <Box className={styles.content}>
-          <List>
-            {menuItems.map((item, index) => (
-              <React.Fragment key={index}>
-                <ListItem disablePadding>
-                  <ListItemButton onClick={item.onClick}>
-                    <ListItemIcon className={styles.listIcon}>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.text} />
-                  </ListItemButton>
-                </ListItem>
-                {index < menuItems.length - 1 && <Divider className={styles.divider} />}
-              </React.Fragment>
-            ))}
-          </List>
-
-          {/* Информация внизу */}
-          <Box className={styles.footer}>
-            <Typography variant="caption" color="text.secondary" className={styles.footerText}>
-              ARM Voice Assistant v1.0
-            </Typography>
-          </Box>
-        </Box>
-      )}
+      </Box>
     </Box>
   );
 };

@@ -1,37 +1,20 @@
 import SendIcon from '@mui/icons-material/Send';
 import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MessageList } from 'react-chat-elements';
 
 import 'react-chat-elements/dist/main.css';
 
 import ScreenHeader from '../components/ScreenHeader';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { addMessage, clearInput, setInputValue } from '../store/slices/chatSlice';
 
 import styles from './ChatScreen.module.css';
 
-interface Message {
-  id: string;
-  position: 'left' | 'right';
-  type: 'text';
-  text: string;
-  date: Date;
-}
-
-interface ChatScreenProps {
-  onClose: () => void;
-}
-
-const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      position: 'left',
-      type: 'text',
-      text: 'Привет! Я ваш голосовой ассистент. Чем могу помочь?',
-      date: new Date(),
-    },
-  ]);
-  const [inputValue, setInputValue] = useState('');
+const ChatScreen: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const messages = useAppSelector((state) => state.chat.messages);
+  const inputValue = useAppSelector((state) => state.chat.inputValue);
   const messageListRef = useRef<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -49,29 +32,29 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
   const handleSend = async () => {
     if (!inputValue.trim()) return;
 
-    const userMessage: Message = {
+    const userMessage = {
       id: Date.now().toString(),
-      position: 'right',
-      type: 'text',
+      position: 'right' as const,
+      type: 'text' as const,
       text: inputValue,
       date: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
+    dispatch(addMessage(userMessage));
+    dispatch(clearInput());
 
     // Отправить запрос ассистенту
     if (window.api) {
       try {
         const response = await window.api.askLLM(inputValue);
-        const assistantMessage: Message = {
+        const assistantMessage = {
           id: (Date.now() + 1).toString(),
-          position: 'left',
-          type: 'text',
+          position: 'left' as const,
+          type: 'text' as const,
           text: response || 'Извините, не удалось получить ответ.',
           date: new Date(),
         };
-        setMessages((prev) => [...prev, assistantMessage]);
+        dispatch(addMessage(assistantMessage));
 
         // Воспроизвести ответ голосом
         if (response) {
@@ -79,14 +62,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
         }
       } catch (error) {
         console.error('Failed to get assistant response:', error);
-        const errorMessage: Message = {
+        const errorMessage = {
           id: (Date.now() + 1).toString(),
-          position: 'left',
-          type: 'text',
+          position: 'left' as const,
+          type: 'text' as const,
           text: 'Произошла ошибка при обработке запроса.',
           date: new Date(),
         };
-        setMessages((prev) => [...prev, errorMessage]);
+        dispatch(addMessage(errorMessage));
       }
     }
   };
@@ -101,7 +84,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
   return (
     <Box className={styles.container}>
       {/* Заголовок */}
-      <ScreenHeader title="История диалогов" onBack={onClose} />
+      <ScreenHeader title="История диалогов" />
 
       {/* Список сообщений */}
       <Box className={styles.messagesContainer}>
@@ -144,7 +127,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose }) => {
             maxRows={4}
             placeholder="Введите сообщение..."
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => dispatch(setInputValue(e.target.value))}
             onKeyPress={handleKeyPress}
             variant="outlined"
             size="small"

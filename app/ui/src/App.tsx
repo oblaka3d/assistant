@@ -1,12 +1,13 @@
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
-import { useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
+import NavigationIndicators from './components/NavigationIndicators';
 import ChatScreen from './screens/ChatScreen';
 import MainScreen from './screens/MainScreen';
 import MenuScreen from './screens/MenuScreen';
-
-type Screen = 'main' | 'chat' | 'menu';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { navigateNext, navigatePrev, setTransitioning } from './store/slices/uiSlice';
 
 const darkTheme = createTheme({
   palette: {
@@ -22,47 +23,38 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('main');
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const dispatch = useAppDispatch();
+  const currentScreen = useAppSelector((state) => state.ui.currentScreen);
+  const subScreen = useAppSelector((state) => state.ui.subScreen);
+  const isTransitioning = useAppSelector((state) => state.ui.isTransitioning);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Отключаем свайпы, если открыт вложенный экран
+  const canSwipe = subScreen === null;
+
+  // Сброс isTransitioning после завершения анимации
+  useEffect(() => {
+    if (isTransitioning) {
+      const timer = setTimeout(() => {
+        dispatch(setTransitioning(false));
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning, dispatch]);
+
+  // Круговая навигация: влево = следующий экран справа, вправо = предыдущий экран слева
+  // Порядок экранов: chat (слева) -> main (центр) -> menu (справа)
+  // Свайп влево: main -> menu -> chat -> main (показываем экран справа)
+  // Свайп вправо: main -> chat -> menu -> main (показываем экран слева)
   const handleSwipeLeft = () => {
-    // Свайп влево (справа налево)
-    if (currentScreen === 'main' && !isTransitioning) {
-      // С главного экрана → открыть меню справа
-      setIsTransitioning(true);
-      setCurrentScreen('menu');
-      setTimeout(() => setIsTransitioning(false), 300);
-    } else if (currentScreen === 'menu' && !isTransitioning) {
-      // С меню → вернуться на главный экран
-      setIsTransitioning(true);
-      setCurrentScreen('main');
-      setTimeout(() => setIsTransitioning(false), 300);
-    } else if (currentScreen === 'chat' && !isTransitioning) {
-      // С чата → вернуться на главный экран
-      setIsTransitioning(true);
-      setCurrentScreen('main');
-      setTimeout(() => setIsTransitioning(false), 300);
+    if (canSwipe) {
+      dispatch(navigatePrev()); // Свайп влево = показываем экран справа = navigatePrev
     }
   };
 
   const handleSwipeRight = () => {
-    // Свайп вправо (слева направо)
-    if (currentScreen === 'main' && !isTransitioning) {
-      // С главного экрана → открыть чат слева
-      setIsTransitioning(true);
-      setCurrentScreen('chat');
-      setTimeout(() => setIsTransitioning(false), 300);
-    } else if (currentScreen === 'chat' && !isTransitioning) {
-      // С чата → вернуться на главный экран
-      setIsTransitioning(true);
-      setCurrentScreen('main');
-      setTimeout(() => setIsTransitioning(false), 300);
-    } else if (currentScreen === 'menu' && !isTransitioning) {
-      // С меню → вернуться на главный экран
-      setIsTransitioning(true);
-      setCurrentScreen('main');
-      setTimeout(() => setIsTransitioning(false), 300);
+    if (canSwipe) {
+      dispatch(navigateNext()); // Свайп вправо = показываем экран слева = navigateNext
     }
   };
 
@@ -71,15 +63,24 @@ function App() {
     onSwipedRight: handleSwipeRight,
     trackMouse: true,
     preventScrollOnSwipe: true,
+    disabled: !canSwipe, // Отключаем свайпы во вложенных экранах
   });
 
-  const goToMain = () => {
-    if (!isTransitioning) {
-      setIsTransitioning(true);
-      setCurrentScreen('main');
-      setTimeout(() => setIsTransitioning(false), 300);
+  // Определяем порядок экранов для анимации
+  const getScreenIndex = (screen: string) => {
+    switch (screen) {
+      case 'main':
+        return 1;
+      case 'chat':
+        return 0;
+      case 'menu':
+        return 2;
+      default:
+        return 1;
     }
   };
+
+  const screenIndex = getScreenIndex(currentScreen);
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -99,20 +100,22 @@ function App() {
             display: 'flex',
             width: '300%',
             height: '100%',
-            transform: `translateX(-${currentScreen === 'main' ? 33.333 : currentScreen === 'chat' ? 0 : 66.666}%)`,
+            transform: `translateX(-${screenIndex * 33.333}%)`,
             transition: isTransitioning ? 'transform 0.3s ease-in-out' : 'none',
           }}
         >
           <div style={{ width: '33.333%', height: '100%', flexShrink: 0 }}>
-            <ChatScreen onClose={goToMain} />
+            <ChatScreen />
           </div>
           <div style={{ width: '33.333%', height: '100%', flexShrink: 0 }}>
             <MainScreen />
           </div>
           <div style={{ width: '33.333%', height: '100%', flexShrink: 0 }}>
-            <MenuScreen onClose={goToMain} />
+            <MenuScreen />
           </div>
         </div>
+        {/* Индикаторы навигации */}
+        <NavigationIndicators />
       </div>
     </ThemeProvider>
   );
