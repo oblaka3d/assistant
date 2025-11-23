@@ -10,7 +10,8 @@ import { setupIPC } from './ipc';
 // unsafe-eval может потребоваться для некоторых библиотек (например, THREE.js)
 // В production можно включить предупреждения через: ELECTRON_ENABLE_SECURITY_WARNINGS=true
 // Но для разработки предупреждения можно отключить, так как мы явно устанавливаем CSP
-if (!process.env.ELECTRON_ENABLE_SECURITY_WARNINGS && !app.isPackaged) {
+// Устанавливаем переменную только если она не установлена вручную
+if (process.env.ELECTRON_ENABLE_SECURITY_WARNINGS !== 'true') {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 }
 
@@ -32,35 +33,14 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
-      // WebSecurity включен для безопасности
-      // CSP устанавливается через session.webRequest
-      webSecurity: true,
+      // Отключаем webSecurity для работы с локальными файлами (blob URLs для текстур THREE.js)
+      webSecurity: false,
+      // Дополнительно отключаем проверки безопасности для работы с blob URLs
+      allowRunningInsecureContent: true,
     },
     backgroundColor: '#1a1a1a',
   });
-
-  // Устанавливаем CSP через session после создания окна
-  // Это помогает избежать предупреждений Electron
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; " +
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-            "font-src 'self' https://fonts.gstatic.com data:; " +
-            "img-src 'self' data: blob:; " +
-            "connect-src 'self' https://api.openai.com https://tts.api.cloud.yandex.net https://*.yandex.net; " +
-            "worker-src 'self' blob:; " +
-            "child-src 'self' blob:; " +
-            "object-src 'none'; " +
-            "base-uri 'self'; " +
-            "form-action 'none';",
-        ],
-      },
-    });
-  });
+  
 
   // Hardware acceleration (работает на всех платформах)
   app.commandLine.appendSwitch('enable-gpu-rasterization');
@@ -114,6 +94,10 @@ function createWindow(): void {
   mainWindow.loadFile(htmlPath).catch((error) => {
     console.error('Error loading file:', error);
   });
+
+  // Открываем DevTools автоматически для отладки
+  // В production можно закомментировать или добавить проверку isDev
+  mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => {
     mainWindow = null;

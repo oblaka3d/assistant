@@ -1,0 +1,64 @@
+.statusBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.statusBarContent {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.statusBarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  font-size: 1rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.batteryLevel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .statusBar {
+    height: 20px;
+    padding: 0 0.75rem;
+  }
+
+  .icon {
+    font-size: 0.9rem !important;
+    width: 0.9rem !important;
+    height: 0.9rem !important;
+  }
+
+  .batteryLevel {
+    font-size: 0.7rem;
+  }
+
+  .statusBarRight {
+    gap: 0.4rem;
+  }
+}

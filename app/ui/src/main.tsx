@@ -15,14 +15,18 @@ if (!rootElement) {
     '<div style="padding: 20px; color: red;">Error: Root element not found</div>';
 } else {
   try {
-    console.log('Initializing React app...');
+    console.log('[main.tsx] ========================================');
+    console.log('[main.tsx] Initializing React app...');
+    console.log('[main.tsx] Window location:', window.location.href);
+    console.log('[main.tsx] Document ready state:', document.readyState);
     
     // Проверка доступности Electron API
     if (window.api) {
-      console.log('Electron API is available:', Object.keys(window.api));
+      console.log('[main.tsx] Electron API is available:', Object.keys(window.api));
     } else {
-      console.warn('Electron API is not available. Make sure preload script is loaded.');
+      console.warn('[main.tsx] Electron API is not available. Make sure preload script is loaded.');
     }
+    console.log('[main.tsx] ========================================');
     
     const root = ReactDOM.createRoot(rootElement);
 

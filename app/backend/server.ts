@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 
-import { config } from './config';
+import { config, getSTTConfig, getSTTProvider, getLLMConfig, getLLMProvider, getTTSConfig, getTTSProvider } from './config';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +15,30 @@ app.get('/health', (_req: Request, res: Response) => {
 app.get('/config', (_req: Request, res: Response) => {
   res.json({
     audio: config.audio,
-    stt: { ...config.stt, apiKey: config.stt.apiKey ? '***' : undefined },
-    llm: { ...config.llm, apiKey: config.llm.apiKey ? '***' : undefined },
-    tts: { ...config.tts, apiKey: config.tts.apiKey ? '***' : undefined },
+    stt: {
+      ...config.stt,
+      currentProvider: getSTTProvider(),
+      apiKey: (() => {
+        const sttConfig = getSTTConfig();
+        return 'apiKey' in sttConfig && sttConfig.apiKey ? '***' : undefined;
+      })(),
+    },
+    llm: {
+      ...config.llm,
+      currentProvider: getLLMProvider(),
+      apiKey: (() => {
+        const llmConfig = getLLMConfig();
+        return 'apiKey' in llmConfig && llmConfig.apiKey ? '***' : undefined;
+      })(),
+    },
+    tts: {
+      ...config.tts,
+      currentProvider: getTTSProvider(),
+      apiKey: (() => {
+        const ttsConfig = getTTSConfig();
+        return 'apiKey' in ttsConfig && ttsConfig.apiKey ? '***' : undefined;
+      })(),
+    },
   });
 });
 

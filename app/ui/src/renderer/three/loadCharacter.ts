@@ -20,23 +20,137 @@ export async function loadCharacterGLB(
   url: string,
   onProgress?: (progress: number) => void
 ): Promise<CharacterModel> {
+  console.log('[loadCharacterGLB] Function called with URL:', url);
+  console.log('[loadCharacterGLB] Window location:', typeof window !== 'undefined' ? window.location.href : 'undefined');
+  
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
+    
+    // Настройка загрузчика для работы с локальными файлами в Electron
+    let finalUrl = url;
+    
+    try {
+      // Проверяем, является ли URL уже абсолютным (начинается с file:// или http://)
+      const isAbsoluteUrl = url.startsWith('file://') || url.startsWith('http://') || url.startsWith('https://');
+      
+      if (isAbsoluteUrl) {
+        // URL уже абсолютный, используем его как есть
+        // НЕ устанавливаем setPath для абсолютных URL, чтобы избежать дублирования пути
+        finalUrl = url;
+        console.log('[loadCharacterGLB] Using absolute URL as-is (no setPath):', finalUrl);
+      } else {
+        // Относительный URL, создаем абсолютный относительно текущего местоположения
+        const urlObj = new URL(url, window.location.href);
+        finalUrl = urlObj.href;
+        
+        // Для GLB файлов не нужно устанавливать setPath, так как текстуры встроены
+        // GLTFLoader сам правильно обработает относительный или абсолютный URL
+        console.log('[loadCharacterGLB] Converted relative URL to absolute:', finalUrl);
+      }
+    } catch (e) {
+      console.warn('[loadCharacterGLB] Could not parse URL, using original URL:', e);
+      finalUrl = url;
+    }
+    
+    console.log('[loadCharacterGLB] GLTFLoader created, starting load from URL:', finalUrl);
 
     loader.load(
-      url,
+      finalUrl,
       (gltf) => {
+        console.log('GLB model loaded successfully:', {
+          scene: gltf.scene,
+          animationsCount: gltf.animations.length,
+          sceneChildren: gltf.scene.children.length,
+          textures: gltf.parser.json.textures ? gltf.parser.json.textures.length : 0,
+          materials: gltf.parser.json.materials ? gltf.parser.json.materials.length : 0,
+          images: gltf.parser.json.images ? gltf.parser.json.images.length : 0,
+        });
+        
         try {
           const scene = gltf.scene;
           const animations = gltf.animations;
 
-          // Настраиваем сцену
+          // Убеждаемся, что сцена видима
+          scene.visible = true;
+
+          // Настраиваем сцену и убеждаемся, что все части видимы
+          let meshCount = 0;
+          let textureCount = 0;
+          
+          // Сначала проверяем текстуры в самой gltf структуре
+          if (gltf.parser.json.textures) {
+            console.log('[loadCharacterGLB] Textures in GLB:', gltf.parser.json.textures.length);
+          }
+          if (gltf.parser.json.images) {
+            console.log('[loadCharacterGLB] Images in GLB:', gltf.parser.json.images.length);
+          }
+          
           scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               child.castShadow = false;
               child.receiveShadow = false;
+              child.visible = true;
+              meshCount++;
+              
+              // Убеждаемся, что материал существует и видимый, с правильными цветами
+              if (child.material) {
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                
+                materials.forEach((mat: THREE.Material) => {
+                  mat.visible = true;
+                  
+                  // Обрабатываем стандартные материалы с текстурами
+                  if (mat instanceof THREE.MeshStandardMaterial || 
+                      mat instanceof THREE.MeshPhysicalMaterial || 
+                      mat instanceof THREE.MeshBasicMaterial) {
+                    mat.needsUpdate = true;
+                    
+                    // Проверяем и применяем все возможные текстуры
+                    const textureProps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'bumpMap', 'displacementMap'];
+                    
+                    textureProps.forEach((prop) => {
+                      const texture = (mat as any)[prop];
+                      if (texture && texture instanceof THREE.Texture) {
+                        textureCount++;
+                        texture.needsUpdate = true;
+                        // Убеждаемся, что текстура загружена
+                        if (texture.image) {
+                          console.log(`[loadCharacterGLB] Mesh "${child.name}" has ${prop} texture:`, {
+                            width: texture.image.width,
+                            height: texture.image.height,
+                            loaded: texture.image.complete,
+                          });
+                        }
+                      }
+                    });
+                    
+                    // Если есть основная текстура (map), убеждаемся, что она правильно настроена
+                    if (mat.map && mat.map instanceof THREE.Texture) {
+                      mat.map.flipY = false; // GLTF использует flipY = false
+                      mat.map.needsUpdate = true;
+                      if (mat.map.image && !mat.map.image.complete) {
+                        // Если изображение еще загружается, ждем его
+                        mat.map.image.onload = () => {
+                          mat.map!.needsUpdate = true;
+                          mat.needsUpdate = true;
+                          console.log(`[loadCharacterGLB] Texture loaded for mesh "${child.name}"`);
+                        };
+                      }
+                    }
+                    
+                    // Логируем информацию о материале
+                    if (mat.color) {
+                      console.log(`[loadCharacterGLB] Mesh "${child.name}" material color:`, mat.color.getHexString());
+                    }
+                  }
+                });
+              }
             }
           });
+          
+          console.log(`[loadCharacterGLB] Total meshes found: ${meshCount}`);
+          console.log(`[loadCharacterGLB] Total textures found: ${textureCount}`);
+          console.log('[loadCharacterGLB] Scene materials check complete');
 
           // Создаем mixer для анимаций
           let mixer: THREE.AnimationMixer | null = null;
@@ -89,7 +203,9 @@ export async function loadCharacterGLB(
         }
       },
       (error) => {
+        console.error('GLTFLoader error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Failed to load character model from ${url}:`, errorMessage);
         reject(new Error(`Failed to load character model: ${errorMessage}`));
       }
     );

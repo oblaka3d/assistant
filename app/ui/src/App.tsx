@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
 import NavigationIndicators from './components/NavigationIndicators';
+import StatusBar from './components/StatusBar';
 import ChatScreen from './screens/ChatScreen';
 import MainScreen from './screens/MainScreen';
 import MenuScreen from './screens/MenuScreen';
@@ -95,11 +96,14 @@ function App() {
           position: 'relative',
         }}
       >
+        {/* Строка состояния */}
+        <StatusBar />
         <div
           style={{
             display: 'flex',
             width: '300%',
-            height: '100%',
+            height: 'calc(100vh - 24px)', // Вычитаем высоту строки состояния
+            marginTop: '24px', // Отступ сверху для строки состояния
             transform: `translateX(-${screenIndex * 33.333}%)`,
             transition: isTransitioning ? 'transform 0.3s ease-in-out' : 'none',
           }}

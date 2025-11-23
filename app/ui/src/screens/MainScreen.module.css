@@ -118,23 +118,25 @@
 }
 
 .sceneContainer {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   overflow: hidden;
-  min-height: 0;
+  z-index: 0;
 }
 
 .canvas {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
   display: block;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 1;
 }
 
@@ -168,32 +170,22 @@
   gap: 1rem;
 }
 
-.controls {
+/* Статус - верхний правый угол */
+.statusContainer {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 3rem 2rem;
-  padding-bottom: 3rem;
-  background: linear-gradient(
-    to top,
-    rgba(26, 26, 26, 0.98) 0%,
-    rgba(26, 26, 26, 0.85) 40%,
-    transparent 100%
-  );
+  top: 1.5rem;
+  right: 1.5rem;
   z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2.5rem;
 }
+
+/* Удаляем старый .controls, элементы теперь отдельно */
 
 .statusPaper {
   padding: 0.5rem 1rem;
-  background-color: rgba(45, 45, 45, 0.9);
+  background-color: rgba(45, 45, 45, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   min-width: 150px;
 }
 
@@ -225,16 +217,19 @@
 }
 
 .recordButtonContainer {
-  position: relative;
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
 }
 
 .recordRipple {
   position: absolute;
-  width: 140px;
-  height: 140px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: 2px solid rgba(231, 76, 60, 0.4);
   animation: recordingRipple 2s ease-out infinite;
@@ -250,18 +245,36 @@
   border-color: rgba(231, 76, 60, 0.2);
 }
 
+/* Настраиваемые переменные для кнопки */
 .recordButton {
+  /* Размеры кнопки */
+  --button-size: 80px;
+  --button-border-width: 2px;
+  
+  /* Прозрачность и цвета */
+  --button-bg-opacity: 0.5;
+  --button-border-opacity: 0.15;
+  --button-shadow-opacity: 0.2;
+  
+  /* Эффекты */
+  --button-blur: 15px;
+  
   position: relative;
-  width: 140px;
-  height: 140px;
-  min-width: 140px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
-  display: flex;
-  flex-direction: column;
+  width: var(--button-size) !important;
+  height: var(--button-size) !important;
+  min-width: var(--button-size) !important;
+  max-width: var(--button-size) !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: linear-gradient(
+    135deg,
+    rgba(74, 144, 226, var(--button-bg-opacity)) 0%,
+    rgba(53, 122, 189, var(--button-bg-opacity)) 100%
+  ) !important;
+  backdrop-filter: blur(var(--button-blur));
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
   font-size: 1.25rem;
   font-weight: 700;
   font-family:
@@ -270,15 +283,60 @@
     BlinkMacSystemFont,
     sans-serif;
   box-shadow:
-    0 8px 32px rgba(74, 144, 226, 0.4),
-    0 4px 16px rgba(0, 0, 0, 0.3);
+    0 8px 32px rgba(74, 144, 226, var(--button-shadow-opacity)),
+    0 4px 16px rgba(0, 0, 0, 0.15);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: var(--button-border-width) solid rgba(255, 255, 255, var(--button-border-opacity));
   z-index: 2;
+  overflow: hidden;
+  text-transform: none !important;
+  aspect-ratio: 1 / 1 !important;
+}
+
+/* Переопределение Material-UI стилей для круглой кнопки */
+.recordButton,
+.recordButton *,
+.recordButton::before,
+.recordButton::after,
+.recordButton .MuiButton-root,
+.recordButton .MuiButtonBase-root {
+  border-radius: 50% !important;
+  width: var(--button-size) !important;
+  height: var(--button-size) !important;
+  min-width: var(--button-size) !important;
+  max-width: var(--button-size) !important;
+}
+
+.recordButton.MuiButton-root {
+  border-radius: 50% !important;
+  min-width: var(--button-size) !important;
+  width: var(--button-size) !important;
+  height: var(--button-size) !important;
+  max-width: var(--button-size) !important;
+  padding: 0 !important;
+}
+
+/* Переопределяем стили Material-UI для круглой кнопки */
+.recordButton,
+.recordButton *,
+.recordButton::before,
+.recordButton::after,
+.recordButton .MuiButton-root,
+.recordButton .MuiButtonBase-root {
+  border-radius: 50% !important;
+  width: 80px !important;
+  height: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+/* Убираем стандартные скругления Material-UI */
+.recordButton.MuiButton-root {
+  border-radius: 50% !important;
 }
 
 .recordButton:hover {
-  background: linear-gradient(135deg, #357abd 0%, #2e6da4 100%);
+  background: linear-gradient(135deg, rgba(53, 122, 189, 0.6) 0%, rgba(46, 109, 164, 0.6) 100%);
   transform: scale(1.05);
 }
 
@@ -287,24 +345,32 @@
 }
 
 .recordButtonRecording {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.6) 0%, rgba(192, 57, 43, 0.6) 100%) !important;
   box-shadow:
-    0 8px 32px rgba(231, 76, 60, 0.6),
+    0 8px 32px rgba(231, 76, 60, 0.3),
     0 0 0 0 rgba(231, 76, 60, 0.7) !important;
   animation: pulseAnimation 1.5s ease-in-out infinite;
 }
 
 .recordButtonRecording:hover {
-  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%) !important;
+  background: linear-gradient(135deg, rgba(192, 57, 43, 0.7) 0%, rgba(169, 50, 38, 0.7) 100%) !important;
 }
 
 .recordButtonIcon {
-  font-size: 3rem;
+  width: 1.7rem !important;
+  height: 1.7rem !important;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transform-origin: center bottom;
+  transform-origin: center;
+  color: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s ease;
+}
+
+.recordButtonIcon svg {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .recordButtonIconRecording {
@@ -326,22 +392,25 @@
 }
 
 .textBlocks {
-  width: 100%;
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  max-width: 700px;
-  max-height: 220px;
+  gap: 1.5rem;
+  max-width: 400px;
+  max-height: 300px;
   overflow-y: auto;
-  padding: 0 2rem;
+  z-index: 10;
+  animation: fadeIn 0.3s ease-in;
 }
 
 .textBlock {
-  padding: 2rem;
-  background-color: rgba(45, 45, 45, 0.9);
+  padding: 1.5rem;
+  background-color: rgba(45, 45, 45, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
 }
 
 .textBlockLabel {
@@ -393,10 +462,9 @@
 
 /* Responsive */
 @media (max-width: 600px) {
-  .controls {
-    padding: 2rem 1.5rem;
-    padding-bottom: 2.5rem;
-    gap: 2rem;
+  .statusContainer {
+    top: 1rem;
+    right: 1rem;
   }
 
   .statusPaper {
@@ -408,34 +476,32 @@
     font-size: 0.875rem;
   }
 
+  .recordButtonContainer {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
   .recordRipple {
-    width: 120px;
-    height: 120px;
+    width: 70px;
+    height: 70px;
   }
 
   .recordButton {
-    width: 120px;
-    height: 120px;
-    min-width: 120px;
-    gap: 0.5rem;
-  }
-
-  .recordButtonIcon {
-    font-size: 2.5rem;
-  }
-
-  .recordButtonText {
-    font-size: 0.875rem;
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
   }
 
   .textBlocks {
-    gap: 1.5rem;
+    top: 1rem;
+    left: 1rem;
+    max-width: calc(100% - 100px);
+    gap: 1rem;
     max-height: 180px;
-    padding: 0 1rem;
   }
 
   .textBlock {
-    padding: 1.5rem;
+    padding: 1rem;
   }
 
   .textBlockLabel {
@@ -446,11 +512,5 @@
   .textBlockContent {
     font-size: 0.9375rem;
     min-height: 1.5rem;
-  }
-
-  .footer {
-    bottom: 0.5rem;
-    right: 1rem;
-    font-size: 0.65rem;
   }
 }

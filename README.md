@@ -18,7 +18,7 @@
 #### Linux
 
 ```bash
-# Установка ALSA утилит (для arecord/aplay)
+# Установка ALSTHREE.GLTFLoader: Couldn't load texture blob:file:///98810b56-bce7-4f73-b623-cbc943487f30A утилит (для arecord/aplay)
 sudo apt update
 sudo apt install -y alsa-utils alsa-base
 

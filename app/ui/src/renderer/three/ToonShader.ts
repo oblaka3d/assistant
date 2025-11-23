@@ -103,10 +103,19 @@ export function applyToonShader(
   outlineColor: THREE.Color = new THREE.Color(0, 0, 0),
   outlineThickness: number = 0.02
 ): void {
+  // Собираем все меши сначала, чтобы избежать рекурсии при добавлении дочерних элементов
+  const meshes: THREE.Mesh[] = [];
   object.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
+    if (child instanceof THREE.Mesh && !child.userData.isOutline) {
+      meshes.push(child);
+    }
+  });
+
+  // Применяем шейдер к каждому мешу
+  for (const mesh of meshes) {
+    try {
       // Сохраняем оригинальный материал
-      const originalMaterial = child.material;
+      const originalMaterial = mesh.material;
 
       // Создаем toon материал
       const toonMaterial = createToonMaterial(toonColor);
@@ -119,16 +128,20 @@ export function applyToonShader(
         toonMaterial.uniforms.uColor.value = originalMaterial.color.clone();
       }
 
-      child.material = toonMaterial;
+      mesh.material = toonMaterial;
 
       // Создаем outline mesh
-      const outlineMesh = child.clone();
+      const outlineMesh = mesh.clone();
       outlineMesh.material = createOutlineMaterial(outlineThickness, outlineColor);
       outlineMesh.scale.multiplyScalar(1.02); // Небольшое увеличение для outline
       outlineMesh.renderOrder = -1; // Рендерим outline первым
+      outlineMesh.userData.isOutline = true; // Помечаем как outline, чтобы не обрабатывать его снова
 
       // Добавляем outline как дочерний элемент
-      child.add(outlineMesh);
+      mesh.add(outlineMesh);
+    } catch (error) {
+      console.warn('[applyToonShader] Failed to apply shader to mesh:', error);
+      // Продолжаем обработку других мешей
     }
-  });
+  }
 }

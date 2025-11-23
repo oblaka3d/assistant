@@ -19,18 +19,23 @@ function getRecordCommand(): { command: string; args: string[] } {
   if (os === 'linux') {
     // Попробуем использовать arecord (ALSA), если доступен
     // Fallback на sox, если arecord недоступен
+    const args = [
+      '-f',
+      config.audio.format,
+      '-r',
+      sampleRate,
+      '-c',
+      channels,
+    ];
+    
+    // Добавляем -D только если device указан
+    if (config.audio.device) {
+      args.push('-D', config.audio.device);
+    }
+    
     return {
       command: 'arecord',
-      args: [
-        '-f',
-        config.audio.format,
-        '-r',
-        sampleRate,
-        '-c',
-        channels,
-        '-D',
-        config.audio.device,
-      ],
+      args,
     };
   } else if (os === 'darwin') {
     // macOS: используем sox или coreaudio через sox
@@ -86,18 +91,23 @@ function getPlayCommand(): { command: string; args: string[] } {
 
   if (os === 'linux') {
     // Попробуем использовать aplay (ALSA), если доступен
+    const args = [
+      '-f',
+      config.audio.format,
+      '-r',
+      sampleRate,
+      '-c',
+      channels,
+    ];
+    
+    // Добавляем -D только если device указан
+    if (config.audio.device) {
+      args.push('-D', config.audio.device);
+    }
+    
     return {
       command: 'aplay',
-      args: [
-        '-f',
-        config.audio.format,
-        '-r',
-        sampleRate,
-        '-c',
-        channels,
-        '-D',
-        config.audio.device,
-      ],
+      args,
     };
   } else if (os === 'darwin') {
     // macOS: используем sox или afplay через такую конструкцию

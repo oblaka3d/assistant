@@ -10,9 +10,21 @@ export default defineConfig({
   build: {
     outDir: '../../dist/app/ui',
     emptyOutDir: true,
+    copyPublicDir: true, // Явно указываем, что нужно копировать public директорию
+    chunkSizeWarningLimit: 1000, // Увеличиваем лимит для THREE.js
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'app/ui/index.html'),
+      },
+      output: {
+        manualChunks: {
+          // Выделяем THREE.js в отдельный чанк
+          'three': ['three'],
+          // Выделяем Material-UI в отдельный чанк
+          'mui': ['@mui/material', '@mui/icons-material'],
+          // Выделяем React в отдельный чанк
+          'react-vendor': ['react', 'react-dom', 'react-redux'],
+        },
       },
     },
   },
@@ -24,5 +36,5 @@ export default defineConfig({
   server: {
     port: 3000,
   },
-  publicDir: 'app/ui/public',
+  publicDir: 'public', // Относительно root (app/ui)
 });

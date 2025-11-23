@@ -1,8 +1,10 @@
 import { Box, Button, Typography, Paper } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
 import React, { useEffect, useRef } from 'react';
 
 import { initCharacterScene, CharacterScene } from '../renderer/main';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { addMessage } from '../store/slices/chatSlice';
 import {
   setAssistantText,
   setIsLoading,
@@ -28,7 +30,12 @@ const MainScreen: React.FC = () => {
     useAppSelector((state) => state.voice);
 
   useEffect(() => {
+    console.log('[MainScreen] useEffect triggered');
+    console.log('[MainScreen] canvasRef.current:', canvasRef.current);
+    console.log('[MainScreen] containerRef.current:', containerRef.current);
+    
     if (!canvasRef.current) {
+      console.warn('[MainScreen] Canvas element not found');
       dispatch(setIsLoading(false));
       dispatch(setLoadError(true));
       dispatch(setStatus('Готов к работе (без персонажа)' as VoiceStatus));
@@ -41,7 +48,7 @@ const MainScreen: React.FC = () => {
       try {
         dispatch(setIsLoading(true));
         dispatch(setLoadError(false));
-
+        
         // Таймаут для скрытия индикатора загрузки
         loadingTimeoutRef.current = setTimeout(() => {
           if (isMounted) {
@@ -52,8 +59,25 @@ const MainScreen: React.FC = () => {
         }, 3000);
 
         // Определяем путь к модели персонажа
-        const modelPath = '/assets/models/character.glb';
-
+        // В Electron файлы из public копируются в корень dist/app/ui/
+        // В Electron с loadFile() пути должны быть относительно HTML файла
+        // Используем относительный путь - GLTFLoader сам обработает его правильно
+        let modelPath = './assets/models/character.glb';
+        
+        // Для file:// протокола можно использовать относительный путь
+        // GLTFLoader автоматически создаст правильный абсолютный URL
+        console.log('[MainScreen] Using relative path for model:', modelPath);
+        
+        console.log('[MainScreen] Starting character scene initialization');
+        console.log('[MainScreen] Model path:', modelPath);
+        console.log('[MainScreen] Window location:', {
+          href: window.location.href,
+          protocol: window.location.protocol,
+          pathname: window.location.pathname,
+          origin: window.location.origin,
+        });
+        console.log('[MainScreen] Canvas element:', canvasRef.current);
+        
         // Создаем THREE.js сцену
         const scene = await initCharacterScene({
           canvas: canvasRef.current!,
@@ -61,7 +85,7 @@ const MainScreen: React.FC = () => {
           onProgress: (progress) => {
             console.log('Character loading progress:', Math.round(progress * 100) + '%');
           },
-          enableToonShader: true,
+          enableToonShader: false, // Отключаем toon shader, используем оригинальные материалы модели
         });
 
         if (!isMounted) {
@@ -74,7 +98,7 @@ const MainScreen: React.FC = () => {
         dispatch(setSceneReady(scene.ready));
         dispatch(setIsLoading(false));
         dispatch(setStatus('Готов к работе' as VoiceStatus));
-
+        
         // Очищаем таймаут
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
@@ -87,7 +111,7 @@ const MainScreen: React.FC = () => {
         console.log('Character scene loaded successfully');
       } catch (error) {
         if (!isMounted) return;
-
+        
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn('Failed to load character scene, continuing without it:', errorMessage);
 
@@ -105,18 +129,32 @@ const MainScreen: React.FC = () => {
     loadScene();
 
     // Настройка ResizeObserver для изменения размера канваса
-    if (containerRef.current && canvasRef.current) {
-      resizeObserverRef.current = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          if (sceneRef.current && width > 0 && height > 0) {
-            sceneRef.current.resize(width, height);
+    // Используем небольшую задержку, чтобы убедиться, что canvas уже в DOM
+    const setupResizeObserver = () => {
+      if (containerRef.current && canvasRef.current) {
+        resizeObserverRef.current = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const { width, height } = entry.contentRect;
+            if (sceneRef.current && width > 0 && height > 0) {
+              console.log('[MainScreen] Container resized to:', width, 'x', height);
+              sceneRef.current.resize(width, height);
+            }
           }
-        }
-      });
+        });
 
-      resizeObserverRef.current.observe(containerRef.current);
-    }
+        resizeObserverRef.current.observe(containerRef.current);
+        
+        // Также следим за canvas напрямую
+        if (canvasRef.current) {
+          resizeObserverRef.current.observe(canvasRef.current);
+        }
+      } else {
+        // Повторяем попытку, если элементы еще не готовы
+        setTimeout(setupResizeObserver, 100);
+      }
+    };
+
+    setupResizeObserver();
 
     // Очистка при размонтировании
     return () => {
@@ -189,17 +227,41 @@ const MainScreen: React.FC = () => {
           return;
         }
 
-        // Получить ответ от ассистента
+        // Добавляем сообщение пользователя в чат
+        dispatch(
+          addMessage({
+            id: Date.now().toString(),
+            position: 'right',
+            type: 'text',
+            text: transcribedText,
+            date: new Date(),
+          })
+        );
+          
+          // Получить ответ от ассистента
         dispatch(setStatus('Генерация ответа...' as VoiceStatus));
         const response = await window.api.askLLM(transcribedText);
         dispatch(setAssistantText(response || '—'));
 
-        // Воспроизвести ответ
+        // Добавляем ответ ассистента в чат
+        if (response) {
+          dispatch(
+            addMessage({
+              id: (Date.now() + 1).toString(),
+              position: 'left',
+              type: 'text',
+              text: response,
+              date: new Date(),
+            })
+          );
+        }
+          
+          // Воспроизвести ответ
         dispatch(setStatus('Отвечаю...' as VoiceStatus));
         if (sceneRef.current) {
           sceneRef.current.playTalking();
-        }
-
+          }
+          
         await window.api.speak(response);
 
         dispatch(setStatus('Готов к работе' as VoiceStatus));
@@ -216,7 +278,9 @@ const MainScreen: React.FC = () => {
         }
       }
     } else {
-      // Начать запись
+      // Начать запись - очищаем предыдущие тексты
+      dispatch(setUserText('—'));
+      dispatch(setAssistantText('—'));
       dispatch(setIsRecording(true));
       dispatch(setStatus('Слушаю...' as VoiceStatus));
 
@@ -226,7 +290,7 @@ const MainScreen: React.FC = () => {
         // Небольшая анимация головы при начале записи
         sceneRef.current.playHeadNod();
       }
-
+      
       try {
         await window.api.startRecord();
       } catch (error) {
@@ -265,14 +329,14 @@ const MainScreen: React.FC = () => {
 
       {/* THREE.js контейнер */}
       <Box ref={containerRef} className={styles.sceneContainer}>
-        {sceneReady ? (
-          <>
-            <canvas ref={canvasRef} className={styles.canvas} />
-            {/* Подсветка вокруг персонажа */}
-            <Box className={styles.glow} />
-          </>
-        ) : (
-          // Placeholder, если персонаж не загрузился
+        {/* Canvas всегда рендерится для инициализации THREE.js */}
+        <canvas ref={canvasRef} className={styles.canvas} />
+        
+        {/* Подсветка вокруг персонажа (только если сцена готова) */}
+        {sceneReady && <Box className={styles.glow} />}
+        
+        {/* Placeholder, если персонаж не загрузился */}
+        {loadError && !sceneReady && (
           <Box className={styles.placeholder}>
             <Typography variant="h4" sx={{ opacity: 0.3, fontFamily: "'Inter', sans-serif" }}>
               🎭
@@ -287,75 +351,74 @@ const MainScreen: React.FC = () => {
         )}
       </Box>
 
-      {/* Блок управления */}
-      <Box className={styles.controls}>
-        {/* Статус */}
+      {/* Статус - верхний правый угол (скрыт) */}
+      {/* <Box className={styles.statusContainer}>
         <Paper elevation={3} className={styles.statusPaper}>
           <Typography variant="body2" className={`${styles.statusText} ${getStatusClassName()}`}>
             {status}
           </Typography>
         </Paper>
+      </Box> */}
 
-        {/* Анимированная кнопка записи */}
-        <Box className={styles.recordButtonContainer}>
-          {/* Ripple эффекты при записи */}
-          {isRecording && (
-            <>
-              <Box className={styles.recordRipple} />
-              <Box className={styles.recordRipple} />
-              <Box className={styles.recordRipple} />
-            </>
+      {/* Текстовые блоки - нижний левый угол (показываются только при наличии текста) */}
+      {(userText !== '—' || assistantText !== '—') && (
+        <Box className={styles.textBlocks}>
+          {/* Показываем "Вы сказали" только если есть распознанный текст И нет ответа (во время обработки) */}
+          {userText !== '—' && assistantText === '—' && (
+            <Paper elevation={3} className={styles.textBlock}>
+              <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
+                Вы сказали:
+              </Typography>
+              <Typography
+                variant="body1"
+                className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn}`}
+              >
+                {userText}
+              </Typography>
+            </Paper>
           )}
 
-          <Button
-            onClick={handleRecord}
-            variant="contained"
-            disableRipple
-            className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
-          >
-            {/* Иконка микрофона с анимацией */}
-            <Box
-              component="span"
+          {/* Показываем "Ответ" только если есть ответ от ассистента */}
+          {assistantText !== '—' && (
+            <Paper elevation={3} className={styles.textBlock}>
+              <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
+                Ответ:
+              </Typography>
+              <Typography
+                variant="body1"
+                className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn}`}
+              >
+                {assistantText}
+              </Typography>
+            </Paper>
+          )}
+        </Box>
+      )}
+
+      {/* Кнопка записи - нижний правый угол */}
+      <Box className={styles.recordButtonContainer}>
+        {/* Ripple эффекты при записи */}
+        {isRecording && (
+          <>
+            <Box className={styles.recordRipple} />
+            <Box className={styles.recordRipple} />
+            <Box className={styles.recordRipple} />
+          </>
+        )}
+
+        <Button
+          onClick={handleRecord}
+          variant="contained"
+          disableRipple
+          className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
+          title={isRecording ? 'Запись...' : 'Говорить'}
+        >
+          {/* Иконка микрофона с анимацией */}
+          <MicIcon
               className={`${styles.recordButtonIcon} ${isRecording ? styles.recordButtonIconRecording : ''}`}
-            >
-              🎤
-            </Box>
-            <Typography component="span" className={styles.recordButtonText}>
-              {isRecording ? 'Запись...' : 'Говорить'}
-            </Typography>
-          </Button>
-        </Box>
-
-        {/* Текстовые блоки */}
-        <Box className={styles.textBlocks}>
-          <Paper elevation={3} className={styles.textBlock}>
-            <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
-              Вы сказали:
-            </Typography>
-            <Typography
-              variant="body1"
-              className={`${styles.textBlockContent} ${userText !== '—' ? styles.textBlockContentFadeIn : ''}`}
-            >
-              {userText}
-            </Typography>
-          </Paper>
-
-          <Paper elevation={3} className={styles.textBlock}>
-            <Typography variant="caption" color="text.secondary" className={styles.textBlockLabel}>
-              Ответ:
-            </Typography>
-            <Typography
-              variant="body1"
-              className={`${styles.textBlockContent} ${assistantText !== '—' ? styles.textBlockContentFadeIn : ''}`}
-            >
-              {assistantText}
-            </Typography>
-          </Paper>
-        </Box>
+            />
+        </Button>
       </Box>
-
-      {/* Футер */}
-      <Box className={styles.footer}>ARM Voice Assistant v1.0</Box>
     </Box>
   );
 };
