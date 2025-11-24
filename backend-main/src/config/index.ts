@@ -29,4 +29,24 @@ export const config = {
   security: {
     apiKeySecret: process.env.API_KEY_SECRET || 'change-this-api-key-secret',
   },
+
+  oauth: {
+    google: {
+      clientID: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || '/api/v1/auth/google/callback',
+    },
+    yandex: {
+      clientID: process.env.YANDEX_CLIENT_ID || '',
+      clientSecret: process.env.YANDEX_CLIENT_SECRET || '',
+      callbackURL: process.env.YANDEX_CALLBACK_URL || '/api/v1/auth/yandex/callback',
+    },
+    github: {
+      clientID: process.env.GITHUB_CLIENT_ID || '',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+      callbackURL: process.env.GITHUB_CALLBACK_URL || '/api/v1/auth/github/callback',
+    },
+    sessionSecret:
+      process.env.SESSION_SECRET || 'your-super-secret-session-key-change-in-production',
+  },
 };

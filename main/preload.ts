@@ -69,4 +69,8 @@ contextBridge.exposeInMainWorld('api', {
   getLLMProviderInfo: (): Promise<{ provider: string; model: string | null; name: string }> => {
     return ipcRenderer.invoke('getLLMProviderInfo');
   },
+  // OAuth
+  openOAuthWindow: (url: string): Promise<{ token: string; refreshToken: string }> => {
+    return ipcRenderer.invoke('openOAuthWindow', url);
+  },
 });

@@ -26,6 +26,7 @@ export const fetchSettings = createAsyncThunk<SettingsData, void, { rejectValue:
         theme: settingsData.theme || 'system',
         sttProviderName: settingsData.sttProviderName || null,
         llmProviderName: settingsData.llmProviderName || null,
+        llmModel: settingsData.llmModel || null,
         ttsProviderName: settingsData.ttsProviderName || null,
         modelScene: {
           modelPath: settingsData.modelScene.modelPath,
@@ -66,6 +67,7 @@ export const saveSettings = createAsyncThunk<
       theme: settingsData.theme || 'system',
       sttProviderName: settingsData.sttProviderName || null,
       llmProviderName: settingsData.llmProviderName || null,
+      llmModel: settingsData.llmModel || null,
       ttsProviderName: settingsData.ttsProviderName || null,
       modelScene: {
         modelPath: settingsData.modelScene.modelPath,

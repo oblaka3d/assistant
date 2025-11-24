@@ -1,19 +1,22 @@
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
+import { lazy, Suspense, useEffect, useRef, useMemo, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
 import NavigationIndicators from './components/NavigationIndicators';
 import StatusBar from './components/StatusBar';
 import { TIMEOUTS, DEFAULTS } from './constants/app';
 import { useLanguage } from './hooks/useLanguage';
-import ChatScreen from './screens/ChatScreen/ChatScreen';
-import MainScreen from './screens/MainScreen/MainScreen';
-import MenuScreen from './screens/MenuScreen/MenuScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setLLMProviderName } from './store/slices/settingsSlice';
 import { navigateNext, navigatePrev, setTransitioning } from './store/slices/uiSlice';
+import { oauthLogin } from './store/thunks/userThunks';
 import { createLogger } from './utils/logger';
 import { createAppTheme } from './utils/theme';
+
+// Ленивая загрузка экранов для улучшения производительности
+const ChatScreen = lazy(() => import('./screens/ChatScreen/ChatScreen'));
+const MainScreen = lazy(() => import('./screens/MainScreen/MainScreen'));
+const MenuScreen = lazy(() => import('./screens/MenuScreen/MenuScreen'));
 
 const log = createLogger('App');
 
@@ -77,6 +80,60 @@ function App() {
 
   // Синхронизация языка из Redux с i18n
   useLanguage();
+
+  // Обработка OAuth callback
+  useEffect(() => {
+    // Обработка токенов из URL параметров
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const refreshToken = urlParams.get('refreshToken');
+
+    if (token && refreshToken) {
+      // Очищаем URL от параметров
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Выполняем OAuth авторизацию
+      dispatch(oauthLogin({ token, refreshToken }))
+        .unwrap()
+        .then(() => {
+          log.debug('OAuth login successful');
+        })
+        .catch((error) => {
+          log.error('OAuth login failed:', error);
+        });
+      return;
+    }
+
+    // Обработка postMessage от OAuth callback страницы
+    const handleMessage = (event: MessageEvent) => {
+      // Проверяем origin для безопасности (разрешаем сообщения от backend)
+      const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const baseOrigin = apiBaseUrl.replace('/api/v1', '');
+
+      if (event.origin.startsWith(baseOrigin) || event.origin === 'null') {
+        try {
+          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+          if (data.type === 'oauth-callback' && data.token && data.refreshToken) {
+            dispatch(oauthLogin({ token: data.token, refreshToken: data.refreshToken }))
+              .unwrap()
+              .then(() => {
+                log.debug('OAuth login successful via postMessage');
+              })
+              .catch((error) => {
+                log.error('OAuth login failed:', error);
+              });
+          }
+        } catch {
+          // Игнорируем ошибки парсинга
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [dispatch]);
 
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
@@ -176,13 +233,61 @@ function App() {
           }}
         >
           <div style={{ width: `${100 / DEFAULTS.SCREEN_COUNT}%`, height: '100%', flexShrink: 0 }}>
-            <ChatScreen />
+            <Suspense
+              fallback={
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              }
+            >
+              <ChatScreen />
+            </Suspense>
           </div>
           <div style={{ width: `${100 / DEFAULTS.SCREEN_COUNT}%`, height: '100%', flexShrink: 0 }}>
-            <MainScreen />
+            <Suspense
+              fallback={
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              }
+            >
+              <MainScreen />
+            </Suspense>
           </div>
           <div style={{ width: `${100 / DEFAULTS.SCREEN_COUNT}%`, height: '100%', flexShrink: 0 }}>
-            <MenuScreen />
+            <Suspense
+              fallback={
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              }
+            >
+              <MenuScreen />
+            </Suspense>
           </div>
         </div>
         {/* Индикаторы навигации */}

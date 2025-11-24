@@ -9,6 +9,10 @@ export interface APIProvider {
   description: string;
   requiresApiKey: boolean;
   apiKeyName?: string;
+  models?: Array<{
+    id: string;
+    name: string;
+  }>;
   additionalFields?: Array<{
     name: string;
     label: string;
@@ -66,6 +70,13 @@ export const API_PROVIDERS: APIProvider[] = [
     description: 'Генерация ответов через OpenAI GPT',
     requiresApiKey: true,
     apiKeyName: 'OPENAI_API_KEY',
+    models: [
+      { id: 'gpt-4o', name: 'GPT-4o' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+      { id: 'gpt-4', name: 'GPT-4' },
+      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
+    ],
   },
   {
     id: 'yandex_gpt',
@@ -74,6 +85,10 @@ export const API_PROVIDERS: APIProvider[] = [
     description: 'Генерация ответов через Yandex GPT',
     requiresApiKey: true,
     apiKeyName: 'YANDEX_GPT_KEY',
+    models: [
+      { id: 'yandexgpt/latest', name: 'Yandex GPT (latest)' },
+      { id: 'yandexgpt-lite/latest', name: 'Yandex GPT Lite (latest)' },
+    ],
     additionalFields: [
       {
         name: 'folderId',
@@ -90,6 +105,13 @@ export const API_PROVIDERS: APIProvider[] = [
     description: 'Генерация ответов через Anthropic Claude',
     requiresApiKey: true,
     apiKeyName: 'ANTHROPIC_API_KEY',
+    models: [
+      { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet' },
+      { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku' },
+      { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
+      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
+      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' },
+    ],
   },
   // TTS Providers
   {

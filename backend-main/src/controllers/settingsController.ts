@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { body, validationResult } from 'express-validator';
 
 import { AuthRequest } from '../middleware/auth';
@@ -11,18 +11,19 @@ import {
 /**
  * Получение настроек пользователя
  */
-export const getSettingsController = async (
-  req: AuthRequest,
+export const getSettingsController: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
-    const settings = await getOrCreateSettings(req.user.userId);
+    const settings = await getOrCreateSettings(authReq.user.userId);
 
     res.status(200).json({
       success: true,
@@ -33,6 +34,7 @@ export const getSettingsController = async (
           theme: settings.theme,
           sttProviderName: settings.sttProviderName,
           llmProviderName: settings.llmProviderName,
+          llmModel: settings.llmModel,
           ttsProviderName: settings.ttsProviderName,
           modelScene: {
             modelPath: settings.modelScene.modelPath,
@@ -53,13 +55,14 @@ export const getSettingsController = async (
 /**
  * Обновление настроек пользователя
  */
-export const updateSettingsController = async (
-  req: AuthRequest,
+export const updateSettingsController: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
@@ -88,6 +91,9 @@ export const updateSettingsController = async (
     if (req.body.llmProviderName !== undefined) {
       updateData.llmProviderName = req.body.llmProviderName;
     }
+    if (req.body.llmModel !== undefined) {
+      updateData.llmModel = req.body.llmModel;
+    }
     if (req.body.ttsProviderName !== undefined) {
       updateData.ttsProviderName = req.body.ttsProviderName;
     }
@@ -95,7 +101,7 @@ export const updateSettingsController = async (
       updateData.modelScene = req.body.modelScene;
     }
 
-    const settings = await updateSettings(req.user.userId, updateData);
+    const settings = await updateSettings(authReq.user.userId, updateData);
 
     res.status(200).json({
       success: true,
@@ -106,6 +112,7 @@ export const updateSettingsController = async (
           theme: settings.theme,
           sttProviderName: settings.sttProviderName,
           llmProviderName: settings.llmProviderName,
+          llmModel: settings.llmModel,
           ttsProviderName: settings.ttsProviderName,
           modelScene: {
             modelPath: settings.modelScene.modelPath,
@@ -154,6 +161,14 @@ export const validateUpdateSettings = [
         return true;
       }
       throw new Error('llmProviderName must be a string or null');
+    }),
+  body('llmModel')
+    .optional()
+    .custom((value) => {
+      if (value === null || value === undefined || typeof value === 'string') {
+        return true;
+      }
+      throw new Error('llmModel must be a string or null');
     }),
   body('ttsProviderName')
     .optional()

@@ -15,6 +15,7 @@ interface SettingsState {
   theme: 'light' | 'dark' | 'system';
   sttProviderName: string | null; // Название выбранного STT провайдера
   llmProviderName: string | null; // Название выбранного LLM провайдера
+  llmModel: string | null; // Название выбранной LLM модели
   ttsProviderName: string | null; // Название выбранного TTS провайдера
   modelScene: ModelSceneSettings;
 }
@@ -25,6 +26,7 @@ const initialState: SettingsState = {
   theme: 'system', // По умолчанию системная тема
   sttProviderName: null, // Будет загружено при инициализации
   llmProviderName: null, // Будет загружено при инициализации
+  llmModel: null, // Будет загружено при инициализации
   ttsProviderName: null, // Будет загружено при инициализации
   modelScene: {
     modelPath: './assets/models/character.glb',
@@ -72,6 +74,13 @@ const settingsSlice = createSlice({
     },
     setLLMProviderName: (state, action: PayloadAction<string | null>) => {
       state.llmProviderName = action.payload;
+      // Сбрасываем модель при смене провайдера
+      if (action.payload === null) {
+        state.llmModel = null;
+      }
+    },
+    setLLMModel: (state, action: PayloadAction<string | null>) => {
+      state.llmModel = action.payload;
     },
     setTTSProviderName: (state, action: PayloadAction<string | null>) => {
       state.ttsProviderName = action.payload;
@@ -90,6 +99,7 @@ export const {
   setTheme,
   setSTTProviderName,
   setLLMProviderName,
+  setLLMModel,
   setTTSProviderName,
   setModelPath,
   setSceneName,

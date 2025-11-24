@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import 'react-chat-elements/dist/main.css';
 
 import ScreenHeader from '../../components/ScreenHeader';
+import { API_PROVIDERS } from '../../constants/apiProviders';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { clearInput, setInputValue, toggleDialogPanel } from '../../store/slices/chatSlice';
 import {
@@ -32,7 +33,7 @@ const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { dialogs, currentDialogId, inputValue } = useAppSelector((state) => state.chat);
-  const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
+  const { llmProviderName, llmModel } = useAppSelector((state) => state.settings);
   const isRecording = useAppSelector((state) => state.voice.isRecording);
   const messageListRef = useRef<MessageListRef | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -93,8 +94,28 @@ const ChatScreen: React.FC = () => {
     }
   };
 
-  // Формируем заголовок с названием LLM модели
-  const chatTitle = llmProviderName ? `${t('chat.title')} - ${llmProviderName}` : t('chat.title');
+  // Формируем заголовок с названием LLM провайдера и модели
+  const chatTitle = useMemo(() => {
+    if (!llmProviderName) {
+      return t('chat.title');
+    }
+
+    // Получаем информацию о провайдере и модели
+    const provider = API_PROVIDERS.find((p) => p.id === llmProviderName);
+
+    if (!provider) {
+      return `${t('chat.title')} - ${llmProviderName}`;
+    }
+
+    if (llmModel && provider.models) {
+      const model = provider.models.find((m) => m.id === llmModel);
+      if (model) {
+        return `${t('chat.title')} - ${provider.name} (${model.name})`;
+      }
+    }
+
+    return `${t('chat.title')} - ${provider.name}`;
+  }, [llmProviderName, llmModel, t]);
 
   const handleTogglePanel = () => {
     dispatch(toggleDialogPanel());

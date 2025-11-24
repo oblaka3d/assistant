@@ -58,6 +58,28 @@ function createWindow(): void {
   console.log('File exists:', fs.existsSync(htmlPath));
   console.log('Is dev mode:', isDev);
 
+  // Обработка OAuth callback - перехватываем навигацию на callback URL с токенами
+  mainWindow.webContents.on('did-navigate', (_event, url) => {
+    if (!mainWindow) return;
+
+    try {
+      const urlObj = new URL(url);
+      const token = urlObj.searchParams.get('token');
+      const refreshToken = urlObj.searchParams.get('refreshToken');
+
+      // Если это OAuth callback с токенами, загружаем index.html с токенами
+      if (token && refreshToken && urlObj.pathname.includes('/auth/')) {
+        const htmlPath = path.join(__dirname, '../ui-electron/index.html');
+        const callbackUrl = `file://${htmlPath}?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken)}`;
+        mainWindow.loadURL(callbackUrl).catch((error) => {
+          console.error('Error loading OAuth callback:', error);
+        });
+      }
+    } catch {
+      // Игнорируем ошибки парсинга URL
+    }
+  });
+
   // Логирование ошибок загрузки
   mainWindow.webContents.on(
     'did-fail-load',

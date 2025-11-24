@@ -1,6 +1,12 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import { register as apiRegister, login as apiLogin, getCurrentUser } from '../../utils/api';
+import {
+  register as apiRegister,
+  login as apiLogin,
+  getCurrentUser,
+  saveToken,
+  saveRefreshToken,
+} from '../../utils/api';
 import type { RegisterRequest, LoginRequest } from '../../utils/api';
 import type { User } from '../types/user';
 
@@ -83,3 +89,35 @@ export const fetchCurrentUser = createAsyncThunk<User, void, { rejectValue: stri
     }
   }
 );
+
+/**
+ * OAuth авторизация (сохранение токенов из callback)
+ */
+export const oauthLogin = createAsyncThunk<
+  User,
+  { token: string; refreshToken: string },
+  { rejectValue: string }
+>('user/oauthLogin', async ({ token, refreshToken }, { dispatch, rejectWithValue }) => {
+  try {
+    // Сохраняем токены
+    saveToken(token);
+    saveRefreshToken(refreshToken);
+
+    // Получаем информацию о пользователе
+    const response = await getCurrentUser();
+    const user = {
+      id: response.data.user.id,
+      email: response.data.user.email,
+      username: response.data.user.email.split('@')[0],
+      name: response.data.user.name,
+      displayName: response.data.user.name,
+    };
+
+    // Загружаем настройки после успешной авторизации
+    await dispatch(fetchSettings());
+
+    return user;
+  } catch (error) {
+    return rejectWithValue((error as Error).message);
+  }
+});

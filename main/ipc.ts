@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 
 import type { OpenAIConfig, YandexGPTConfig, AnthropicConfig } from '../backend-electron/config';
 import { checkDependencies } from '../backend-electron/dependency-checker';
@@ -169,4 +169,80 @@ export function setupIPC(): void {
       };
     }, 'getLogFileInfo')
   );
+
+  // OAuth окно
+  ipcMain.handle(
+    'openOAuthWindow',
+    createIPCHandler(async (_event, url: string) => {
+      return new Promise((resolve, reject) => {
+        const oauthWindow = new BrowserWindow({
+          width: 500,
+          height: 600,
+          show: true,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true,
+          },
+        });
+
+        // Отслеживаем навигацию для обнаружения callback
+        oauthWindow.webContents.on('will-redirect', (_event, navigationUrl) => {
+          handleOAuthCallback(navigationUrl, oauthWindow, resolve, reject);
+        });
+
+        // Отслеживаем изменения URL
+        oauthWindow.webContents.on('did-navigate', (_event, navigationUrl) => {
+          handleOAuthCallback(navigationUrl, oauthWindow, resolve, reject);
+        });
+
+        // Отслеживаем навигацию внутри страницы (для hash changes)
+        oauthWindow.webContents.on('did-navigate-in-page', (_event, navigationUrl) => {
+          handleOAuthCallback(navigationUrl, oauthWindow, resolve, reject);
+        });
+
+        oauthWindow.on('closed', () => {
+          reject(new Error('OAuth window was closed'));
+        });
+
+        oauthWindow.loadURL(url).catch((error) => {
+          reject(error);
+        });
+      });
+    }, 'openOAuthWindow')
+  );
+}
+
+function handleOAuthCallback(
+  url: string,
+  window: BrowserWindow,
+  resolve: (value: { token: string; refreshToken: string }) => void,
+  reject: (error: Error) => void
+): void {
+  try {
+    const urlObj = new URL(url);
+
+    // Проверяем, является ли это callback URL (может быть /auth/callback или полный путь)
+    const isCallbackPath = urlObj.pathname.includes('/auth/callback');
+    const hasTokens = urlObj.searchParams.has('token') && urlObj.searchParams.has('refreshToken');
+
+    if (isCallbackPath && hasTokens) {
+      const token = urlObj.searchParams.get('token');
+      const refreshToken = urlObj.searchParams.get('refreshToken');
+
+      if (token && refreshToken) {
+        // Небольшая задержка перед закрытием, чтобы пользователь видел успешный результат
+        setTimeout(() => {
+          window.close();
+          resolve({ token, refreshToken });
+        }, 500);
+      } else {
+        reject(new Error('OAuth callback missing tokens'));
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch {
+    // Игнорируем ошибки парсинга URL (это может быть не наш callback)
+    // Это нормально, так как мы отслеживаем все навигации
+  }
 }

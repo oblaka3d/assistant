@@ -1,17 +1,22 @@
-import { NextFunction, Response } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 
 import { AuthRequest } from '../middleware/auth';
 import { getApiKeys, saveApiKeys } from '../services/apiKeyService';
 
-export const getApiKeysController = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getApiKeysController: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
-    const keys = await getApiKeys(req.user.userId);
+    const keys = await getApiKeys(authReq.user.userId);
     res.json({
       success: true,
       data: {
@@ -23,13 +28,14 @@ export const getApiKeysController = async (req: AuthRequest, res: Response, next
   }
 };
 
-export const saveApiKeysController = async (
-  req: AuthRequest,
+export const saveApiKeysController: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
@@ -41,7 +47,7 @@ export const saveApiKeysController = async (
     }
 
     const keys = (req.body.keys || {}) as Record<string, string>;
-    const saved = await saveApiKeys(req.user.userId, keys);
+    const saved = await saveApiKeys(authReq.user.userId, keys);
 
     res.json({
       success: true,

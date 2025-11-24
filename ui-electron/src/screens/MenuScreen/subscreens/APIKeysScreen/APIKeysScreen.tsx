@@ -29,6 +29,7 @@ import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setSTTProviderName,
   setLLMProviderName,
+  setLLMModel,
   setTTSProviderName,
 } from '../../../../store/slices/settingsSlice';
 import { saveSettings } from '../../../../store/thunks/settingsThunks';
@@ -42,7 +43,7 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { keys: remoteKeys, isLoading, error, saveAPIKeys } = useApiKeys();
-  const { sttProviderName, llmProviderName, ttsProviderName } = useAppSelector(
+  const { sttProviderName, llmProviderName, llmModel, ttsProviderName } = useAppSelector(
     (state) => state.settings
   );
 
@@ -55,6 +56,16 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
     setLocalKeys(remoteKeys || {});
   }, [remoteKeys]);
 
+  // Автоматически выбираем первую модель, если провайдер выбран, но модель не выбрана
+  useEffect(() => {
+    if (llmProviderName && !llmModel) {
+      const provider = getProvidersByCategory('llm').find((p) => p.id === llmProviderName);
+      if (provider?.models && provider.models.length > 0) {
+        dispatch(setLLMModel(provider.models[0].id));
+      }
+    }
+  }, [llmProviderName, llmModel, dispatch]);
+
   const handleKeyChange = (keyName: string, value: string) => {
     setLocalKeys((prev) => ({
       ...prev,
@@ -66,11 +77,12 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
   const handleSave = async () => {
     const success = await saveAPIKeys(localKeys);
     if (success) {
-      // Также сохраняем выбранные провайдеры
+      // Также сохраняем выбранные провайдеры и модель
       await dispatch(
         saveSettings({
           sttProviderName,
           llmProviderName,
+          llmModel,
           ttsProviderName,
         })
       ).unwrap();
@@ -92,9 +104,25 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
       dispatch(setSTTProviderName(newProviderId));
     } else if (category === 'llm') {
       dispatch(setLLMProviderName(newProviderId));
+      // Сбрасываем модель при смене провайдера
+      if (newProviderId === null) {
+        dispatch(setLLMModel(null));
+      } else {
+        // Устанавливаем первую модель по умолчанию, если есть
+        const provider = getProvidersByCategory('llm').find((p) => p.id === newProviderId);
+        if (provider?.models && provider.models.length > 0) {
+          dispatch(setLLMModel(provider.models[0].id));
+        }
+      }
     } else if (category === 'tts') {
       dispatch(setTTSProviderName(newProviderId));
     }
+    setSaveSuccess(false);
+  };
+
+  const handleModelChange = (modelId: string) => {
+    const newModelId = modelId === '' ? null : modelId;
+    dispatch(setLLMModel(newModelId));
     setSaveSuccess(false);
   };
 
@@ -105,7 +133,7 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
     return null;
   };
 
-  const renderProviderFields = (provider: APIProvider | null) => {
+  const renderProviderFields = (provider: APIProvider | null, category: 'stt' | 'llm' | 'tts') => {
     if (!provider) return null;
     if (!provider.requiresApiKey) {
       return (
@@ -121,6 +149,28 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
 
     return (
       <Box sx={{ mt: 2 }}>
+        {/* Выбор модели для LLM провайдеров */}
+        {category === 'llm' && provider.models && provider.models.length > 0 && (
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>{t('apiKeys.selectModel')}</InputLabel>
+            <Select
+              value={llmModel || ''}
+              onChange={(e) => handleModelChange(e.target.value)}
+              label={t('apiKeys.selectModel')}
+              disabled={isLoading}
+            >
+              <MenuItem value="">
+                <em>{t('apiKeys.default')}</em>
+              </MenuItem>
+              {provider.models.map((model) => (
+                <MenuItem key={model.id} value={model.id}>
+                  {model.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
         <TextField
           fullWidth
           label={t('apiKeys.apiKey')}
@@ -193,7 +243,7 @@ const APIKeysScreen: React.FC<APIKeysScreenProps> = ({ onBack }) => {
               ))}
             </Select>
           </FormControl>
-          {selectedProvider && renderProviderFields(selectedProvider)}
+          {selectedProvider && renderProviderFields(selectedProvider, category)}
         </Paper>
       </Box>
     );

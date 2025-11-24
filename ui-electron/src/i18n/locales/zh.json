@@ -86,7 +86,9 @@
     "show": "显示",
     "hide": "隐藏",
     "selectProvider": "选择提供商",
+    "selectModel": "选择模型",
     "none": "未选择",
+    "default": "默认",
     "noApiKeyRequired": "此提供商不需要API密钥",
     "description": "为每个类别选择提供商并输入相应的API密钥。每个任务只能选择一个提供商。",
     "securityNote": "⚠️ 密钥已加密并存储在服务器上。只有您的帐户可以访问它们。"
@@ -130,6 +132,20 @@
     "loginDescription": "以访问高级功能",
     "loadError": "加载用户时出错",
     "logoutError": "退出时出错"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "email": "电子邮件",
+    "password": "密码",
+    "name": "姓名",
+    "confirmPassword": "确认密码",
+    "loading": "加载中...",
+    "forgotPassword": "忘记密码？",
+    "or": "或",
+    "continueWithGoogle": "使用Google继续",
+    "continueWithYandex": "使用Yandex继续",
+    "continueWithGitHub": "使用GitHub继续"
   },
   "app": {
     "name": "ARM语音助手",

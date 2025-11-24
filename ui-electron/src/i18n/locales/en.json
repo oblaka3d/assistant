@@ -86,7 +86,9 @@
     "show": "Show",
     "hide": "Hide",
     "selectProvider": "Select provider",
+    "selectModel": "Select model",
     "none": "None",
+    "default": "Default",
     "noApiKeyRequired": "This provider does not require an API key",
     "description": "Select a provider for each category and enter the corresponding API keys. You can select only one provider for each task.",
     "securityNote": "⚠️ Keys are encrypted and stored on the server. Only your account has access to them."
@@ -138,7 +140,12 @@
     "password": "Password",
     "name": "Name",
     "confirmPassword": "Confirm Password",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "forgotPassword": "Forgot password?",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithYandex": "Continue with Yandex",
+    "continueWithGitHub": "Continue with GitHub"
   },
   "app": {
     "name": "ARM Voice Assistant",

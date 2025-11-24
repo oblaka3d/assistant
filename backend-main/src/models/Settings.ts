@@ -16,6 +16,7 @@ export interface ISettings extends Document {
   theme: 'light' | 'dark' | 'system';
   sttProviderName: string | null;
   llmProviderName: string | null;
+  llmModel: string | null;
   ttsProviderName: string | null;
   modelScene: IModelSceneSettings;
   createdAt: Date;
@@ -82,6 +83,10 @@ const SettingsSchema = new Schema<ISettings>(
       default: null,
     },
     llmProviderName: {
+      type: String,
+      default: null,
+    },
+    llmModel: {
       type: String,
       default: null,
     },

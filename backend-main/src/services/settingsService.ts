@@ -8,6 +8,7 @@ export interface SettingsUpdateData {
   theme?: 'light' | 'dark' | 'system';
   sttProviderName?: string | null;
   llmProviderName?: string | null;
+  llmModel?: string | null;
   ttsProviderName?: string | null;
   modelScene?: Partial<IModelSceneSettings>;
 }

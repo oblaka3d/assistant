@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 import { verifyToken, TokenPayload } from '../utils/jwt';
 
@@ -9,7 +9,11 @@ export interface AuthRequest extends Request {
 /**
  * Middleware для проверки JWT токена
  */
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate: RequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -22,7 +26,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
     try {
       const decoded = verifyToken(token);
-      req.user = decoded;
+      (req as AuthRequest).user = decoded;
       next();
     } catch {
       res.status(401).json({ error: 'Invalid or expired token' });

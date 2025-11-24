@@ -4,6 +4,13 @@
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
 
+/**
+ * Получить URL для OAuth авторизации
+ */
+export const getOAuthUrl = (provider: 'google' | 'yandex' | 'github'): string => {
+  return `${API_BASE_URL}/auth/${provider}`;
+};
+
 export interface RegisterRequest {
   email: string;
   password: string;
@@ -63,6 +70,7 @@ export interface SettingsData {
   theme: 'light' | 'dark' | 'system';
   sttProviderName: string | null;
   llmProviderName: string | null;
+  llmModel: string | null;
   ttsProviderName: string | null;
   modelScene: ModelSceneSettings;
 }
@@ -80,6 +88,7 @@ export interface UpdateSettingsRequest {
   theme?: 'light' | 'dark' | 'system';
   sttProviderName?: string | null;
   llmProviderName?: string | null;
+  llmModel?: string | null;
   ttsProviderName?: string | null;
   modelScene?: Partial<ModelSceneSettings>;
 }
@@ -243,6 +252,71 @@ export const getSettings = async (): Promise<SettingsResponse> => {
 export const updateSettings = async (data: UpdateSettingsRequest): Promise<SettingsResponse> => {
   return fetchWithErrorHandling<SettingsResponse>('/settings', {
     method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+};
+
+export interface UpdateProfileRequest {
+  name?: string;
+  email?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
+/**
+ * Обновление профиля пользователя
+ */
+export const updateProfile = async (data: UpdateProfileRequest): Promise<AuthResponse> => {
+  return fetchWithErrorHandling<AuthResponse>('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+};
+
+/**
+ * Изменение пароля пользователя
+ */
+export const changePassword = async (
+  data: ChangePasswordRequest
+): Promise<{ success: boolean; message: string }> => {
+  return fetchWithErrorHandling<{ success: boolean; message: string }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+};
+
+/**
+ * Запрос на сброс пароля
+ */
+export const forgotPassword = async (
+  data: ForgotPasswordRequest
+): Promise<{ success: boolean; message: string }> => {
+  return fetchWithErrorHandling<{ success: boolean; message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+};
+
+/**
+ * Сброс пароля по токену
+ */
+export const resetPassword = async (
+  data: ResetPasswordRequest
+): Promise<{ success: boolean; message: string }> => {
+  return fetchWithErrorHandling<{ success: boolean; message: string }>('/auth/reset-password', {
+    method: 'POST',
     body: JSON.stringify(data),
   });
 };
