@@ -143,39 +143,6 @@ export function setupIPC(): void {
     }, 'getCurrentUser')
   );
 
-  // API ключи
-  ipcMain.handle(
-    'getAPIKeys',
-    createIPCHandler(async () => {
-      // TODO: Загрузить API ключи из файла/базы данных
-      // Пока возвращаем из переменных окружения
-      return {
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-        YANDEX_STT_KEY: process.env.YANDEX_STT_KEY || '',
-        YANDEX_GPT_KEY: process.env.YANDEX_GPT_KEY || '',
-        YANDEX_TTS_KEY: process.env.YANDEX_TTS_KEY || '',
-        YANDEX_FOLDER_ID: process.env.YANDEX_FOLDER_ID || '',
-        GOOGLE_STT_KEY: process.env.GOOGLE_STT_KEY || '',
-        GOOGLE_TTS_KEY: process.env.GOOGLE_TTS_KEY || '',
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
-      };
-    }, 'getAPIKeys')
-  );
-
-  ipcMain.handle(
-    'saveAPIKeys',
-    createIPCHandler(async (_event, keys: Record<string, string>) => {
-      // TODO: Сохранить API ключи в файл/базу данных
-      // Пока сохраняем в переменные окружения (только для текущей сессии)
-      Object.keys(keys).forEach((key) => {
-        if (keys[key]) {
-          process.env[key] = keys[key];
-        }
-      });
-      return true;
-    }, 'saveAPIKeys')
-  );
-
   // Логирование
   ipcMain.handle(
     'getLogs',

@@ -169,7 +169,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <Paper elevation={3} className={styles.settingPaper}>
           <Box className={styles.settingHeader}>
             <VolumeUpIcon className={styles.settingIcon} />
-            <Typography variant="h6">{t('settings.volume')}</Typography>
+            <Typography variant="h6" sx={{ color: 'text.primary' }}>
+              {t('settings.volume')}
+            </Typography>
           </Box>
           <Box sx={{ px: 2 }}>
             <Slider
@@ -190,7 +192,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <Paper elevation={3} className={styles.settingPaper}>
           <Box className={styles.settingHeader}>
             <LanguageIcon className={styles.settingIcon} />
-            <Typography variant="h6">{t('settings.language')}</Typography>
+            <Typography variant="h6" sx={{ color: 'text.primary' }}>
+              {t('settings.language')}
+            </Typography>
           </Box>
           <Box sx={{ px: 2, pb: 2 }}>
             <FormControl fullWidth size="small">
@@ -216,7 +220,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <Paper elevation={3} className={styles.settingPaper}>
           <Box className={styles.settingHeader}>
             <SettingsBrightnessIcon className={styles.settingIcon} />
-            <Typography variant="h6">{t('settings.theme')}</Typography>
+            <Typography variant="h6" sx={{ color: 'text.primary' }}>
+              {t('settings.theme')}
+            </Typography>
           </Box>
           <Box sx={{ px: 2, pb: 2 }}>
             <FormControl fullWidth size="small">
@@ -258,7 +264,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <Paper elevation={3} className={styles.settingPaper} sx={{ mt: 2 }}>
           <Box className={styles.settingHeader}>
             <ImageIcon className={styles.settingIcon} />
-            <Typography variant="h6">{t('settings.modelAndScene')}</Typography>
+            <Typography variant="h6" sx={{ color: 'text.primary' }}>
+              {t('settings.modelAndScene')}
+            </Typography>
           </Box>
 
           <Box sx={{ px: 2, pb: 2 }}>

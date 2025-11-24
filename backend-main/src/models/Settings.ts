@@ -14,7 +14,9 @@ export interface ISettings extends Document {
   volume: number;
   language: string;
   theme: 'light' | 'dark' | 'system';
+  sttProviderName: string | null;
   llmProviderName: string | null;
+  ttsProviderName: string | null;
   modelScene: IModelSceneSettings;
   createdAt: Date;
   updatedAt: Date;
@@ -75,7 +77,15 @@ const SettingsSchema = new Schema<ISettings>(
       default: 'system',
       enum: ['light', 'dark', 'system'],
     },
+    sttProviderName: {
+      type: String,
+      default: null,
+    },
     llmProviderName: {
+      type: String,
+      default: null,
+    },
+    ttsProviderName: {
       type: String,
       default: null,
     },

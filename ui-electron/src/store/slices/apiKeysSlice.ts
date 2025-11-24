@@ -1,14 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface APIKey {
-  provider: string;
-  key: string;
-  name?: string;
-  description?: string;
-}
-
 interface APIKeysState {
-  keys: Record<string, APIKey>;
+  keys: Record<string, string>;
   isLoading: boolean;
   error: string | null;
 }
@@ -23,19 +16,15 @@ const apiKeysSlice = createSlice({
   name: 'apiKeys',
   initialState,
   reducers: {
-    setAPIKey: (state, action: PayloadAction<APIKey>) => {
-      const { provider, ...rest } = action.payload;
-      state.keys[provider] = {
-        provider,
-        ...rest,
-      };
+    setAPIKey: (state, action: PayloadAction<{ name: string; value: string }>) => {
+      state.keys[action.payload.name] = action.payload.value;
       state.error = null;
     },
     removeAPIKey: (state, action: PayloadAction<string>) => {
       delete state.keys[action.payload];
       state.error = null;
     },
-    setAPIKeys: (state, action: PayloadAction<Record<string, APIKey>>) => {
+    setAPIKeys: (state, action: PayloadAction<Record<string, string>>) => {
       state.keys = action.payload;
       state.error = null;
     },

@@ -13,7 +13,9 @@ interface SettingsState {
   volume: number;
   language: string;
   theme: 'light' | 'dark' | 'system';
-  llmProviderName: string | null; // Название текущего LLM провайдера
+  sttProviderName: string | null; // Название выбранного STT провайдера
+  llmProviderName: string | null; // Название выбранного LLM провайдера
+  ttsProviderName: string | null; // Название выбранного TTS провайдера
   modelScene: ModelSceneSettings;
 }
 
@@ -21,7 +23,9 @@ const initialState: SettingsState = {
   volume: 70,
   language: 'ru',
   theme: 'system', // По умолчанию системная тема
+  sttProviderName: null, // Будет загружено при инициализации
   llmProviderName: null, // Будет загружено при инициализации
+  ttsProviderName: null, // Будет загружено при инициализации
   modelScene: {
     modelPath: './assets/models/character.glb',
     sceneName: null, // Сцена не выбрана по умолчанию
@@ -63,8 +67,14 @@ const settingsSlice = createSlice({
     setAnimationSpeed: (state, action: PayloadAction<number>) => {
       state.modelScene.animationSpeed = action.payload;
     },
+    setSTTProviderName: (state, action: PayloadAction<string | null>) => {
+      state.sttProviderName = action.payload;
+    },
     setLLMProviderName: (state, action: PayloadAction<string | null>) => {
       state.llmProviderName = action.payload;
+    },
+    setTTSProviderName: (state, action: PayloadAction<string | null>) => {
+      state.ttsProviderName = action.payload;
     },
     setAllSettings: (state, action: PayloadAction<Partial<SettingsState>>) => {
       return { ...state, ...action.payload };
@@ -78,7 +88,9 @@ export const {
   setVolume,
   setLanguage,
   setTheme,
+  setSTTProviderName,
   setLLMProviderName,
+  setTTSProviderName,
   setModelPath,
   setSceneName,
   setEnableToonShader,

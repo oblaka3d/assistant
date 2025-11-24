@@ -26,15 +26,7 @@ interface ChatState {
 const defaultDialog: Dialog = {
   id: 'default',
   title: 'Новый диалог',
-  messages: [
-    {
-      id: '1',
-      position: 'left',
-      type: 'text',
-      text: 'Привет! Я ваш голосовой ассистент. Чем могу помочь?',
-      date: new Date(),
-    },
-  ],
+  messages: [], // Пустой массив - приветствие показывается через экран приветствия
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -89,15 +81,7 @@ const chatSlice = createSlice({
       const newDialog: Dialog = {
         id: Date.now().toString(),
         title: action.payload.title || 'Новый диалог',
-        messages: [
-          {
-            id: '1',
-            position: 'left',
-            type: 'text',
-            text: 'Привет! Я ваш голосовой ассистент. Чем могу помочь?',
-            date: new Date(),
-          },
-        ],
+        messages: [], // Пустой массив - приветствие показывается через экран приветствия
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -118,15 +102,7 @@ const chatSlice = createSlice({
             const defaultDialog: Dialog = {
               id: Date.now().toString(),
               title: 'Новый диалог',
-              messages: [
-                {
-                  id: '1',
-                  position: 'left',
-                  type: 'text',
-                  text: 'Привет! Я ваш голосовой ассистент. Чем могу помочь?',
-                  date: new Date(),
-                },
-              ],
+              messages: [], // Пустой массив - приветствие показывается через экран приветствия
               createdAt: new Date(),
               updatedAt: new Date(),
             };

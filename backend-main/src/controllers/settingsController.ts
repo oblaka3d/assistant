@@ -31,7 +31,9 @@ export const getSettingsController = async (
           volume: settings.volume,
           language: settings.language,
           theme: settings.theme,
+          sttProviderName: settings.sttProviderName,
           llmProviderName: settings.llmProviderName,
+          ttsProviderName: settings.ttsProviderName,
           modelScene: {
             modelPath: settings.modelScene.modelPath,
             sceneName: settings.modelScene.sceneName,
@@ -80,8 +82,14 @@ export const updateSettingsController = async (
     if (req.body.theme !== undefined) {
       updateData.theme = req.body.theme;
     }
+    if (req.body.sttProviderName !== undefined) {
+      updateData.sttProviderName = req.body.sttProviderName;
+    }
     if (req.body.llmProviderName !== undefined) {
       updateData.llmProviderName = req.body.llmProviderName;
+    }
+    if (req.body.ttsProviderName !== undefined) {
+      updateData.ttsProviderName = req.body.ttsProviderName;
     }
     if (req.body.modelScene !== undefined) {
       updateData.modelScene = req.body.modelScene;
@@ -96,7 +104,9 @@ export const updateSettingsController = async (
           volume: settings.volume,
           language: settings.language,
           theme: settings.theme,
+          sttProviderName: settings.sttProviderName,
           llmProviderName: settings.llmProviderName,
+          ttsProviderName: settings.ttsProviderName,
           modelScene: {
             modelPath: settings.modelScene.modelPath,
             sceneName: settings.modelScene.sceneName,
@@ -129,7 +139,30 @@ export const validateUpdateSettings = [
     .optional()
     .isIn(['light', 'dark', 'system'])
     .withMessage('Theme must be light, dark, or system'),
-  body('llmProviderName').optional().isString().withMessage('llmProviderName must be a string'),
+  body('sttProviderName')
+    .optional()
+    .custom((value) => {
+      if (value === null || value === undefined || typeof value === 'string') {
+        return true;
+      }
+      throw new Error('sttProviderName must be a string or null');
+    }),
+  body('llmProviderName')
+    .optional()
+    .custom((value) => {
+      if (value === null || value === undefined || typeof value === 'string') {
+        return true;
+      }
+      throw new Error('llmProviderName must be a string or null');
+    }),
+  body('ttsProviderName')
+    .optional()
+    .custom((value) => {
+      if (value === null || value === undefined || typeof value === 'string') {
+        return true;
+      }
+      throw new Error('ttsProviderName must be a string or null');
+    }),
   body('modelScene.modelPath').optional().isString().withMessage('modelPath must be a string'),
   body('modelScene.sceneName')
     .optional()

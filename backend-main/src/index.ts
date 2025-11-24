@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { config } from './config';
 import { connectDatabase } from './config/database';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import apiKeysRoutes from './routes/apiKeysRoutes';
 import authRoutes from './routes/authRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 
@@ -31,6 +32,7 @@ app.get('/health', (_req, res) => {
 // Routes
 app.use(`${config.api.prefix}/auth`, authRoutes);
 app.use(`${config.api.prefix}/settings`, settingsRoutes);
+app.use(`${config.api.prefix}/api-keys`, apiKeysRoutes);
 
 // Error handling
 app.use(notFound);

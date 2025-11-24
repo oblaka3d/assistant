@@ -65,13 +65,6 @@ contextBridge.exposeInMainWorld('api', {
   } | null> => {
     return ipcRenderer.invoke('getCurrentUser');
   },
-  // API ключи
-  getAPIKeys: (): Promise<Record<string, string>> => {
-    return ipcRenderer.invoke('getAPIKeys');
-  },
-  saveAPIKeys: (keys: Record<string, string>): Promise<boolean> => {
-    return ipcRenderer.invoke('saveAPIKeys', keys);
-  },
   // LLM провайдер
   getLLMProviderInfo: (): Promise<{ provider: string; model: string | null; name: string }> => {
     return ipcRenderer.invoke('getLLMProviderInfo');

@@ -1,6 +1,7 @@
 import MenuIcon from '@mui/icons-material/Menu';
+import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
-import { Box, IconButton, TextField, Typography, Paper } from '@mui/material';
+import { Box, IconButton, TextField, Typography, Paper, CircularProgress } from '@mui/material';
 import React, { useRef, useEffect, useMemo } from 'react';
 import { MessageList } from 'react-chat-elements';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,12 @@ import 'react-chat-elements/dist/main.css';
 import ScreenHeader from '../../components/ScreenHeader';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { clearInput, setInputValue, toggleDialogPanel } from '../../store/slices/chatSlice';
-import { loadLLMProviderInfo, sendMessage } from '../../store/thunks/chatThunks';
+import {
+  loadLLMProviderInfo,
+  sendMessage,
+  startChatRecording,
+  stopChatRecordingAndTranscribe,
+} from '../../store/thunks/chatThunks';
 import { createLogger } from '../../utils/logger';
 
 import styles from './ChatScreen.module.css';
@@ -27,6 +33,7 @@ const ChatScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const { dialogs, currentDialogId, inputValue } = useAppSelector((state) => state.chat);
   const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
+  const isRecording = useAppSelector((state) => state.voice.isRecording);
   const messageListRef = useRef<MessageListRef | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +42,11 @@ const ChatScreen: React.FC = () => {
     const currentDialog = dialogs.find((d) => d.id === currentDialogId);
     return currentDialog?.messages || [];
   }, [dialogs, currentDialogId]);
+
+  // Проверяем, является ли текущий диалог пустым
+  const isWelcomeState = useMemo(() => {
+    return messages.length === 0;
+  }, [messages]);
 
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
@@ -88,6 +100,37 @@ const ChatScreen: React.FC = () => {
     dispatch(toggleDialogPanel());
   };
 
+  const handleRecord = async () => {
+    if (isRecording) {
+      // Остановить запись и расшифровать
+      try {
+        const transcribedText = await dispatch(
+          stopChatRecordingAndTranscribe({
+            onTranscribed: (text) => {
+              // Добавляем расшифрованный текст в поле ввода для предварительного просмотра
+              dispatch(setInputValue(text));
+            },
+          })
+        ).unwrap();
+
+        // Автоматически отправляем сообщение, если текст распознан
+        if (transcribedText && transcribedText.trim()) {
+          dispatch(clearInput());
+          await dispatch(sendMessage({ text: transcribedText.trim(), t })).unwrap();
+        }
+      } catch (error) {
+        log.error('Recording error:', error);
+      }
+    } else {
+      // Начать запись
+      try {
+        await dispatch(startChatRecording()).unwrap();
+      } catch (error) {
+        log.error('Failed to start recording:', error);
+      }
+    }
+  };
+
   return (
     <Box className={styles.container}>
       {/* Панель диалогов */}
@@ -96,7 +139,7 @@ const ChatScreen: React.FC = () => {
       {/* Заголовок */}
       <ScreenHeader
         title={chatTitle}
-        action={
+        startAction={
           <IconButton onClick={handleTogglePanel} className={styles.menuButton} color="inherit">
             <MenuIcon />
           </IconButton>
@@ -105,14 +148,41 @@ const ChatScreen: React.FC = () => {
 
       {/* Список сообщений */}
       <Box className={styles.messagesContainer}>
-        {messages.length === 0 ? (
-          <Box className={styles.emptyState}>
-            <Typography variant="h6" color="text.secondary">
-              {t('chat.empty')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('ui.startDialog')}
-            </Typography>
+        {isWelcomeState ? (
+          <Box className={styles.welcomeState}>
+            <Box className={styles.welcomeContent}>
+              <Box className={styles.welcomeIcon}>
+                <Typography variant="h2" sx={{ fontSize: '3rem', mb: 2 }}>
+                  🤖
+                </Typography>
+              </Box>
+              <Typography variant="h4" className={styles.welcomeTitle} sx={{ mb: 1 }}>
+                {t('chat.welcome')}
+              </Typography>
+              <Typography variant="body1" className={styles.welcomeSubtitle} sx={{ mb: 4 }}>
+                {t('chat.welcomeSubtitle')}
+              </Typography>
+              <Box className={styles.welcomeSuggestions}>
+                <Box
+                  className={styles.suggestionChip}
+                  onClick={() => dispatch(setInputValue(t('chat.suggestions.about')))}
+                >
+                  <Typography variant="body2">💡 {t('chat.suggestions.about')}</Typography>
+                </Box>
+                <Box
+                  className={styles.suggestionChip}
+                  onClick={() => dispatch(setInputValue(t('chat.suggestions.capabilities')))}
+                >
+                  <Typography variant="body2">🚀 {t('chat.suggestions.capabilities')}</Typography>
+                </Box>
+                <Box
+                  className={styles.suggestionChip}
+                  onClick={() => dispatch(setInputValue(t('chat.suggestions.help')))}
+                >
+                  <Typography variant="body2">⚡ {t('chat.suggestions.help')}</Typography>
+                </Box>
+              </Box>
+            </Box>
           </Box>
         ) : (
           <Box ref={scrollContainerRef} className={styles.messagesList}>
@@ -130,8 +200,7 @@ const ChatScreen: React.FC = () => {
                   type: msg.type,
                   text: msg.text,
                   date: msg.date,
-                  title: msg.position === 'right' ? t('chat.user') : t('chat.assistant'),
-                  titleColor: msg.position === 'right' ? '#4a90e2' : '#27ae60',
+                  title: '', // Убираем подпись пользователя/ассистента
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 })) as unknown as any
               }
@@ -146,22 +215,42 @@ const ChatScreen: React.FC = () => {
           <TextField
             fullWidth
             multiline
-            maxRows={4}
-            placeholder={t('ui.enterMessage')}
+            maxRows={3}
+            placeholder={isRecording ? t('chat.recording') : t('ui.enterMessage')}
             value={inputValue}
             onChange={(e) => dispatch(setInputValue(e.target.value))}
             onKeyPress={handleKeyPress}
             variant="outlined"
             size="small"
             className={styles.inputField}
+            disabled={isRecording}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                minHeight: '36px',
+              },
+            }}
           />
+          <IconButton
+            color={isRecording ? 'error' : 'default'}
+            onClick={handleRecord}
+            className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
+            title={isRecording ? t('chat.stopRecording') : t('chat.startRecording')}
+          >
+            {isRecording ? (
+              <Box className={styles.recordButtonPulse}>
+                <MicIcon />
+              </Box>
+            ) : (
+              <MicIcon />
+            )}
+          </IconButton>
           <IconButton
             color="primary"
             onClick={handleSend}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isRecording}
             className={styles.sendButton}
           >
-            <SendIcon />
+            {isRecording ? <CircularProgress size={20} /> : <SendIcon />}
           </IconButton>
         </Box>
       </Paper>

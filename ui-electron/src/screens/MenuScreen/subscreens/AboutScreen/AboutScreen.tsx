@@ -24,7 +24,9 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
               <InfoIcon className={styles.settingIcon} />
               <Box sx={{ ml: 2 }}>
-                <Typography variant="h6">{t('app.name')}</Typography>
+                <Typography variant="h6" sx={{ color: 'text.primary' }}>
+                  {t('app.name')}
+                </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   {t('about.version')} 1.0
                 </Typography>

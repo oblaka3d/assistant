@@ -32,9 +32,6 @@ declare global {
         displayName?: string;
         email?: string;
       } | null>;
-      // API ключи
-      getAPIKeys: () => Promise<Record<string, string>>;
-      saveAPIKeys: (keys: Record<string, string>) => Promise<boolean>;
       // LLM провайдер
       getLLMProviderInfo: () => Promise<{ provider: string; model: string | null; name: string }>;
     };

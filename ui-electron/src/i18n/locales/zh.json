@@ -45,7 +45,17 @@
     "user": "用户",
     "assistant": "助手",
     "dialogs": "对话",
-    "newDialog": "新建对话"
+    "newDialog": "新建对话",
+    "welcome": "你好！我是您的语音助手。我能为您做些什么？",
+    "welcomeSubtitle": "请随时问我任何问题，我会尽力帮助您。",
+    "suggestions": {
+      "about": "介绍一下自己",
+      "capabilities": "你能做什么？",
+      "help": "帮我完成任务"
+    },
+    "recording": "录音中...",
+    "startRecording": "开始语音录音",
+    "stopRecording": "停止录音"
   },
   "settings": {
     "title": "设置",
@@ -74,7 +84,12 @@
     "apiKey": "API密钥",
     "folderId": "文件夹ID",
     "show": "显示",
-    "hide": "隐藏"
+    "hide": "隐藏",
+    "selectProvider": "选择提供商",
+    "none": "未选择",
+    "noApiKeyRequired": "此提供商不需要API密钥",
+    "description": "为每个类别选择提供商并输入相应的API密钥。每个任务只能选择一个提供商。",
+    "securityNote": "⚠️ 密钥已加密并存储在服务器上。只有您的帐户可以访问它们。"
   },
   "history": {
     "title": "对话历史",

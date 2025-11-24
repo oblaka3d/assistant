@@ -60,9 +60,19 @@ const DialogPanel: React.FC = () => {
       open={dialogPanelOpen}
       onClose={handleClose}
       classes={{ paper: styles.drawer }}
+      PaperProps={{
+        sx: {
+          zIndex: 10001, // Выше, чем StatusBar (z-index: 10000)
+        },
+      }}
+      ModalProps={{
+        sx: {
+          zIndex: 10001, // Также для overlay
+        },
+      }}
     >
       <Toolbar className={styles.toolbar}>
-        <Typography variant="h6" className={styles.title}>
+        <Typography variant="h6" className={styles.title} sx={{ color: 'text.primary' }}>
           {t('chat.dialogs')}
         </Typography>
         <IconButton onClick={handleClose} size="small" className={styles.closeButton}>

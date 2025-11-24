@@ -24,7 +24,9 @@ export const fetchSettings = createAsyncThunk<SettingsData, void, { rejectValue:
         volume: settingsData.volume,
         language: settingsData.language,
         theme: settingsData.theme || 'system',
-        llmProviderName: settingsData.llmProviderName,
+        sttProviderName: settingsData.sttProviderName || null,
+        llmProviderName: settingsData.llmProviderName || null,
+        ttsProviderName: settingsData.ttsProviderName || null,
         modelScene: {
           modelPath: settingsData.modelScene.modelPath,
           sceneName: settingsData.modelScene.sceneName,
@@ -62,7 +64,9 @@ export const saveSettings = createAsyncThunk<
       volume: settingsData.volume,
       language: settingsData.language,
       theme: settingsData.theme || 'system',
-      llmProviderName: settingsData.llmProviderName,
+      sttProviderName: settingsData.sttProviderName || null,
+      llmProviderName: settingsData.llmProviderName || null,
+      ttsProviderName: settingsData.ttsProviderName || null,
       modelScene: {
         modelPath: settingsData.modelScene.modelPath,
         sceneName: settingsData.modelScene.sceneName,

@@ -25,4 +25,8 @@ export const config = {
   api: {
     prefix: process.env.API_PREFIX || '/api/v1',
   },
+
+  security: {
+    apiKeySecret: process.env.API_KEY_SECRET || 'change-this-api-key-secret',
+  },
 };

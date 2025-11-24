@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { addMessage } from '../slices/chatSlice';
 import { setLLMProviderName } from '../slices/settingsSlice';
+import { setIsRecording } from '../slices/voiceSlice';
 
 /**
  * Загрузка информации о LLM провайдере
@@ -82,5 +83,60 @@ export const sendMessage = createAsyncThunk(
       dispatch(addMessage(errorMessage));
       throw error;
     }
+  }
+);
+
+/**
+ * Начало записи аудио для чата
+ */
+export const startChatRecording = createAsyncThunk(
+  'chat/startRecording',
+  async (_, { dispatch }) => {
+    if (!window.api) {
+      throw new Error('Electron API not available');
+    }
+
+    dispatch(setIsRecording(true));
+
+    try {
+      await window.api.startRecord();
+    } catch (error) {
+      dispatch(setIsRecording(false));
+      throw error;
+    }
+  }
+);
+
+/**
+ * Остановка записи и расшифровка для чата
+ */
+export const stopChatRecordingAndTranscribe = createAsyncThunk(
+  'chat/stopRecordingAndTranscribe',
+  async (
+    params: {
+      onTranscribed: (text: string) => void;
+    },
+    { dispatch }
+  ) => {
+    const { onTranscribed } = params;
+
+    if (!window.api) {
+      throw new Error('Electron API not available');
+    }
+
+    dispatch(setIsRecording(false));
+
+    // Остановка записи и получение аудио буфера
+    const audioBuffer = await window.api.stopRecord();
+
+    // Распознавание речи
+    const transcribedText = await window.api.transcribe(audioBuffer);
+
+    if (transcribedText && transcribedText.trim() !== '') {
+      // Передаем расшифрованный текст через callback
+      onTranscribed(transcribedText.trim());
+    }
+
+    return transcribedText?.trim() || '';
   }
 );

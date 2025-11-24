@@ -45,7 +45,17 @@
     "user": "User",
     "assistant": "Assistant",
     "dialogs": "Dialogs",
-    "newDialog": "New dialog"
+    "newDialog": "New dialog",
+    "welcome": "Hello! I'm your voice assistant. How can I help you?",
+    "welcomeSubtitle": "Ask me anything, and I'll do my best to assist you.",
+    "suggestions": {
+      "about": "Tell me about yourself",
+      "capabilities": "What can you do?",
+      "help": "Help me with a task"
+    },
+    "recording": "Recording...",
+    "startRecording": "Start voice recording",
+    "stopRecording": "Stop recording"
   },
   "settings": {
     "title": "Settings",
@@ -74,7 +84,12 @@
     "apiKey": "API Key",
     "folderId": "Folder ID",
     "show": "Show",
-    "hide": "Hide"
+    "hide": "Hide",
+    "selectProvider": "Select provider",
+    "none": "None",
+    "noApiKeyRequired": "This provider does not require an API key",
+    "description": "Select a provider for each category and enter the corresponding API keys. You can select only one provider for each task.",
+    "securityNote": "⚠️ Keys are encrypted and stored on the server. Only your account has access to them."
   },
   "history": {
     "title": "Dialogue History",

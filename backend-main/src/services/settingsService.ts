@@ -6,7 +6,9 @@ export interface SettingsUpdateData {
   volume?: number;
   language?: string;
   theme?: 'light' | 'dark' | 'system';
+  sttProviderName?: string | null;
   llmProviderName?: string | null;
+  ttsProviderName?: string | null;
   modelScene?: Partial<IModelSceneSettings>;
 }
 

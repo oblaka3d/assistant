@@ -61,7 +61,9 @@ export interface SettingsData {
   volume: number;
   language: string;
   theme: 'light' | 'dark' | 'system';
+  sttProviderName: string | null;
   llmProviderName: string | null;
+  ttsProviderName: string | null;
   modelScene: ModelSceneSettings;
 }
 
@@ -76,8 +78,17 @@ export interface UpdateSettingsRequest {
   volume?: number;
   language?: string;
   theme?: 'light' | 'dark' | 'system';
+  sttProviderName?: string | null;
   llmProviderName?: string | null;
+  ttsProviderName?: string | null;
   modelScene?: Partial<ModelSceneSettings>;
+}
+
+export interface ApiKeysResponse {
+  success: boolean;
+  data: {
+    keys: Record<string, string>;
+  };
 }
 
 /**
@@ -233,5 +244,24 @@ export const updateSettings = async (data: UpdateSettingsRequest): Promise<Setti
   return fetchWithErrorHandling<SettingsResponse>('/settings', {
     method: 'PATCH',
     body: JSON.stringify(data),
+  });
+};
+
+/**
+ * Получение API ключей пользователя
+ */
+export const getApiKeys = async (): Promise<ApiKeysResponse> => {
+  return fetchWithErrorHandling<ApiKeysResponse>('/api-keys', {
+    method: 'GET',
+  });
+};
+
+/**
+ * Сохранение API ключей пользователя
+ */
+export const saveApiKeys = async (keys: Record<string, string>): Promise<ApiKeysResponse> => {
+  return fetchWithErrorHandling<ApiKeysResponse>('/api-keys', {
+    method: 'PUT',
+    body: JSON.stringify({ keys }),
   });
 };
