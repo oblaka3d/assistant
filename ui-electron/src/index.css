@@ -19,6 +19,9 @@
   --divider: rgba(255, 255, 255, 0.12);
   --scrollbar-track: rgba(45, 45, 45, 0.3);
   /* --scrollbar-thumb и --scrollbar-thumb-hover устанавливаются динамически */
+  --nav-base-offset: 8px;
+  --nav-chat-offset: 72px;
+  --keyboard-offset: 0px;
 }
 
 /* Light theme */
@@ -40,6 +43,9 @@
   --divider: rgba(0, 0, 0, 0.12);
   --scrollbar-track: rgba(0, 0, 0, 0.05);
   /* --scrollbar-thumb и --scrollbar-thumb-hover устанавливаются динамически */
+  --nav-base-offset: 8px;
+  --nav-chat-offset: 72px;
+  --keyboard-offset: 0px;
 }
 
 * {

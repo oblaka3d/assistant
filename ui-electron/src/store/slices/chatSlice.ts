@@ -54,8 +54,6 @@ const chatSlice = createSlice({
             dialog.title = firstUserMessage.text.substring(0, 50) || 'Новый диалог';
           }
         }
-        // Помечаем диалог как требующий синхронизации
-        (dialog as any).needsSync = true;
       }
     },
     setMessages: (state, action: PayloadAction<{ dialogId: string; messages: Message[] }>) => {
@@ -156,6 +154,7 @@ const chatSlice = createSlice({
         }
       }
     },
+    resetChat: () => initialState,
   },
 });
 
@@ -173,5 +172,6 @@ export const {
   setDialogPanelOpen,
   setDialogs,
   syncDialog,
+  resetChat,
 } = chatSlice.actions;
 export default chatSlice.reducer;

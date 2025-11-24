@@ -3,31 +3,35 @@ import ImageIcon from '@mui/icons-material/Image';
 import LanguageIcon from '@mui/icons-material/Language';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import PaletteIcon from '@mui/icons-material/Palette';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SpeedIcon from '@mui/icons-material/Speed';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import {
   Box,
-  Paper,
-  Slider,
-  Typography,
-  Switch,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControlLabel,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  CircularProgress,
-  TextField,
-  Grid,
-  IconButton,
+  Switch,
+  Typography,
 } from '@mui/material';
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
+import {
+  ColorPicker,
+  ModelSelector,
+  SelectSetting,
+  SettingSection,
+  SliderSetting,
+} from '../../../../components/settings';
 import { SETTINGS_RANGES, ASSETS_PATHS } from '../../../../constants/app';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
@@ -42,6 +46,7 @@ import {
   setLightIntensity,
   setCameraDistance,
   setAnimationSpeed,
+  resetSettings,
 } from '../../../../store/slices/settingsSlice';
 import { saveSettings } from '../../../../store/thunks';
 import { createLogger } from '../../../../utils/logger';
@@ -67,6 +72,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
   const [availableScenes, setAvailableScenes] = useState<string[]>([]);
   const [loadingScenes, setLoadingScenes] = useState<boolean>(true);
+  const [resetDialogOpen, setResetDialogOpen] = useState<boolean>(false);
 
   // Ref для debounce таймера
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,304 +185,132 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
     loadScenes();
   }, [dispatch, modelScene.modelPath]);
 
+  const handleResetSettings = () => {
+    setResetDialogOpen(true);
+  };
+
+  const handleConfirmReset = () => {
+    // Сбрасываем настройки в Redux
+    dispatch(resetSettings());
+
+    // Удаляем флаг приветственного экрана из localStorage
+    localStorage.removeItem('welcomeScreenShown');
+
+    // Закрываем диалог
+    setResetDialogOpen(false);
+
+    log.info('Settings reset to default values');
+
+    // Перезагружаем страницу, чтобы показать приветственный экран
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
+
+  const handleCancelReset = () => {
+    setResetDialogOpen(false);
+  };
+
   return (
     <Box className={styles.container}>
       <ScreenHeader title={t('settings.title')} onBack={onBack} />
 
       <ScrollableContent screenId="settings">
-        <Paper elevation={3} className={styles.settingPaper}>
-          <Box className={styles.settingHeader}>
-            <VolumeUpIcon className={styles.settingIcon} />
-            <Typography variant="h6" sx={{ color: 'text.primary' }}>
-              {t('settings.volume')}
-            </Typography>
-          </Box>
-          <Box sx={{ px: 2 }}>
-            <Slider
-              value={volume}
-              onChange={(_, value) => dispatch(setVolume(value as number))}
-              min={SETTINGS_RANGES.VOLUME.min}
-              max={SETTINGS_RANGES.VOLUME.max}
-              step={SETTINGS_RANGES.VOLUME.step}
-              valueLabelDisplay="auto"
-              className={styles.slider}
+        {/* Громкость */}
+        <SettingSection icon={<VolumeUpIcon />} title={t('settings.volume')}>
+          <SliderSetting
+            value={volume}
+            onChange={(value) => dispatch(setVolume(value))}
+            min={SETTINGS_RANGES.VOLUME.min}
+            max={SETTINGS_RANGES.VOLUME.max}
+            step={SETTINGS_RANGES.VOLUME.step}
+            label={`${volume}%`}
+          />
+        </SettingSection>
+
+        {/* Язык */}
+        <SettingSection icon={<LanguageIcon />} title={t('settings.language')}>
+          <SelectSetting
+            id="language-select"
+            label={t('settings.language')}
+            value={language}
+            onChange={(value) => dispatch(setLanguage(value))}
+            options={[
+              { value: 'ru', label: t('app.russian') },
+              { value: 'en', label: t('app.english') },
+              { value: 'zh', label: t('app.chinese') },
+            ]}
+          />
+        </SettingSection>
+
+        {/* Тема */}
+        <SettingSection icon={<SettingsBrightnessIcon />} title={t('settings.theme')}>
+          <SelectSetting
+            id="theme-select"
+            label={t('settings.theme')}
+            value={theme}
+            onChange={(value) => dispatch(setTheme(value as 'light' | 'dark' | 'system'))}
+            options={[
+              {
+                value: 'light',
+                label: t('settings.themeLight'),
+                icon: <LightModeIcon fontSize="small" />,
+              },
+              {
+                value: 'dark',
+                label: t('settings.themeDark'),
+                icon: <DarkModeIcon fontSize="small" />,
+              },
+              {
+                value: 'system',
+                label: t('settings.themeSystem'),
+                icon: <SettingsBrightnessIcon fontSize="small" />,
+              },
+            ]}
+          />
+        </SettingSection>
+
+        {/* Акцентный цвет */}
+        <SettingSection icon={<PaletteIcon />} title={t('settings.accentColor')}>
+          <Box className={styles.colorPickerContainer}>
+            <ColorPicker
+              label={t('settings.accentColorLight')}
+              value={accentColorLight}
+              onChange={(color) => dispatch(setAccentColorLight(color))}
+              theme="light"
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-              {volume}%
-            </Typography>
+            <ColorPicker
+              label={t('settings.accentColorDark')}
+              value={accentColorDark}
+              onChange={(color) => dispatch(setAccentColorDark(color))}
+              theme="dark"
+            />
           </Box>
-        </Paper>
+        </SettingSection>
 
-        <Paper elevation={3} className={styles.settingPaper}>
-          <Box className={styles.settingHeader}>
-            <LanguageIcon className={styles.settingIcon} />
-            <Typography variant="h6" sx={{ color: 'text.primary' }}>
-              {t('settings.language')}
-            </Typography>
-          </Box>
-          <Box sx={{ px: 2, pb: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="language-select-label">{t('settings.language')}</InputLabel>
-              <Select
-                labelId="language-select-label"
-                id="language-select"
-                value={language}
-                label={t('settings.language')}
-                onChange={(e) => {
-                  dispatch(setLanguage(e.target.value));
-                }}
-                sx={{ color: 'text.primary' }}
-              >
-                <MenuItem value="ru">{t('app.russian')}</MenuItem>
-                <MenuItem value="en">{t('app.english')}</MenuItem>
-                <MenuItem value="zh">{t('app.chinese')}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Paper>
-
-        <Paper elevation={3} className={styles.settingPaper}>
-          <Box className={styles.settingHeader}>
-            <SettingsBrightnessIcon className={styles.settingIcon} />
-            <Typography variant="h6" sx={{ color: 'text.primary' }}>
-              {t('settings.theme')}
-            </Typography>
-          </Box>
-          <Box sx={{ px: 2, pb: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="theme-select-label">{t('settings.theme')}</InputLabel>
-              <Select
-                labelId="theme-select-label"
-                id="theme-select"
-                value={theme}
-                label={t('settings.theme')}
-                onChange={(e) => {
-                  dispatch(setTheme(e.target.value as 'light' | 'dark' | 'system'));
-                }}
-                sx={{ color: 'text.primary' }}
-              >
-                <MenuItem value="light">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LightModeIcon fontSize="small" />
-                    {t('settings.themeLight')}
-                  </Box>
-                </MenuItem>
-                <MenuItem value="dark">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <DarkModeIcon fontSize="small" />
-                    {t('settings.themeDark')}
-                  </Box>
-                </MenuItem>
-                <MenuItem value="system">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <SettingsBrightnessIcon fontSize="small" />
-                    {t('settings.themeSystem')}
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Paper>
-
-        <Paper elevation={3} className={styles.settingPaper}>
-          <Box className={styles.settingHeader}>
-            <PaletteIcon className={styles.settingIcon} />
-            <Typography variant="h6" sx={{ color: 'text.primary' }}>
-              {t('settings.accentColor')}
-            </Typography>
-          </Box>
-          <Box sx={{ px: 2, pb: 2 }}>
-            {/* Акцентный цвет для светлой темы */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <LightModeIcon fontSize="small" />
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {t('settings.accentColorLight')}
-                </Typography>
-              </Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={8}>
-                  <TextField
-                    fullWidth
-                    type="color"
-                    value={accentColorLight}
-                    onChange={(e) => dispatch(setAccentColorLight(e.target.value))}
-                    label={t('settings.accentColorLight')}
-                    size="small"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    inputProps={{
-                      style: { height: '40px' },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 1,
-                      flexWrap: 'wrap',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {[
-                      '#4a90e2', // Синий
-                      '#e74c3c', // Красный
-                      '#27ae60', // Зеленый
-                      '#f39c12', // Оранжевый
-                      '#9b59b6', // Фиолетовый
-                      '#1abc9c', // Бирюзовый
-                      '#e67e22', // Темно-оранжевый
-                      '#3498db', // Голубой
-                    ].map((color) => (
-                      <IconButton
-                        key={color}
-                        onClick={() => dispatch(setAccentColorLight(color))}
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          backgroundColor: color,
-                          border: accentColorLight === color ? '2px solid' : '1px solid',
-                          borderColor: accentColorLight === color ? 'primary.main' : 'divider',
-                          '&:hover': {
-                            backgroundColor: color,
-                            opacity: 0.8,
-                          },
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-
-            {/* Акцентный цвет для темной темы */}
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <DarkModeIcon fontSize="small" />
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {t('settings.accentColorDark')}
-                </Typography>
-              </Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={8}>
-                  <TextField
-                    fullWidth
-                    type="color"
-                    value={accentColorDark}
-                    onChange={(e) => dispatch(setAccentColorDark(e.target.value))}
-                    label={t('settings.accentColorDark')}
-                    size="small"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    inputProps={{
-                      style: { height: '40px' },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 1,
-                      flexWrap: 'wrap',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {[
-                      '#4a90e2', // Синий
-                      '#e74c3c', // Красный
-                      '#27ae60', // Зеленый
-                      '#f39c12', // Оранжевый
-                      '#9b59b6', // Фиолетовый
-                      '#1abc9c', // Бирюзовый
-                      '#e67e22', // Темно-оранжевый
-                      '#3498db', // Голубой
-                    ].map((color) => (
-                      <IconButton
-                        key={color}
-                        onClick={() => dispatch(setAccentColorDark(color))}
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          backgroundColor: color,
-                          border: accentColorDark === color ? '2px solid' : '1px solid',
-                          borderColor: accentColorDark === color ? 'primary.main' : 'divider',
-                          '&:hover': {
-                            backgroundColor: color,
-                            opacity: 0.8,
-                          },
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          </Box>
-        </Paper>
-
-        {/* Секция "Модель и сцена" */}
-        <Paper elevation={3} className={styles.settingPaper} sx={{ mt: 2 }}>
-          <Box className={styles.settingHeader}>
-            <ImageIcon className={styles.settingIcon} />
-            <Typography variant="h6" sx={{ color: 'text.primary' }}>
-              {t('settings.modelAndScene')}
-            </Typography>
-          </Box>
-
-          <Box sx={{ px: 2, pb: 2 }}>
+        {/* Модель и сцена */}
+        <SettingSection
+          icon={<ImageIcon />}
+          title={t('settings.modelAndScene')}
+          className={styles.modelSceneSection}
+        >
+          <Box className={styles.modelSceneContent}>
             {/* Выбор модели */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {t('settings.model')}
-              </Typography>
-              {loadingModels ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={20} />
-                  <Typography variant="body2" color="text.secondary">
-                    {t('ui.loadingModels')}
-                  </Typography>
-                </Box>
-              ) : (
-                <FormControl fullWidth size="small">
-                  <InputLabel id="model-select-label">{t('settings.model')}</InputLabel>
-                  <Select
-                    labelId="model-select-label"
-                    id="model-select"
-                    value={modelScene.modelPath.split('/').pop() || availableModels[0] || ''}
-                    label={t('settings.model')}
-                    onChange={(e) => {
-                      const selectedModel = e.target.value;
-                      if (selectedModel) {
-                        const modelPath = `${ASSETS_PATHS.MODELS}${selectedModel}`;
-                        dispatch(setModelPath(modelPath));
-                        log.debug('Model changed to:', modelPath);
-                      }
-                    }}
-                    sx={{ color: 'text.primary' }}
-                  >
-                    {availableModels.length === 0 ? (
-                      <MenuItem disabled value="">
-                        <Typography variant="body2" color="text.secondary">
-                          {t('ui.noModels')}
-                        </Typography>
-                      </MenuItem>
-                    ) : (
-                      availableModels.map((model) => (
-                        <MenuItem key={model} value={model}>
-                          {model}
-                        </MenuItem>
-                      ))
-                    )}
-                  </Select>
-                </FormControl>
-              )}
-            </Box>
+            <ModelSelector
+              id="model-select"
+              label={t('settings.model')}
+              value={modelScene.modelPath.split('/').pop() || availableModels[0] || ''}
+              onChange={(value) => {
+                if (value) {
+                  const modelPath = `${ASSETS_PATHS.MODELS}${value}`;
+                  dispatch(setModelPath(modelPath));
+                  log.debug('Model changed to:', modelPath);
+                }
+              }}
+              options={availableModels}
+              loading={loadingModels}
+              emptyMessage={t('ui.noModels')}
+            />
 
             {/* Выбор сцены */}
             <Box sx={{ mb: 3 }}>
@@ -485,52 +319,31 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               </Typography>
               {loadingScenes ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={20} />
                   <Typography variant="body2" color="text.secondary">
                     {t('ui.loadingScenes')}
                   </Typography>
                 </Box>
               ) : (
-                <FormControl fullWidth size="small">
-                  <InputLabel id="scene-select-label">{t('settings.scene')}</InputLabel>
-                  <Select
-                    labelId="scene-select-label"
-                    id="scene-select"
-                    value={modelScene.sceneName || ''}
-                    label={t('settings.scene')}
-                    onChange={(e) => {
-                      const selectedScene = e.target.value;
-                      if (selectedScene === '') {
-                        dispatch(setSceneName(null));
-                        log.debug('Scene cleared');
-                      } else {
-                        dispatch(setSceneName(selectedScene));
-                        log.debug('Scene changed to:', selectedScene);
-                      }
-                    }}
-                    sx={{ color: 'text.primary' }}
-                    disabled={loadingScenes}
-                  >
-                    <MenuItem value="">
-                      <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                        {t('ui.sceneNotSelected')}
-                      </Typography>
-                    </MenuItem>
-                    {availableScenes.length === 0 ? (
-                      <MenuItem disabled value="__no_scenes__">
-                        <Typography variant="body2" color="text.secondary">
-                          {t('ui.noScenes')}
-                        </Typography>
-                      </MenuItem>
-                    ) : (
-                      availableScenes.map((scene) => (
-                        <MenuItem key={scene} value={scene}>
-                          {scene}
-                        </MenuItem>
-                      ))
-                    )}
-                  </Select>
-                </FormControl>
+                <SelectSetting
+                  id="scene-select"
+                  label={t('settings.scene')}
+                  value={modelScene.sceneName || ''}
+                  onChange={(value) => {
+                    if (value === '') {
+                      dispatch(setSceneName(null));
+                      log.debug('Scene cleared');
+                    } else {
+                      dispatch(setSceneName(value));
+                      log.debug('Scene changed to:', value);
+                    }
+                  }}
+                  options={[
+                    { value: '', label: t('ui.sceneNotSelected') },
+                    ...(availableScenes.length === 0
+                      ? [{ value: '__no_scenes__', label: t('ui.noScenes') }]
+                      : availableScenes.map((scene) => ({ value: scene, label: scene }))),
+                  ]}
+                />
               )}
             </Box>
 
@@ -556,77 +369,87 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             {/* Интенсивность освещения */}
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <LightModeIcon className={styles.settingIcon} sx={{ fontSize: '1rem', mr: 1 }} />
+                <LightModeIcon sx={{ fontSize: '1rem', mr: 1, color: 'var(--primary-color)' }} />
                 <Typography variant="body2">{t('settings.lightIntensity')}</Typography>
               </Box>
-              <Slider
+              <SliderSetting
                 value={modelScene.lightIntensity}
-                onChange={(_, value) => dispatch(setLightIntensity(value as number))}
+                onChange={(value) => dispatch(setLightIntensity(value))}
                 min={SETTINGS_RANGES.LIGHT_INTENSITY.min}
                 max={SETTINGS_RANGES.LIGHT_INTENSITY.max}
                 step={SETTINGS_RANGES.LIGHT_INTENSITY.step}
-                valueLabelDisplay="auto"
-                className={styles.slider}
+                label={modelScene.lightIntensity.toFixed(1)}
               />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1, textAlign: 'center' }}
-              >
-                {modelScene.lightIntensity.toFixed(1)}
-              </Typography>
             </Box>
 
             {/* Расстояние камеры */}
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <VideocamIcon className={styles.settingIcon} sx={{ fontSize: '1rem', mr: 1 }} />
+                <VideocamIcon sx={{ fontSize: '1rem', mr: 1, color: 'var(--primary-color)' }} />
                 <Typography variant="body2">{t('settings.cameraDistance')}</Typography>
               </Box>
-              <Slider
+              <SliderSetting
                 value={modelScene.cameraDistance}
-                onChange={(_, value) => dispatch(setCameraDistance(value as number))}
+                onChange={(value) => dispatch(setCameraDistance(value))}
                 min={SETTINGS_RANGES.CAMERA_DISTANCE.min}
                 max={SETTINGS_RANGES.CAMERA_DISTANCE.max}
                 step={SETTINGS_RANGES.CAMERA_DISTANCE.step}
-                valueLabelDisplay="auto"
-                className={styles.slider}
+                label={modelScene.cameraDistance.toFixed(1)}
               />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1, textAlign: 'center' }}
-              >
-                {modelScene.cameraDistance.toFixed(1)}
-              </Typography>
             </Box>
 
             {/* Скорость анимации */}
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <SpeedIcon className={styles.settingIcon} sx={{ fontSize: '1rem', mr: 1 }} />
+                <SpeedIcon sx={{ fontSize: '1rem', mr: 1, color: 'var(--primary-color)' }} />
                 <Typography variant="body2">{t('settings.animationSpeed')}</Typography>
               </Box>
-              <Slider
+              <SliderSetting
                 value={modelScene.animationSpeed}
-                onChange={(_, value) => dispatch(setAnimationSpeed(value as number))}
+                onChange={(value) => dispatch(setAnimationSpeed(value))}
                 min={SETTINGS_RANGES.ANIMATION_SPEED.min}
                 max={SETTINGS_RANGES.ANIMATION_SPEED.max}
                 step={SETTINGS_RANGES.ANIMATION_SPEED.step}
-                valueLabelDisplay="auto"
-                className={styles.slider}
+                label={`${modelScene.animationSpeed.toFixed(1)}x`}
               />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1, textAlign: 'center' }}
-              >
-                {modelScene.animationSpeed.toFixed(1)}x
-              </Typography>
             </Box>
           </Box>
-        </Paper>
+        </SettingSection>
+
+        {/* Сброс настроек */}
+        <SettingSection icon={<RefreshIcon />} title={t('settings.resetSettings')}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {t('settings.resetSettingsDescription')}
+            </Typography>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<RefreshIcon />}
+              onClick={handleResetSettings}
+              fullWidth
+            >
+              {t('settings.resetSettings')}
+            </Button>
+          </Box>
+        </SettingSection>
       </ScrollableContent>
+
+      {/* Диалог подтверждения сброса */}
+      <Dialog open={resetDialogOpen} onClose={handleCancelReset}>
+        <DialogTitle>{t('settings.resetSettingsConfirmTitle')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{t('settings.resetSettingsConfirmMessage')}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelReset} color="inherit">
+            {t('ui.cancel')}
+          </Button>
+          <Button onClick={handleConfirmReset} color="error" variant="contained">
+            {t('settings.resetSettings')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,7 +1,5 @@
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, Typography, Paper, IconButton, Tooltip, Divider, Chip } from '@mui/material';
-import { format } from 'date-fns';
-import { ru, enUS, zhCN } from 'date-fns/locale';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,6 +9,9 @@ import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { clearMessages } from '../../../../store/slices/chatSlice';
 import { createLogger } from '../../../../utils/logger';
 import styles from '../../MenuScreen.module.css';
+
+import screenStyles from './HistoryScreen.module.css';
+import { formatMessageDate, getDateLocale, isFirstInGroup } from './utils/dateFormatter';
 
 const log = createLogger('HistoryScreen');
 
@@ -24,17 +25,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
   const messages = useAppSelector((state) => state.chat.messages);
   const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
 
-  // Определяем локаль для форматирования даты
-  const dateLocale = useMemo(() => {
-    switch (i18n.language) {
-      case 'ru':
-        return ru;
-      case 'zh':
-        return zhCN;
-      default:
-        return enUS;
-    }
-  }, [i18n.language]);
+  const dateLocale = useMemo(() => getDateLocale(i18n.language), [i18n.language]);
 
   const handleClearHistory = () => {
     if (confirm(t('history.confirmClear'))) {
@@ -43,34 +34,6 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
     }
   };
 
-  // Форматирование даты и времени
-  const formatMessageDate = (date: Date) => {
-    try {
-      const messageDate = new Date(date);
-      const now = new Date();
-      const diffInSeconds = Math.floor((now.getTime() - messageDate.getTime()) / 1000);
-
-      // Если сообщение сегодня, показываем только время
-      if (diffInSeconds < 86400 && messageDate.getDate() === now.getDate()) {
-        return format(messageDate, 'HH:mm', { locale: dateLocale });
-      }
-
-      // Если сообщение вчера
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      if (diffInSeconds < 172800 && messageDate.getDate() === yesterday.getDate()) {
-        return `${t('history.yesterday')} ${format(messageDate, 'HH:mm', { locale: dateLocale })}`;
-      }
-
-      // Иначе показываем дату и время
-      return format(messageDate, 'dd.MM.yyyy HH:mm', { locale: dateLocale });
-    } catch (error) {
-      log.error('Error formatting date:', error);
-      return '';
-    }
-  };
-
-  // Формируем заголовок с названием LLM модели
   const chatTitle = llmProviderName ? `${t('chat.title')} - ${llmProviderName}` : t('chat.title');
 
   return (
@@ -89,18 +52,9 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
         }
       />
 
-      <ScrollableContent screenId="history">
+      <ScrollableContent screenId="history" className={screenStyles.content}>
         {messages.length === 0 ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              gap: 2,
-            }}
-          >
+          <Box className={screenStyles.emptyState}>
             <Typography variant="h6" color="text.secondary">
               {t('chat.empty')}
             </Typography>
@@ -112,65 +66,52 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
           <Box sx={{ py: 2 }}>
             {messages.map((message, index) => {
               const isUser = message.position === 'right';
-              const isFirstInGroup =
-                index === 0 ||
-                messages[index - 1].position !== message.position ||
-                new Date(message.date).getTime() - new Date(messages[index - 1].date).getTime() >
-                  300000; // 5 минут
+              const firstInGroup = isFirstInGroup(index, messages);
 
               return (
-                <Box key={message.id}>
-                  {isFirstInGroup && (
+                <Box key={message.id} className={screenStyles.messageGroup}>
+                  {firstInGroup && (
                     <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: isUser ? 'flex-end' : 'flex-start',
-                        alignItems: 'center',
-                        gap: 1,
-                        mb: 0.5,
-                        px: 1,
-                      }}
+                      className={`${screenStyles.messageHeader} ${
+                        isUser
+                          ? screenStyles.messageHeaderUser
+                          : screenStyles.messageHeaderAssistant
+                      }`}
                     >
                       <Typography variant="caption" color="text.secondary">
                         {isUser ? t('chat.user') : t('chat.assistant')}
                       </Typography>
                       <Chip
-                        label={formatMessageDate(message.date)}
+                        label={formatMessageDate(message.date, dateLocale, t)}
                         size="small"
-                        sx={{ height: '20px', fontSize: '0.7rem' }}
+                        className={screenStyles.dateChip}
                       />
                     </Box>
                   )}
                   <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: isUser ? 'flex-end' : 'flex-start',
-                      mb: 1,
-                    }}
+                    className={`${screenStyles.messageContainer} ${
+                      isUser
+                        ? screenStyles.messageContainerUser
+                        : screenStyles.messageContainerAssistant
+                    }`}
                   >
                     <Paper
                       elevation={1}
-                      sx={{
-                        maxWidth: '70%',
-                        p: 1.5,
-                        backgroundColor: isUser ? 'primary.main' : 'background.paper',
-                        color: isUser ? 'primary.contrastText' : 'text.primary',
-                        borderRadius: 2,
-                      }}
+                      className={`${screenStyles.messageBubble} ${
+                        isUser
+                          ? screenStyles.messageBubbleUser
+                          : screenStyles.messageBubbleAssistant
+                      }`}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          wordBreak: 'break-word',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
+                      <Typography variant="body2" className={screenStyles.messageText}>
                         {message.text}
                       </Typography>
                     </Paper>
                   </Box>
                   {index < messages.length - 1 &&
-                    messages[index + 1].position !== message.position && <Divider sx={{ my: 1 }} />}
+                    messages[index + 1].position !== message.position && (
+                      <Divider className={screenStyles.divider} />
+                    )}
                 </Box>
               );
             })}

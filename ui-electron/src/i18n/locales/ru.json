@@ -27,7 +27,8 @@
     "errorMessage": "Произошла ошибка при обработке запроса.",
     "errorSorry": "Извините, не удалось получить ответ.",
     "youSaid": "Вы сказали",
-    "answer": "Ответ"
+    "answer": "Ответ",
+    "cancel": "Отмена"
   },
   "menu": {
     "title": "Меню",
@@ -55,7 +56,8 @@
     },
     "recording": "Запись...",
     "startRecording": "Начать запись голоса",
-    "stopRecording": "Остановить запись"
+    "stopRecording": "Остановить запись",
+    "keyboardLanguage": "Язык клавиатуры"
   },
   "settings": {
     "title": "Настройки",
@@ -74,7 +76,11 @@
     "themeSystem": "Системная",
     "accentColor": "Акцентный цвет",
     "accentColorLight": "Акцентный цвет (светлая тема)",
-    "accentColorDark": "Акцентный цвет (темная тема)"
+    "accentColorDark": "Акцентный цвет (темная тема)",
+    "resetSettings": "Сбросить настройки",
+    "resetSettingsDescription": "Сбросить все настройки к значениям по умолчанию и показать приветственный экран при следующем запуске",
+    "resetSettingsConfirmTitle": "Сбросить настройки?",
+    "resetSettingsConfirmMessage": "Вы уверены, что хотите сбросить все настройки к значениям по умолчанию? Приветственный экран будет показан при следующем запуске."
   },
   "apiKeys": {
     "title": "API ключи",
@@ -157,5 +163,8 @@
     "russian": "Русский",
     "english": "English",
     "chinese": "中文"
+  },
+  "welcome": {
+    "getStarted": "Начать"
   }
 }

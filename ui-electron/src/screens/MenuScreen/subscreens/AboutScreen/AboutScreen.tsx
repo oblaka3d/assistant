@@ -7,6 +7,8 @@ import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
 import styles from '../../MenuScreen.module.css';
 
+import screenStyles from './AboutScreen.module.css';
+
 interface AboutScreenProps {
   onBack: () => void;
 }
@@ -18,22 +20,22 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
     <Box className={styles.container}>
       <ScreenHeader title={t('about.title')} onBack={onBack} />
 
-      <ScrollableContent screenId="about">
-        <Paper elevation={3} className={styles.settingPaper}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-              <InfoIcon className={styles.settingIcon} />
-              <Box sx={{ ml: 2 }}>
-                <Typography variant="h6" sx={{ color: 'text.primary' }}>
+      <ScrollableContent screenId="about" className={screenStyles.content}>
+        <Paper elevation={3} className={screenStyles.paper}>
+          <Box className={screenStyles.paperContent}>
+            <Box className={screenStyles.paperMain}>
+              <InfoIcon className={screenStyles.icon} />
+              <Box className={screenStyles.textContent}>
+                <Typography variant="h6" className={screenStyles.title}>
                   {t('app.name')}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                <Typography variant="body2" className={screenStyles.subtitle}>
                   {t('about.version')} 1.0
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                <Typography variant="body2" className={screenStyles.description}>
                   {t('about.description')}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                <Typography variant="body2" className={screenStyles.description}>
                   {t('about.tech')}
                 </Typography>
               </Box>

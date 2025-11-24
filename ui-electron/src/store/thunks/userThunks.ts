@@ -8,12 +8,26 @@ import {
   saveRefreshToken,
 } from '../../utils/api';
 import type { RegisterRequest, LoginRequest } from '../../utils/api';
+import type { AppDispatch } from '../index';
 import type { User } from '../types/user';
 
 import { fetchDialogs, createDialogOnServer } from './chatThunks';
 import { fetchSettings } from './settingsThunks';
 
 const DEFAULT_DIALOG_TITLE = 'Новый диалог';
+
+const initializeUserSession = async (dispatch: AppDispatch) => {
+  await dispatch(fetchSettings());
+  const dialogs = await dispatch(fetchDialogs()).unwrap();
+  if (!dialogs || dialogs.length === 0) {
+    await dispatch(
+      createDialogOnServer({
+        dialogId: Date.now().toString(),
+        title: DEFAULT_DIALOG_TITLE,
+      })
+    ).unwrap();
+  }
+};
 
 /**
  * Регистрация нового пользователя
@@ -31,17 +45,7 @@ export const registerUser = createAsyncThunk<User, RegisterRequest, { rejectValu
         displayName: response.data.user.name,
       };
 
-      // Загружаем настройки и диалоги после успешной регистрации
-      await dispatch(fetchSettings());
-      const dialogs = await dispatch(fetchDialogs()).unwrap();
-      if (!dialogs || dialogs.length === 0) {
-        await dispatch(
-          createDialogOnServer({
-            dialogId: Date.now().toString(),
-            title: DEFAULT_DIALOG_TITLE,
-          })
-        ).unwrap();
-      }
+      await initializeUserSession(dispatch);
 
       return user;
     } catch (error) {
@@ -66,17 +70,7 @@ export const loginUser = createAsyncThunk<User, LoginRequest, { rejectValue: str
         displayName: response.data.user.name,
       };
 
-      // Загружаем настройки и диалоги после успешного входа
-      await dispatch(fetchSettings());
-      const dialogs = await dispatch(fetchDialogs()).unwrap();
-      if (!dialogs || dialogs.length === 0) {
-        await dispatch(
-          createDialogOnServer({
-            dialogId: Date.now().toString(),
-            title: DEFAULT_DIALOG_TITLE,
-          })
-        ).unwrap();
-      }
+      await initializeUserSession(dispatch);
 
       return user;
     } catch (error) {
@@ -101,17 +95,7 @@ export const fetchCurrentUser = createAsyncThunk<User, void, { rejectValue: stri
         displayName: response.data.user.name,
       };
 
-      // Загружаем настройки и диалоги после успешной загрузки пользователя
-      await dispatch(fetchSettings());
-      const dialogs = await dispatch(fetchDialogs()).unwrap();
-      if (!dialogs || dialogs.length === 0) {
-        await dispatch(
-          createDialogOnServer({
-            dialogId: Date.now().toString(),
-            title: DEFAULT_DIALOG_TITLE,
-          })
-        ).unwrap();
-      }
+      await initializeUserSession(dispatch);
 
       return user;
     } catch (error) {
@@ -143,17 +127,7 @@ export const oauthLogin = createAsyncThunk<
       displayName: response.data.user.name,
     };
 
-    // Загружаем настройки и диалоги после успешной авторизации
-    await dispatch(fetchSettings());
-    const dialogs = await dispatch(fetchDialogs()).unwrap();
-    if (!dialogs || dialogs.length === 0) {
-      await dispatch(
-        createDialogOnServer({
-          dialogId: Date.now().toString(),
-          title: DEFAULT_DIALOG_TITLE,
-        })
-      ).unwrap();
-    }
+    await initializeUserSession(dispatch);
 
     return user;
   } catch (error) {

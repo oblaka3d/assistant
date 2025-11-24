@@ -6,6 +6,8 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { resetAPIKeys } from '../store/slices/apiKeysSlice';
+import { resetChat } from '../store/slices/chatSlice';
 import { setLoading, setError, logout } from '../store/slices/userSlice';
 import { fetchCurrentUser } from '../store/thunks';
 import { createLogger } from '../utils/logger';
@@ -44,6 +46,8 @@ const UserBar: React.FC<UserBarProps> = ({ onLoginClick }) => {
     try {
       dispatch(setLoading(true));
       dispatch(logout());
+      dispatch(resetChat());
+      dispatch(resetAPIKeys());
       log.log('User logged out successfully');
     } catch (error) {
       log.error('Failed to logout:', error);

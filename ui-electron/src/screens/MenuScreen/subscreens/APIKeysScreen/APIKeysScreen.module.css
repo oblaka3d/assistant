@@ -1,0 +1,57 @@
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background);
+  transition: background-color 0.3s ease;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.category {
+  margin-bottom: 1.5rem;
+}
+
+.categoryTitle {
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.categoryPaper {
+  padding: 1rem;
+  background-color: var(--surface);
+  transition: background-color 0.3s ease;
+}
+
+.saveButton {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.description {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.securityNote {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.divider {
+  margin: 1.5rem 0;
+}

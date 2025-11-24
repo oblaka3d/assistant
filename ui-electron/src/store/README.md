@@ -1,63 +1,31 @@
 # Redux Store
 
-Управление состоянием приложения через Redux Toolkit.
+Управление состоянием через Redux Toolkit.
 
-## Структура
+## Slices
 
-### UI Slice (`uiSlice.ts`)
+- **`uiSlice`** - навигация, текущий экран, подэкраны
+- **`voiceSlice`** - голосовое взаимодействие, статус записи
+- **`chatSlice`** - диалоги, сообщения, текущий диалог
+- **`settingsSlice`** - настройки (тема, язык, модель, сцена)
+- **`userSlice`** - информация о пользователе
+- **`apiKeysSlice`** - API ключи
 
-Навигация и UI состояние:
+## Thunks
 
-- `currentScreen` - текущий экран: `'main' | 'chat' | 'menu'`
-- `subScreen` - вложенный экран в меню: `'settings' | 'history' | 'about' | null`
-- `isTransitioning` - флаг перехода между экранами
-- `navigationHistory` - история навигации
+Асинхронная бизнес-логика в `thunks/`:
 
-**Навигация:**
-
-- Круговая навигация между основными экранами (свайпы)
-- Вложенные экраны в меню (Настройки, История, О приложении)
-
-### Voice Slice (`voiceSlice.ts`)
-
-Состояние голосового ассистента:
-
-- `status` - текущий статус
-- `isRecording` - флаг записи
-- `userText` - текст пользователя
-- `assistantText` - ответ ассистента
-- `sceneReady` - готовность 3D сцены
-
-### Chat Slice (`chatSlice.ts`)
-
-История сообщений:
-
-- `messages` - массив сообщений чата
-- `inputValue` - текущее значение поля ввода
-
-### Settings Slice (`settingsSlice.ts`)
-
-Настройки приложения:
-
-- `volume` - громкость
-- `language` - язык интерфейса
-- `modelScene` - настройки модели и сцены:
-  - `modelPath` - путь к модели
-  - `sceneName` - название сцены (null = не выбрана)
-  - `enableToonShader` - включение toon shader
-  - `lightIntensity` - интенсивность освещения
-  - `cameraDistance` - расстояние камеры
-  - `animationSpeed` - скорость анимации
+- `chatThunks` - работа с чатом
+- `voiceThunks` - голосовое взаимодействие
+- `sceneThunks` - загрузка 3D сцены
+- `userThunks` - авторизация
+- `settingsThunks` - сохранение настроек
 
 ## Использование
 
 ```typescript
 import { useAppDispatch, useAppSelector } from './hooks';
 
-// В компоненте
 const dispatch = useAppDispatch();
-const currentScreen = useAppSelector((state) => state.ui.currentScreen);
-
-// Вызов action
-dispatch(setScreen('chat'));
+const screen = useAppSelector((state) => state.ui.currentScreen);
 ```

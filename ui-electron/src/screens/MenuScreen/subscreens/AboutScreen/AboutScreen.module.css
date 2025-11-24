@@ -1,0 +1,57 @@
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background);
+  transition: background-color 0.3s ease;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.paper {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--surface);
+  transition: background-color 0.3s ease;
+}
+
+.paperContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.paperMain {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.icon {
+  margin-right: 1rem;
+  color: var(--primary-color);
+  transition: color 0.3s ease;
+}
+
+.textContent {
+  margin-left: 1rem;
+}
+
+.title {
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.description {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+}

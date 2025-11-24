@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 
-import { AuthRequest } from '../middleware/auth';
 import {
   getUserDialogs,
   getDialogById,
@@ -11,6 +10,25 @@ import {
   deleteAllUserDialogs,
   DialogUpdateData,
 } from '../services/chatService';
+import {
+  requireAuthenticatedUser,
+  respondWithValidationErrors,
+  sendSuccess,
+} from '../utils/controllerHelpers';
+
+const formatDialog = (dialog: {
+  dialogId: string;
+  title: string;
+  messages: unknown[];
+  createdAt: Date;
+  updatedAt: Date;
+}) => ({
+  id: dialog.dialogId,
+  title: dialog.title,
+  messages: dialog.messages,
+  createdAt: dialog.createdAt,
+  updatedAt: dialog.updatedAt,
+});
 
 /**
  * Получение всех диалогов пользователя
@@ -21,25 +39,15 @@ export const getDialogsController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
-    const dialogs = await getUserDialogs(authReq.user.userId);
+    const dialogs = await getUserDialogs(user.userId);
 
-    res.status(200).json({
-      success: true,
-      data: {
-        dialogs: dialogs.map((dialog) => ({
-          id: dialog.dialogId,
-          title: dialog.title,
-          messages: dialog.messages,
-          createdAt: dialog.createdAt,
-          updatedAt: dialog.updatedAt,
-        })),
-      },
+    sendSuccess(res, {
+      dialogs: dialogs.map(formatDialog),
     });
   } catch (error) {
     next(error);
@@ -55,32 +63,20 @@ export const getDialogController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
     const { dialogId } = req.params;
-    const dialog = await getDialogById(authReq.user.userId, dialogId);
+    const dialog = await getDialogById(user.userId, dialogId);
 
     if (!dialog) {
       res.status(404).json({ error: 'Dialog not found' });
       return;
     }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        dialog: {
-          id: dialog.dialogId,
-          title: dialog.title,
-          messages: dialog.messages,
-          createdAt: dialog.createdAt,
-          updatedAt: dialog.updatedAt,
-        },
-      },
-    });
+    sendSuccess(res, { dialog: formatDialog(dialog) });
   } catch (error) {
     next(error);
   }
@@ -95,15 +91,12 @@ export const createDialogController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+    if (respondWithValidationErrors(req, res)) {
       return;
     }
 
@@ -114,20 +107,9 @@ export const createDialogController: RequestHandler = async (
       return;
     }
 
-    const dialog = await createDialog(authReq.user.userId, dialogId, title);
+    const dialog = await createDialog(user.userId, dialogId, title);
 
-    res.status(201).json({
-      success: true,
-      data: {
-        dialog: {
-          id: dialog.dialogId,
-          title: dialog.title,
-          messages: dialog.messages,
-          createdAt: dialog.createdAt,
-          updatedAt: dialog.updatedAt,
-        },
-      },
-    });
+    sendSuccess(res, { dialog: formatDialog(dialog) }, 201);
   } catch (error) {
     next(error);
   }
@@ -142,15 +124,12 @@ export const updateDialogController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+    if (respondWithValidationErrors(req, res)) {
       return;
     }
 
@@ -164,20 +143,9 @@ export const updateDialogController: RequestHandler = async (
       updateData.messages = req.body.messages;
     }
 
-    const dialog = await updateDialog(authReq.user.userId, dialogId, updateData);
+    const dialog = await updateDialog(user.userId, dialogId, updateData);
 
-    res.status(200).json({
-      success: true,
-      data: {
-        dialog: {
-          id: dialog.dialogId,
-          title: dialog.title,
-          messages: dialog.messages,
-          createdAt: dialog.createdAt,
-          updatedAt: dialog.updatedAt,
-        },
-      },
-    });
+    sendSuccess(res, { dialog: formatDialog(dialog) });
   } catch (error) {
     next(error);
   }
@@ -192,24 +160,20 @@ export const deleteDialogController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
     const { dialogId } = req.params;
-    const deleted = await deleteDialog(authReq.user.userId, dialogId);
+    const deleted = await deleteDialog(user.userId, dialogId);
 
     if (!deleted) {
       res.status(404).json({ error: 'Dialog not found' });
       return;
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Dialog deleted successfully',
-    });
+    sendSuccess(res, { message: 'Dialog deleted successfully', dialogId });
   } catch (error) {
     next(error);
   }
@@ -224,20 +188,16 @@ export const deleteAllDialogsController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
-    const deletedCount = await deleteAllUserDialogs(authReq.user.userId);
+    const deletedCount = await deleteAllUserDialogs(user.userId);
 
-    res.status(200).json({
-      success: true,
+    sendSuccess(res, {
       message: 'All dialogs deleted successfully',
-      data: {
-        deletedCount,
-      },
+      deletedCount,
     });
   } catch (error) {
     next(error);

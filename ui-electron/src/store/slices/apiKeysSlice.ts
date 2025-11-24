@@ -37,10 +37,18 @@ const apiKeysSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    resetAPIKeys: () => initialState,
   },
 });
 
-export const { setAPIKey, removeAPIKey, setAPIKeys, setLoading, setError, clearError } =
-  apiKeysSlice.actions;
+export const {
+  setAPIKey,
+  removeAPIKey,
+  setAPIKeys,
+  setLoading,
+  setError,
+  clearError,
+  resetAPIKeys,
+} = apiKeysSlice.actions;
 
 export default apiKeysSlice.reducer;

@@ -27,7 +27,8 @@
     "errorMessage": "处理请求时发生错误。",
     "errorSorry": "抱歉，无法获取回复。",
     "youSaid": "您说",
-    "answer": "回答"
+    "answer": "回答",
+    "cancel": "取消"
   },
   "menu": {
     "title": "菜单",
@@ -55,7 +56,8 @@
     },
     "recording": "录音中...",
     "startRecording": "开始语音录音",
-    "stopRecording": "停止录音"
+    "stopRecording": "停止录音",
+    "keyboardLanguage": "键盘语言"
   },
   "settings": {
     "title": "设置",
@@ -74,7 +76,11 @@
     "themeSystem": "跟随系统",
     "accentColor": "强调色",
     "accentColorLight": "强调色（浅色主题）",
-    "accentColorDark": "强调色（深色主题）"
+    "accentColorDark": "强调色（深色主题）",
+    "resetSettings": "重置设置",
+    "resetSettingsDescription": "将所有设置重置为默认值，并在下次启动时显示欢迎屏幕",
+    "resetSettingsConfirmTitle": "重置设置？",
+    "resetSettingsConfirmMessage": "您确定要将所有设置重置为默认值吗？下次启动时会显示欢迎屏幕。"
   },
   "apiKeys": {
     "title": "API密钥",
@@ -157,5 +163,8 @@
     "russian": "Русский",
     "english": "English",
     "chinese": "中文"
+  },
+  "welcome": {
+    "getStarted": "开始"
   }
 }

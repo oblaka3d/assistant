@@ -1,6 +1,6 @@
 .container {
   position: fixed;
-  bottom: 8px;
+  bottom: calc(var(--nav-base-offset, 8px) + var(--keyboard-offset, 0px));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -12,14 +12,14 @@
   background-image: linear-gradient(to top, var(--background) 0%, transparent 100%);
   backdrop-filter: blur(10px);
   border-radius: 16px 16px 0 0;
-  z-index: 1000;
+  z-index: 2000;
   pointer-events: auto;
   transition: background 0.3s ease;
 }
 
 /* На экране чата индикаторы располагаются выше, чтобы не перекрывать инпут */
 .container.chatScreen {
-  bottom: 72px;
+  bottom: calc(var(--nav-chat-offset, 72px) + var(--keyboard-offset, 0px));
 }
 
 .indicator {
@@ -89,11 +89,11 @@
   .container {
     gap: 0.3rem;
     padding: 0.3rem 0.5rem;
-    bottom: 6px;
+    bottom: calc(6px + var(--keyboard-offset, 0px));
   }
 
   .container.chatScreen {
-    bottom: 68px;
+    bottom: calc(68px + var(--keyboard-offset, 0px));
   }
 
   .indicator {

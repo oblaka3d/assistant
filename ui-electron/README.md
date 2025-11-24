@@ -7,62 +7,29 @@ React приложение для голосового ассистента.
 ```
 src/
 ├── screens/          # Экраны приложения
-│   ├── MainScreen.tsx       # Главный экран с 3D персонажем
-│   ├── ChatScreen.tsx       # Текстовый чат
-│   ├── MenuScreen.tsx       # Меню
-│   └── subscreens/          # Вложенные экраны меню
-│       ├── SettingsScreen.tsx
-│       ├── HistoryScreen.tsx
-│       └── AboutScreen.tsx
-├── components/       # React компоненты
-│   ├── StatusBar.tsx        # Строка состояния (WiFi, Bluetooth, Battery)
-│   ├── NavigationIndicators.tsx  # Индикаторы навигации
-│   └── ScreenHeader.tsx     # Заголовок экрана
-├── store/            # Redux store
-│   ├── slices/       # Redux slices
-│   └── hooks.ts      # Типизированные хуки
-├── renderer/         # THREE.js рендерер
-│   └── three/        # THREE.js модули
-└── main.tsx          # Точка входа
-```
-
-## Разработка
-
-```bash
-# Запуск dev сервера
-npm run dev:ui
-
-# Сборка
-npm run build:ui
+│   ├── MainScreen/   # Главный экран с 3D персонажем
+│   ├── ChatScreen/   # Текстовый чат
+│   └── MenuScreen/   # Меню с настройками
+├── components/       # Переиспользуемые компоненты
+├── hooks/           # React хуки (useTheme, useCSSVariables)
+├── store/           # Redux store (slices, thunks)
+├── renderer/        # THREE.js рендерер
+└── utils/           # Утилиты (API, logger, theme)
 ```
 
 ## Экраны
 
-### Main Screen
-
-- 3D персонаж в центре
-- Кнопка записи голоса (круглая, полупрозрачная, справа внизу)
-- Текст взаимодействия (слева вверху)
-- Навигация внизу
-
-### Chat Screen
-
-- Список сообщений
-- Поле ввода текста
-- Навигация внизу (под полем ввода)
-
-### Menu Screen
-
-- Список пунктов меню
-- Вложенные экраны: Настройки, История, О приложении
+- **Main Screen** - 3D персонаж, голосовое управление
+- **Chat Screen** - текстовый чат с историей
+- **Menu Screen** - настройки, история, информация
 
 ## Навигация
 
-Круговая навигация между основными экранами через свайпы:
+Круговая навигация свайпами: `main ↔ chat ↔ menu`
 
-- Свайп влево: `main → menu → chat → main`
-- Свайп вправо: `main → chat → menu → main`
+## Разработка
 
-## Стилизация
-
-Используются CSS Modules для изоляции стилей каждого компонента.
+```bash
+npm run dev:ui    # Hot reload
+npm run build:ui  # Production сборка
+```

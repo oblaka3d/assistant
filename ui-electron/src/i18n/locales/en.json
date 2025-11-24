@@ -27,7 +27,8 @@
     "errorMessage": "An error occurred while processing the request.",
     "errorSorry": "Sorry, failed to get response.",
     "youSaid": "You said",
-    "answer": "Answer"
+    "answer": "Answer",
+    "cancel": "Cancel"
   },
   "menu": {
     "title": "Menu",
@@ -55,7 +56,8 @@
     },
     "recording": "Recording...",
     "startRecording": "Start voice recording",
-    "stopRecording": "Stop recording"
+    "stopRecording": "Stop recording",
+    "keyboardLanguage": "Keyboard language"
   },
   "settings": {
     "title": "Settings",
@@ -74,7 +76,11 @@
     "themeSystem": "System",
     "accentColor": "Accent Color",
     "accentColorLight": "Accent Color (Light Theme)",
-    "accentColorDark": "Accent Color (Dark Theme)"
+    "accentColorDark": "Accent Color (Dark Theme)",
+    "resetSettings": "Reset Settings",
+    "resetSettingsDescription": "Reset all settings to default values and show welcome screen on next launch",
+    "resetSettingsConfirmTitle": "Reset Settings?",
+    "resetSettingsConfirmMessage": "Are you sure you want to reset all settings to default values? This will also show the welcome screen on next launch."
   },
   "apiKeys": {
     "title": "API Keys",
@@ -157,5 +163,8 @@
     "russian": "Русский",
     "english": "English",
     "chinese": "中文"
+  },
+  "welcome": {
+    "getStarted": "Get Started"
   }
 }

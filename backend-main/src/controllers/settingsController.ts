@@ -1,12 +1,17 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
 
-import { AuthRequest } from '../middleware/auth';
 import {
   getOrCreateSettings,
   updateSettings,
   SettingsUpdateData,
 } from '../services/settingsService';
+import {
+  requireAuthenticatedUser,
+  respondWithValidationErrors,
+  sendSuccess,
+} from '../utils/controllerHelpers';
+import { formatSettingsResponse } from '../utils/settingsFormatter';
 
 /**
  * Получение настроек пользователя
@@ -17,38 +22,14 @@ export const getSettingsController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
-    const settings = await getOrCreateSettings(authReq.user.userId);
+    const settings = await getOrCreateSettings(user.userId);
 
-    res.status(200).json({
-      success: true,
-      data: {
-        settings: {
-          volume: settings.volume,
-          language: settings.language,
-          theme: settings.theme,
-          accentColorLight: settings.accentColorLight,
-          accentColorDark: settings.accentColorDark,
-          sttProviderName: settings.sttProviderName,
-          llmProviderName: settings.llmProviderName,
-          llmModel: settings.llmModel,
-          ttsProviderName: settings.ttsProviderName,
-          modelScene: {
-            modelPath: settings.modelScene.modelPath,
-            sceneName: settings.modelScene.sceneName,
-            enableToonShader: settings.modelScene.enableToonShader,
-            lightIntensity: settings.modelScene.lightIntensity,
-            cameraDistance: settings.modelScene.cameraDistance,
-            animationSpeed: settings.modelScene.animationSpeed,
-          },
-        },
-      },
-    });
+    sendSuccess(res, formatSettingsResponse(settings));
   } catch (error) {
     next(error);
   }
@@ -63,16 +44,12 @@ export const updateSettingsController: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const user = requireAuthenticatedUser(req, res);
+    if (!user) {
       return;
     }
 
-    // Проверка ошибок валидации
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+    if (respondWithValidationErrors(req, res)) {
       return;
     }
 
@@ -109,32 +86,9 @@ export const updateSettingsController: RequestHandler = async (
       updateData.modelScene = req.body.modelScene;
     }
 
-    const settings = await updateSettings(authReq.user.userId, updateData);
+    const settings = await updateSettings(user.userId, updateData);
 
-    res.status(200).json({
-      success: true,
-      data: {
-        settings: {
-          volume: settings.volume,
-          language: settings.language,
-          theme: settings.theme,
-          accentColorLight: settings.accentColorLight,
-          accentColorDark: settings.accentColorDark,
-          sttProviderName: settings.sttProviderName,
-          llmProviderName: settings.llmProviderName,
-          llmModel: settings.llmModel,
-          ttsProviderName: settings.ttsProviderName,
-          modelScene: {
-            modelPath: settings.modelScene.modelPath,
-            sceneName: settings.modelScene.sceneName,
-            enableToonShader: settings.modelScene.enableToonShader,
-            lightIntensity: settings.modelScene.lightIntensity,
-            cameraDistance: settings.modelScene.cameraDistance,
-            animationSpeed: settings.modelScene.animationSpeed,
-          },
-        },
-      },
-    });
+    sendSuccess(res, formatSettingsResponse(settings));
   } catch (error) {
     next(error);
   }

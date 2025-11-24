@@ -2,12 +2,10 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import {
   getDialogs,
-  getDialogById,
   createDialogApi,
   updateDialogApi,
   deleteDialogApi,
   deleteAllDialogs,
-  type ChatDialog,
   type ChatMessage,
 } from '../../utils/api';
 import {
@@ -15,8 +13,6 @@ import {
   setDialogs,
   syncDialog,
   deleteDialog as deleteDialogAction,
-  selectDialog,
-  updateDialogTitle,
 } from '../slices/chatSlice';
 import { setLLMProviderName } from '../slices/settingsSlice';
 import { setIsRecording } from '../slices/voiceSlice';

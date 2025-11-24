@@ -98,6 +98,9 @@ const settingsSlice = createSlice({
     setAllSettings: (state, action: PayloadAction<Partial<SettingsState>>) => {
       return { ...state, ...action.payload };
     },
+    resetSettings: () => {
+      return initialState;
+    },
   },
 });
 
@@ -120,5 +123,6 @@ export const {
   setCameraDistance,
   setAnimationSpeed,
   setAllSettings,
+  resetSettings,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

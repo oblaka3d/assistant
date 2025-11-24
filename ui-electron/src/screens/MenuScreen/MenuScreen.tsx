@@ -3,6 +3,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
@@ -27,8 +28,11 @@ import ScreenHeader from '../../components/ScreenHeader';
 import ScrollableContent from '../../components/ScrollableContent';
 import UserBar from '../../components/UserBar';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { resetAPIKeys } from '../../store/slices/apiKeysSlice';
+import { resetChat } from '../../store/slices/chatSlice';
 import { setTheme } from '../../store/slices/settingsSlice';
 import { goBack, openSubScreen } from '../../store/slices/uiSlice';
+import { logout } from '../../store/slices/userSlice';
 import { saveSettings } from '../../store/thunks';
 
 import styles from './MenuScreen.module.css';
@@ -82,6 +86,12 @@ const MenuScreen: React.FC = () => {
         console.error('Failed to save theme:', error);
       }
     }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    dispatch(resetChat());
+    dispatch(resetAPIKeys());
   };
 
   const getThemeIcon = () => {
@@ -212,6 +222,23 @@ const MenuScreen: React.FC = () => {
               {index < menuItems.length - 1 && <Divider className={styles.divider} />}
             </React.Fragment>
           ))}
+
+          {isAuthenticated && (
+            <>
+              <Divider className={styles.divider} />
+              <ListItem disablePadding>
+                <ListItemButton onClick={handleLogout} className={styles.logoutButton}>
+                  <ListItemIcon className={`${styles.listIcon} ${styles.logoutIcon}`}>
+                    <LogoutIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t('user.logout')}
+                    primaryTypographyProps={{ className: styles.logoutText }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            </>
+          )}
         </List>
 
         {/* Информация внизу */}
