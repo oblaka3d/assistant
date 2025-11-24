@@ -1,5 +1,5 @@
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
-import { useEffect, useRef } from 'react';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
 import NavigationIndicators from './components/NavigationIndicators';
@@ -13,28 +13,67 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setLLMProviderName } from './store/slices/settingsSlice';
 import { navigateNext, navigatePrev, setTransitioning } from './store/slices/uiSlice';
 import { createLogger } from './utils/logger';
+import { createAppTheme } from './utils/theme';
 
 const log = createLogger('App');
-
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#4a90e2',
-    },
-    background: {
-      default: '#1a1a1a',
-      paper: '#2d2d2d',
-    },
-  },
-});
 
 function App() {
   const dispatch = useAppDispatch();
   const currentScreen = useAppSelector((state) => state.ui.currentScreen);
   const subScreen = useAppSelector((state) => state.ui.subScreen);
   const isTransitioning = useAppSelector((state) => state.ui.isTransitioning);
+  const theme = useAppSelector((state) => state.settings.theme);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'dark';
+  });
+
+  // Отслеживаем изменения системной темы
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      const isDark = 'matches' in e ? e.matches : mediaQuery.matches;
+      setSystemTheme(isDark ? 'dark' : 'light');
+    };
+
+    // Устанавливаем начальное значение
+    handleChange(mediaQuery);
+
+    // Современные браузеры поддерживают addEventListener
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    // Для старых браузеров
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (mediaQuery as any).addListener(handleChange);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return () => (mediaQuery as any).removeListener(handleChange);
+  }, []);
+
+  // Определяем эффективную тему
+  const effectiveTheme = useMemo(() => {
+    if (theme === 'system') {
+      return systemTheme;
+    }
+    return theme;
+  }, [theme, systemTheme]);
+
+  // Создаем тему на основе эффективной темы
+  const appTheme = useMemo(() => createAppTheme(effectiveTheme), [effectiveTheme]);
+
+  // Устанавливаем data-атрибут на body для CSS переменных
+  useEffect(() => {
+    document.body.setAttribute('data-theme', effectiveTheme);
+    document.documentElement.setAttribute('data-theme', effectiveTheme);
+  }, [effectiveTheme]);
 
   // Синхронизация языка из Redux с i18n
   useLanguage();
@@ -112,7 +151,7 @@ function App() {
   const screenIndex = getScreenIndex(currentScreen);
 
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={appTheme}>
       <CssBaseline />
       <div
         {...handlers}

@@ -5,4 +5,6 @@
 
 export * from './chatThunks';
 export * from './sceneThunks';
+export * from './settingsThunks';
+export * from './userThunks';
 export * from './voiceThunks';

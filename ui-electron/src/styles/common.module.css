@@ -8,18 +8,21 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1a1a1a;
+  background-color: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 /* Common AppBar style */
 .appBar {
-  background-color: #2d2d2d !important;
+  background-color: var(--surface) !important;
+  transition: background-color 0.3s ease;
 }
 
 /* Common Paper style */
 .paper {
-  background-color: rgba(45, 45, 45, 0.9);
+  background-color: var(--surface);
   backdrop-filter: blur(10px);
+  transition: background-color 0.3s ease;
 }
 
 /* Animations */
@@ -123,15 +126,15 @@
 }
 
 .scrollbar::-webkit-scrollbar-track {
-  background: rgba(45, 45, 45, 0.3);
+  background: var(--scrollbar-track);
   border-radius: 3px;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 226, 0.5);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 .scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 226, 0.7);
+  background: var(--scrollbar-thumb-hover);
 }

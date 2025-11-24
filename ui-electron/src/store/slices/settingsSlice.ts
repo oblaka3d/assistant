@@ -12,6 +12,7 @@ interface ModelSceneSettings {
 interface SettingsState {
   volume: number;
   language: string;
+  theme: 'light' | 'dark' | 'system';
   llmProviderName: string | null; // Название текущего LLM провайдера
   modelScene: ModelSceneSettings;
 }
@@ -19,6 +20,7 @@ interface SettingsState {
 const initialState: SettingsState = {
   volume: 70,
   language: 'ru',
+  theme: 'system', // По умолчанию системная тема
   llmProviderName: null, // Будет загружено при инициализации
   modelScene: {
     modelPath: './assets/models/character.glb',
@@ -39,6 +41,9 @@ const settingsSlice = createSlice({
     },
     setLanguage: (state, action: PayloadAction<string>) => {
       state.language = action.payload;
+    },
+    setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
+      state.theme = action.payload;
     },
     setModelPath: (state, action: PayloadAction<string>) => {
       state.modelScene.modelPath = action.payload;
@@ -61,12 +66,18 @@ const settingsSlice = createSlice({
     setLLMProviderName: (state, action: PayloadAction<string | null>) => {
       state.llmProviderName = action.payload;
     },
+    setAllSettings: (state, action: PayloadAction<Partial<SettingsState>>) => {
+      return { ...state, ...action.payload };
+    },
   },
 });
+
+export type { SettingsState };
 
 export const {
   setVolume,
   setLanguage,
+  setTheme,
   setLLMProviderName,
   setModelPath,
   setSceneName,
@@ -74,5 +85,6 @@ export const {
   setLightIntensity,
   setCameraDistance,
   setAnimationSpeed,
+  setAllSettings,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

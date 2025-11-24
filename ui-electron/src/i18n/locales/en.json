@@ -57,7 +57,11 @@
     "lightIntensity": "Light Intensity",
     "cameraDistance": "Camera Distance",
     "animationSpeed": "Animation Speed",
-    "language": "Language"
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   },
   "apiKeys": {
     "title": "API Keys",
@@ -111,6 +115,15 @@
     "loginDescription": "For access to advanced features",
     "loadError": "Error loading user",
     "logoutError": "Error logging out"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "confirmPassword": "Confirm Password",
+    "loading": "Loading..."
   },
   "app": {
     "name": "ARM Voice Assistant",

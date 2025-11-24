@@ -6,7 +6,8 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setUser, setLoading, setError, logout } from '../store/slices/userSlice';
+import { setLoading, setError, logout } from '../store/slices/userSlice';
+import { fetchCurrentUser } from '../store/thunks';
 import { createLogger } from '../utils/logger';
 
 import styles from './UserBar.module.css';
@@ -25,35 +26,23 @@ const UserBar: React.FC<UserBarProps> = ({ onLoginClick }) => {
   // Загружаем текущего пользователя при монтировании компонента
   useEffect(() => {
     const loadCurrentUser = async () => {
-      if (!window.api) {
-        log.warn('Electron API not available');
-        return;
-      }
-
       try {
         dispatch(setLoading(true));
-        const user = await window.api.getCurrentUser();
-        dispatch(setUser(user));
+        await dispatch(fetchCurrentUser());
       } catch (error) {
         log.error('Failed to load current user:', error);
-        dispatch(setError(t('user.loadError')));
+        // Если пользователь не авторизован, просто не показываем ошибку
       } finally {
         dispatch(setLoading(false));
       }
     };
 
     loadCurrentUser();
-  }, [dispatch, t]);
+  }, [dispatch]);
 
   const handleLogout = async () => {
-    if (!window.api) {
-      log.warn('Electron API not available');
-      return;
-    }
-
     try {
       dispatch(setLoading(true));
-      await window.api.logout();
       dispatch(logout());
       log.log('User logged out successfully');
     } catch (error) {

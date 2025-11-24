@@ -1,30 +1,40 @@
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsIcon from '@mui/icons-material/Settings';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import {
   Box,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
+  Tooltip,
   Typography,
   Divider,
 } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ScreenHeader from '../../components/ScreenHeader';
 import ScrollableContent from '../../components/ScrollableContent';
 import UserBar from '../../components/UserBar';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setTheme } from '../../store/slices/settingsSlice';
 import { goBack, openSubScreen } from '../../store/slices/uiSlice';
+import { saveSettings } from '../../store/thunks';
 
 import styles from './MenuScreen.module.css';
 import AboutScreen from './subscreens/AboutScreen/AboutScreen';
 import APIKeysScreen from './subscreens/APIKeysScreen/APIKeysScreen';
+import AuthScreen from './subscreens/AuthScreen/AuthScreen';
 import HistoryScreen from './subscreens/HistoryScreen/HistoryScreen';
 import LogsScreen from './subscreens/LogsScreen/LogsScreen';
 import SettingsScreen from './subscreens/SettingsScreen/SettingsScreen';
@@ -36,12 +46,56 @@ const SUBSCREEN_COMPONENTS: Record<string, React.ComponentType<{ onBack: () => v
   history: HistoryScreen,
   logs: LogsScreen,
   about: AboutScreen,
+  auth: AuthScreen,
 };
 
 const MenuScreen: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const subScreen = useAppSelector((state) => state.ui.subScreen);
+  const theme = useAppSelector((state) => state.settings.theme);
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
+  const [themeMenuAnchor, setThemeMenuAnchor] = useState<null | HTMLElement>(null);
+
+  const handleThemeMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setThemeMenuAnchor(event.currentTarget);
+  };
+
+  const handleThemeMenuClose = () => {
+    setThemeMenuAnchor(null);
+  };
+
+  const handleThemeChange = async (newTheme: 'light' | 'dark' | 'system') => {
+    dispatch(setTheme(newTheme));
+    handleThemeMenuClose();
+
+    // Сохраняем настройки на сервер (если пользователь авторизован)
+    if (isAuthenticated) {
+      try {
+        await dispatch(
+          saveSettings({
+            theme: newTheme,
+          })
+        ).unwrap();
+      } catch (error) {
+        // Игнорируем ошибки сохранения, настройка все равно применена локально
+        console.error('Failed to save theme:', error);
+      }
+    }
+  };
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case 'light':
+        return <LightModeIcon />;
+      case 'dark':
+        return <DarkModeIcon />;
+      case 'system':
+        return <SettingsBrightnessIcon />;
+      default:
+        return <SettingsBrightnessIcon />;
+    }
+  };
 
   const menuItems = [
     {
@@ -86,14 +140,63 @@ const MenuScreen: React.FC = () => {
   // Основной экран меню
   return (
     <Box className={styles.container}>
-      <ScreenHeader title={t('menu.title')} onBack={undefined} />
+      <ScreenHeader
+        title={t('menu.title')}
+        onBack={undefined}
+        action={
+          <Tooltip title={t('settings.theme')}>
+            <IconButton
+              onClick={handleThemeMenuOpen}
+              sx={{
+                color: 'primary.main',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+            >
+              {getThemeIcon()}
+            </IconButton>
+          </Tooltip>
+        }
+      />
+      <Menu
+        anchorEl={themeMenuAnchor}
+        open={Boolean(themeMenuAnchor)}
+        onClose={handleThemeMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={() => handleThemeChange('light')} selected={theme === 'light'}>
+          <ListItemIcon>
+            <LightModeIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('settings.themeLight')}</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange('dark')} selected={theme === 'dark'}>
+          <ListItemIcon>
+            <DarkModeIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('settings.themeDark')}</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange('system')} selected={theme === 'system'}>
+          <ListItemIcon>
+            <SettingsBrightnessIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('settings.themeSystem')}</ListItemText>
+        </MenuItem>
+      </Menu>
 
       <ScrollableContent screenId="menuMain" className={styles.content}>
         {/* Плашка пользователя */}
         <UserBar
           onLoginClick={() => {
-            // TODO: Открыть экран входа
-            console.log('Login clicked');
+            dispatch(openSubScreen('auth'));
           }}
         />
 

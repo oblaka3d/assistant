@@ -7,7 +7,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1a1a1a;
+  background-color: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 .content {
@@ -30,17 +31,17 @@
 }
 
 .content::-webkit-scrollbar-track {
-  background: rgba(45, 45, 45, 0.1);
+  background: var(--scrollbar-track);
   border-radius: 4px;
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 226, 0.5);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 226, 0.7);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Контейнер для скроллируемых экранов */
@@ -61,17 +62,17 @@
 }
 
 .contentScrollable::-webkit-scrollbar-track {
-  background: rgba(45, 45, 45, 0.1);
+  background: var(--scrollbar-track);
   border-radius: 4px;
 }
 
 .contentScrollable::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 226, 0.5);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 .contentScrollable::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 226, 0.7);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Контейнер для не скроллируемых экранов */
@@ -86,7 +87,8 @@
 .settingPaper {
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: #2d2d2d;
+  background-color: var(--surface);
+  transition: background-color 0.3s ease;
 }
 
 .settingHeader {
@@ -114,7 +116,8 @@
 }
 
 .divider {
-  background-color: #2d2d2d;
+  background-color: var(--divider);
+  transition: background-color 0.3s ease;
 }
 
 .footer {

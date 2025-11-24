@@ -1,6 +1,6 @@
 import MicIcon from '@mui/icons-material/Mic';
 import { Box, Button, Typography, Paper } from '@mui/material';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DEFAULTS, TIMEOUTS } from '../../constants/app';
@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { initScene } from '../../store/thunks/sceneThunks';
 import { stopRecordingAndProcess, startRecording } from '../../store/thunks/voiceThunks';
 import { createLogger } from '../../utils/logger';
+import { getSystemTheme } from '../../utils/theme';
 
 import styles from './MainScreen.module.css';
 
@@ -25,12 +26,53 @@ const MainScreen: React.FC = () => {
   const { sceneReady, isLoading, loadError, userText, assistantText, isRecording } = useAppSelector(
     (state) => state.voice
   );
+  const theme = useAppSelector((state) => state.settings.theme);
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => getSystemTheme());
+
+  // Отслеживаем изменения системной темы
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      const isDark = 'matches' in e ? e.matches : mediaQuery.matches;
+      setSystemTheme(isDark ? 'dark' : 'light');
+    };
+
+    // Устанавливаем начальное значение
+    handleChange(mediaQuery);
+
+    // Современные браузеры поддерживают addEventListener
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    // Для старых браузеров
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (mediaQuery as any).addListener(handleChange);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return () => (mediaQuery as any).removeListener(handleChange);
+  }, []);
+
+  // Определяем эффективную тему
+  const effectiveTheme = theme === 'system' ? systemTheme : theme;
 
   // Получаем последний ответ ассистента из чата для отображения на главном экране
   const { dialogs, currentDialogId } = useAppSelector((state) => state.chat);
   const currentDialog = dialogs.find((d) => d.id === currentDialogId);
   const messages = currentDialog?.messages || [];
   const lastAssistantMessage = messages.filter((msg) => msg.position === 'left').slice(-1)[0];
+
+  // Обновляем цвет фона сцены при изменении темы
+  useEffect(() => {
+    if (sceneRef.current) {
+      const backgroundColor = effectiveTheme === 'dark' ? 0x1a1a1a : 0xf5f5f5;
+      sceneRef.current.setBackgroundColor(backgroundColor);
+      log.debug('Scene background color updated to:', effectiveTheme, backgroundColor);
+    }
+  }, [effectiveTheme]);
 
   useEffect(() => {
     log.debug('useEffect triggered', {
@@ -70,6 +112,12 @@ const MainScreen: React.FC = () => {
 
         // Сохраняем ссылку на сцену
         sceneRef.current = scene;
+
+        // Устанавливаем начальный цвет фона на основе текущей темы
+        const currentTheme = theme === 'system' ? systemTheme : theme;
+        const initialBackgroundColor = currentTheme === 'dark' ? 0x1a1a1a : 0xf5f5f5;
+        scene.setBackgroundColor(initialBackgroundColor);
+        log.debug('Initial scene background color set to:', currentTheme, initialBackgroundColor);
 
         // Воспроизводим idle анимацию
         scene.playIdle();
@@ -128,7 +176,7 @@ const MainScreen: React.FC = () => {
         sceneRef.current = null;
       }
     };
-  }, [dispatch]);
+  }, [dispatch, theme, systemTheme]);
 
   const handleRecord = async () => {
     if (isRecording) {

@@ -57,7 +57,11 @@
     "lightIntensity": "Интенсивность света",
     "cameraDistance": "Расстояние камеры",
     "animationSpeed": "Скорость анимации",
-    "language": "Язык"
+    "language": "Язык",
+    "theme": "Тема",
+    "themeLight": "Светлая",
+    "themeDark": "Темная",
+    "themeSystem": "Системная"
   },
   "apiKeys": {
     "title": "API ключи",
@@ -111,6 +115,15 @@
     "loginDescription": "Для доступа к расширенным функциям",
     "loadError": "Ошибка загрузки пользователя",
     "logoutError": "Ошибка выхода из системы"
+  },
+  "auth": {
+    "login": "Вход",
+    "register": "Регистрация",
+    "email": "Email",
+    "password": "Пароль",
+    "name": "Имя",
+    "confirmPassword": "Подтвердите пароль",
+    "loading": "Загрузка..."
   },
   "app": {
     "name": "ARM Voice Assistant",

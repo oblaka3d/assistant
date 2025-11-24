@@ -74,7 +74,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background-color: #1a1a1a;
+  background-color: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 .loading {
@@ -87,18 +88,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #1a1a1a;
+  background-color: var(--background);
   z-index: 1000;
+  transition: background-color 0.3s ease;
 }
 
 .loadingSpinner {
   width: 60px;
   height: 60px;
-  border: 4px solid #2d2d2d;
-  border-top-color: #4a90e2;
+  border: 4px solid var(--surface);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
+  transition: border-color 0.3s ease;
 }
 
 .warning {
@@ -152,13 +155,14 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(74, 144, 226, 0.5) 0%,
-    rgba(74, 144, 226, 0.3) 40%,
+    var(--glow-color) 0%,
+    rgba(74, 144, 226, 0.18) 40%,
     transparent 70%
   );
   animation: glowPulse 3s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
+  transition: background 0.3s ease;
 }
 
 .placeholder {
@@ -166,8 +170,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   gap: 1rem;
+  transition: color 0.3s ease;
 }
 
 /* Статус - верхний правый угол */
@@ -182,11 +187,14 @@
 
 .statusPaper {
   padding: 0.5rem 1rem;
-  background-color: rgba(45, 45, 45, 0.95);
+  background-color: var(--surface);
   backdrop-filter: blur(10px);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-light);
   min-width: 150px;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .statusText {
@@ -415,10 +423,14 @@
 
 .textBlock {
   padding: 1.5rem;
-  background-color: rgba(45, 45, 45, 0.95);
+  background-color: var(--surface);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow);
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+  border: 1px solid var(--divider);
 }
 
 .textBlockLabel {
@@ -444,9 +456,10 @@
   font-size: 1.0625rem;
   font-weight: 400;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
   word-break: break-word;
   min-height: 1.75rem;
+  transition: color 0.3s ease;
 }
 
 .textBlockContentFadeIn {
@@ -457,7 +470,7 @@
   position: absolute;
   bottom: 1rem;
   right: 2rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   font-size: 0.75rem;
   z-index: 5;
   font-family:
@@ -466,6 +479,7 @@
     BlinkMacSystemFont,
     sans-serif;
   opacity: 0.7;
+  transition: color 0.3s ease;
 }
 
 /* Responsive */

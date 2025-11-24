@@ -1,12 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface User {
-  id: string;
-  username: string;
-  email?: string;
-  avatar?: string;
-  displayName?: string;
-}
+import { logout as apiLogout } from '../../utils/api';
+import { registerUser, loginUser, fetchCurrentUser } from '../thunks';
+import type { User } from '../types/user';
+
+export type { User } from '../types/user';
 
 interface UserState {
   currentUser: User | null;
@@ -38,6 +36,7 @@ const userSlice = createSlice({
       state.error = action.payload;
     },
     logout: (state) => {
+      apiLogout();
       state.currentUser = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -45,6 +44,55 @@ const userSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+  },
+  extraReducers: (builder) => {
+    // Register
+    builder
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentUser = action.payload;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = (action.payload as string) || 'Registration failed';
+      });
+    // Login
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentUser = action.payload;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = (action.payload as string) || 'Login failed';
+      });
+    // Fetch current user
+    builder
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentUser = action.payload;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(fetchCurrentUser.rejected, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+      });
   },
 });
 

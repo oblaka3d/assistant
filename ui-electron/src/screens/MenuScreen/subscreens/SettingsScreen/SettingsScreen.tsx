@@ -1,7 +1,9 @@
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ImageIcon from '@mui/icons-material/Image';
 import LanguageIcon from '@mui/icons-material/Language';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import PaletteIcon from '@mui/icons-material/Palette';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SpeedIcon from '@mui/icons-material/Speed';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -18,7 +20,7 @@ import {
   InputLabel,
   CircularProgress,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ScreenHeader from '../../../../components/ScreenHeader';
@@ -28,6 +30,7 @@ import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setVolume,
   setLanguage,
+  setTheme,
   setModelPath,
   setSceneName,
   setEnableToonShader,
@@ -35,6 +38,7 @@ import {
   setCameraDistance,
   setAnimationSpeed,
 } from '../../../../store/slices/settingsSlice';
+import { saveSettings } from '../../../../store/thunks';
 import { createLogger } from '../../../../utils/logger';
 import styles from '../../MenuScreen.module.css';
 
@@ -49,11 +53,53 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const dispatch = useAppDispatch();
   const volume = useAppSelector((state) => state.settings.volume);
   const language = useAppSelector((state) => state.settings.language);
+  const theme = useAppSelector((state) => state.settings.theme);
   const modelScene = useAppSelector((state) => state.settings.modelScene);
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
   const [availableScenes, setAvailableScenes] = useState<string[]>([]);
   const [loadingScenes, setLoadingScenes] = useState<boolean>(true);
+
+  // Ref для debounce таймера
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Флаг для отслеживания первой загрузки настроек
+  const isInitialLoadRef = useRef<boolean>(true);
+
+  // Сохранение настроек на сервер с debounce (1 секунда)
+  useEffect(() => {
+    // Пропускаем сохранение при первой загрузке или если не авторизован
+    if (!isAuthenticated || isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    // Очищаем предыдущий таймер
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Устанавливаем новый таймер
+    saveTimeoutRef.current = setTimeout(() => {
+      dispatch(
+        saveSettings({
+          volume,
+          language,
+          theme,
+          modelScene,
+        })
+      ).catch((error) => {
+        log.error('Failed to save settings:', error);
+      });
+    }, 1000);
+
+    // Очистка при размонтировании
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [volume, language, theme, modelScene, isAuthenticated, dispatch]);
 
   // Загружаем список моделей при открытии настроек
   useEffect(() => {
@@ -162,6 +208,47 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 <MenuItem value="ru">{t('app.russian')}</MenuItem>
                 <MenuItem value="en">{t('app.english')}</MenuItem>
                 <MenuItem value="zh">{t('app.chinese')}</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Paper>
+
+        <Paper elevation={3} className={styles.settingPaper}>
+          <Box className={styles.settingHeader}>
+            <SettingsBrightnessIcon className={styles.settingIcon} />
+            <Typography variant="h6">{t('settings.theme')}</Typography>
+          </Box>
+          <Box sx={{ px: 2, pb: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="theme-select-label">{t('settings.theme')}</InputLabel>
+              <Select
+                labelId="theme-select-label"
+                id="theme-select"
+                value={theme}
+                label={t('settings.theme')}
+                onChange={(e) => {
+                  dispatch(setTheme(e.target.value as 'light' | 'dark' | 'system'));
+                }}
+                sx={{ color: 'text.primary' }}
+              >
+                <MenuItem value="light">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LightModeIcon fontSize="small" />
+                    {t('settings.themeLight')}
+                  </Box>
+                </MenuItem>
+                <MenuItem value="dark">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DarkModeIcon fontSize="small" />
+                    {t('settings.themeDark')}
+                  </Box>
+                </MenuItem>
+                <MenuItem value="system">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SettingsBrightnessIcon fontSize="small" />
+                    {t('settings.themeSystem')}
+                  </Box>
+                </MenuItem>
               </Select>
             </FormControl>
           </Box>

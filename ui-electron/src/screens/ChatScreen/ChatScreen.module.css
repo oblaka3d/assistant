@@ -7,7 +7,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1a1a1a;
+  background-color: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 .messagesContainer {
@@ -34,11 +35,13 @@
 
 .inputContainer {
   padding: 0.5rem;
-  background-color: #2d2d2d;
+  background-color: var(--surface);
   border-radius: 0;
   margin-bottom: 0;
   position: relative;
   z-index: 1;
+  transition: background-color 0.3s ease;
+  border-top: 1px solid var(--divider);
 }
 
 .inputWrapper {
@@ -61,34 +64,38 @@
 }
 
 .sendButton:disabled {
-  background-color: #2d2d2d;
-  color: #666666;
+  background-color: var(--surface);
+  color: var(--text-disabled);
 }
 
 .menuButton {
-  color: #ffffff;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .menuButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--surface-hover);
 }
 
 /* Material-UI TextField styles */
 .inputField :global(.MuiOutlinedInput-root) {
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 .inputField :global(.MuiOutlinedInput-root fieldset) {
-  border-color: #4a90e2;
+  border-color: var(--primary-color);
 }
 
 .inputField :global(.MuiOutlinedInput-root:hover fieldset) {
-  border-color: #357abd;
+  border-color: var(--primary-hover);
 }
 
 .inputField :global(.MuiOutlinedInput-root.Mui-focused fieldset) {
-  border-color: #4a90e2;
+  border-color: var(--primary-color);
 }
 
 /* Chat elements overrides - these need to be global */
@@ -101,18 +108,18 @@
 }
 
 :global(.rce-container-mbox) {
-  background-color: rgba(45, 45, 45, 0.9) !important;
+  background-color: var(--surface) !important;
   backdrop-filter: blur(10px);
 }
 
 :global(.rce-mbox) {
-  background-color: rgba(45, 45, 45, 0.9) !important;
+  background-color: var(--surface) !important;
 }
 
 :global(.rce-mbox-right) {
-  background-color: rgba(74, 144, 226, 0.3) !important;
+  background-color: var(--glow-color) !important;
 }
 
 :global(.rce-mbox-left) {
-  background-color: rgba(45, 45, 45, 0.9) !important;
+  background-color: var(--surface) !important;
 }

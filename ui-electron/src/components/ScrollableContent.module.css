@@ -15,7 +15,7 @@
   scroll-behavior: smooth;
   /* Стилизация скроллбара для WebKit браузеров */
   scrollbar-width: thin;
-  scrollbar-color: rgba(74, 144, 226, 0.5) rgba(45, 45, 45, 0.1);
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   /* Для правильной работы на тач-устройствах */
   touch-action: pan-y;
 }
@@ -25,18 +25,19 @@
 }
 
 .contentScrollable::-webkit-scrollbar-track {
-  background: rgba(45, 45, 45, 0.1);
+  background: var(--scrollbar-track);
   border-radius: 4px;
+  transition: background 0.3s ease;
 }
 
 .contentScrollable::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 226, 0.5);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
-  transition: background 0.2s ease;
+  transition: background 0.3s ease;
 }
 
 .contentScrollable::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 226, 0.7);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Контейнер для не скроллируемых экранов */

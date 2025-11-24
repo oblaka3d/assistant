@@ -1,0 +1,83 @@
+import { createAsyncThunk } from '@reduxjs/toolkit';
+
+import {
+  getSettings,
+  updateSettings as apiUpdateSettings,
+  UpdateSettingsRequest,
+} from '../../utils/api';
+import type { SettingsData } from '../../utils/api';
+import { setAllSettings } from '../slices/settingsSlice';
+import type { SettingsState } from '../slices/settingsSlice';
+
+/**
+ * Загрузка настроек с сервера
+ */
+export const fetchSettings = createAsyncThunk<SettingsData, void, { rejectValue: string }>(
+  'settings/fetch',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await getSettings();
+      const settingsData = response.data.settings;
+
+      // Преобразуем данные с сервера в формат Redux state
+      const settingsState: SettingsState = {
+        volume: settingsData.volume,
+        language: settingsData.language,
+        theme: settingsData.theme || 'system',
+        llmProviderName: settingsData.llmProviderName,
+        modelScene: {
+          modelPath: settingsData.modelScene.modelPath,
+          sceneName: settingsData.modelScene.sceneName,
+          enableToonShader: settingsData.modelScene.enableToonShader,
+          lightIntensity: settingsData.modelScene.lightIntensity,
+          cameraDistance: settingsData.modelScene.cameraDistance,
+          animationSpeed: settingsData.modelScene.animationSpeed,
+        },
+      };
+
+      // Устанавливаем все настройки в store
+      dispatch(setAllSettings(settingsState));
+
+      return settingsData;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+/**
+ * Сохранение настроек на сервер
+ */
+export const saveSettings = createAsyncThunk<
+  SettingsData,
+  UpdateSettingsRequest,
+  { rejectValue: string }
+>('settings/save', async (updateData, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await apiUpdateSettings(updateData);
+    const settingsData = response.data.settings;
+
+    // Преобразуем данные с сервера в формат Redux state
+    const settingsState: SettingsState = {
+      volume: settingsData.volume,
+      language: settingsData.language,
+      theme: settingsData.theme || 'system',
+      llmProviderName: settingsData.llmProviderName,
+      modelScene: {
+        modelPath: settingsData.modelScene.modelPath,
+        sceneName: settingsData.modelScene.sceneName,
+        enableToonShader: settingsData.modelScene.enableToonShader,
+        lightIntensity: settingsData.modelScene.lightIntensity,
+        cameraDistance: settingsData.modelScene.cameraDistance,
+        animationSpeed: settingsData.modelScene.animationSpeed,
+      },
+    };
+
+    // Обновляем все настройки в store
+    dispatch(setAllSettings(settingsState));
+
+    return settingsData;
+  } catch (error) {
+    return rejectWithValue((error as Error).message);
+  }
+});

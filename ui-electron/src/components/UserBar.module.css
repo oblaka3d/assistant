@@ -5,9 +5,11 @@
 .userBar {
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: rgba(45, 45, 45, 0.95);
+  background-color: var(--surface);
   backdrop-filter: blur(10px);
   border-radius: 8px;
+  transition: background-color 0.3s ease;
+  border: 1px solid var(--divider);
 }
 
 .userInfo {
@@ -59,7 +61,8 @@
 .loginIcon {
   width: 48px;
   height: 48px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .loginText {

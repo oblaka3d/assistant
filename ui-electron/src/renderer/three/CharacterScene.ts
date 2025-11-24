@@ -33,6 +33,7 @@ export class CharacterScene {
   private animationFrameId: number | null = null;
   private _debugLogged = false;
   private _frameCount = 0;
+  private gridHelper: THREE.GridHelper | null = null;
 
   constructor(options: CharacterSceneOptions) {
     console.log('[CharacterScene] Constructor called with options:', {
@@ -46,6 +47,8 @@ export class CharacterScene {
     // Создаем сцену
     console.log('[CharacterScene] Creating THREE.js scene...');
     this.scene = new THREE.Scene();
+    // Устанавливаем цвет фона по умолчанию (темный)
+    // Будет обновлен при изменении темы через setBackgroundColor
     this.scene.background = new THREE.Color(0x1a1a1a);
 
     // Получаем реальный размер canvas элемента
@@ -71,8 +74,8 @@ export class CharacterScene {
     this.camera.lookAt(0, 1.6, 0); // Смотрим прямо на персонажа, на уровне глаз
 
     // Добавляем вспомогательную сетку для отладки
-    const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
-    this.scene.add(gridHelper);
+    this.gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+    this.scene.add(this.gridHelper);
 
     // Оси координат убраны по запросу пользователя
 
@@ -590,6 +593,39 @@ export class CharacterScene {
    */
   public get ready(): boolean {
     return this.characterModel !== null;
+  }
+
+  /**
+   * Устанавливает цвет фона сцены
+   */
+  public setBackgroundColor(color: string | number): void {
+    const colorObj = new THREE.Color(color);
+    this.scene.background = colorObj;
+
+    // Обновляем цвет сетки в зависимости от цвета фона
+    // Проверяем, является ли цвет темным (темная тема) или светлым (светлая тема)
+    if (this.gridHelper) {
+      // Вычисляем яркость цвета (luminance)
+      const r = colorObj.r;
+      const g = colorObj.g;
+      const b = colorObj.b;
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      if (luminance < 0.5) {
+        // Темная тема - темные цвета для сетки
+        this.gridHelper.setColors(0x444444, 0x222222);
+      } else {
+        // Светлая тема - светлые цвета для сетки
+        this.gridHelper.setColors(0xcccccc, 0xe0e0e0);
+      }
+    }
+  }
+
+  /**
+   * Получает текущий цвет фона сцены
+   */
+  public getBackgroundColor(): THREE.Color | null {
+    return this.scene.background as THREE.Color | null;
   }
 
   /**
