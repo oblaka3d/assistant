@@ -30,7 +30,8 @@
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": ["./tsconfig.json", "./ui-electron/tsconfig.json"]
+        "project": ["./tsconfig.json", "./ui-electron/tsconfig.json"],
+        "noWarnOnMultipleProjects": true
       },
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
@@ -99,7 +100,7 @@
       }
     },
     {
-      "files": ["main/**/*", "backend-electron/**/*", "backend-main/**/*"],
+      "files": ["main/**/*", "backend-electron/**/*", "backend-main/**/*", "scripts/**/*"],
       "env": {
         "node": true,
         "browser": false

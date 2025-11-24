@@ -11,8 +11,15 @@
     "dev:watch": "concurrently \"tsc -w\" \"wait-on dist/main/electron.js && electron dist/main/electron.js\"",
     "build": "tsc && npm run build:ui && npm run copy:assets",
     "build:ui": "vite build",
+    "build:backend-main": "cd backend-main && npm run build",
+    "build:all": "npm run build:backend-main && npm run build",
     "copy:assets": "mkdir -p dist/ui-electron/assets/models && cp -r ui-electron/public/assets/* dist/ui-electron/assets/ 2>/dev/null || true",
     "copy-ui": "mkdir -p dist/ui-electron && cp -r ui-electron/* dist/ui-electron/ 2>/dev/null || xcopy /E /I /Y ui-electron dist\\ui-electron 2>nul || true",
+    "setup:mongodb": "ts-node scripts/setup-mongodb.ts",
+    "setup:mongodb:auto": "ts-node scripts/setup-mongodb.ts --auto",
+    "start:backend-main": "cd backend-main && npm start",
+    "dev:backend-main": "cd backend-main && npm run dev",
+    "run:all": "npm run setup:mongodb:auto && npm run build:all && concurrently --names \"backend-main,electron\" --prefix-colors \"blue,magenta\" --kill-others-on-fail=false --handle-input=true \"npm run start:backend-main\" \"wait-on http://localhost:3001/health -t 30000 && cross-env WINDOW_MODE=true electron dist/main/electron.js\"",
     "electron": "electron dist/main/electron.js",
     "electron:window": "cross-env WINDOW_MODE=true electron dist/main/electron.js",
     "rebuild": "electron-builder install-app-deps",
@@ -33,7 +40,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run format:check && npm run typecheck",
-    "prepare": "husky"
+    "prepare": "husky && node scripts/load-scripts.js"
   },
   "keywords": [
     "voice-assistant",
