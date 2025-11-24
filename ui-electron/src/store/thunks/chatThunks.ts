@@ -1,6 +1,23 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import { addMessage } from '../slices/chatSlice';
+import {
+  getDialogs,
+  getDialogById,
+  createDialogApi,
+  updateDialogApi,
+  deleteDialogApi,
+  deleteAllDialogs,
+  type ChatDialog,
+  type ChatMessage,
+} from '../../utils/api';
+import {
+  addMessage,
+  setDialogs,
+  syncDialog,
+  deleteDialog as deleteDialogAction,
+  selectDialog,
+  updateDialogTitle,
+} from '../slices/chatSlice';
 import { setLLMProviderName } from '../slices/settingsSlice';
 import { setIsRecording } from '../slices/voiceSlice';
 
@@ -50,6 +67,8 @@ export const sendMessage = createAsyncThunk(
 
     dispatch(addMessage(userMessage));
 
+    // Сохраняем диалог на сервер после добавления сообщения пользователя (с debounce через useEffect в компоненте)
+
     try {
       // Отправить запрос ассистенту
       const response = await window.api.askLLM(text);
@@ -63,6 +82,8 @@ export const sendMessage = createAsyncThunk(
       };
 
       dispatch(addMessage(assistantMessage));
+
+      // Сохранение диалога происходит автоматически через useEffect в ChatScreen
 
       // Воспроизвести ответ голосом
       if (response) {
@@ -138,5 +159,153 @@ export const stopChatRecordingAndTranscribe = createAsyncThunk(
     }
 
     return transcribedText?.trim() || '';
+  }
+);
+
+/**
+ * Загрузка всех диалогов пользователя с сервера
+ */
+export const fetchDialogs = createAsyncThunk(
+  'chat/fetchDialogs',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await getDialogs();
+      const dialogs = response.data.dialogs.map((dialog) => ({
+        id: dialog.id,
+        title: dialog.title,
+        messages: dialog.messages.map((msg) => ({
+          ...msg,
+          date: new Date(msg.date),
+        })),
+        createdAt: new Date(dialog.createdAt),
+        updatedAt: new Date(dialog.updatedAt),
+      }));
+
+      dispatch(setDialogs(dialogs));
+
+      return dialogs;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+/**
+ * Сохранение диалога на сервер
+ */
+export const saveDialog = createAsyncThunk(
+  'chat/saveDialog',
+  async (
+    params: {
+      dialogId: string;
+      title?: string;
+      messages?: ChatMessage[];
+    },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      const { dialogId, title, messages } = params;
+
+      // Преобразуем даты в строки для отправки
+      const messagesForApi = messages?.map((msg) => ({
+        ...msg,
+        date: msg.date instanceof Date ? msg.date.toISOString() : msg.date,
+      }));
+
+      const response = await updateDialogApi(dialogId, {
+        title,
+        messages: messagesForApi,
+      });
+
+      const dialog = {
+        id: response.data.dialog.id,
+        title: response.data.dialog.title,
+        messages: response.data.dialog.messages.map((msg) => ({
+          ...msg,
+          date: new Date(msg.date),
+        })),
+        createdAt: new Date(response.data.dialog.createdAt),
+        updatedAt: new Date(response.data.dialog.updatedAt),
+      };
+
+      dispatch(syncDialog(dialog));
+      dispatch(selectDialog(dialog.id));
+
+      return dialog;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+/**
+ * Создание нового диалога на сервере
+ */
+export const createDialogOnServer = createAsyncThunk(
+  'chat/createDialogOnServer',
+  async (
+    params: {
+      dialogId: string;
+      title?: string;
+    },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      const { dialogId, title } = params;
+
+      const response = await createDialogApi({
+        dialogId,
+        title,
+      });
+
+      const dialog = {
+        id: response.data.dialog.id,
+        title: response.data.dialog.title,
+        messages: response.data.dialog.messages.map((msg) => ({
+          ...msg,
+          date: new Date(msg.date),
+        })),
+        createdAt: new Date(response.data.dialog.createdAt),
+        updatedAt: new Date(response.data.dialog.updatedAt),
+      };
+
+      dispatch(syncDialog(dialog));
+
+      return dialog;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+/**
+ * Удаление диалога с сервера
+ */
+export const deleteDialogOnServer = createAsyncThunk(
+  'chat/deleteDialogOnServer',
+  async (dialogId: string, { dispatch, rejectWithValue }) => {
+    try {
+      await deleteDialogApi(dialogId);
+      dispatch(deleteDialogAction(dialogId));
+      return dialogId;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+/**
+ * Удаление всех диалогов пользователя
+ */
+export const deleteAllDialogsOnServer = createAsyncThunk(
+  'chat/deleteAllDialogsOnServer',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      await deleteAllDialogs();
+      dispatch(setDialogs([]));
+      return true;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
   }
 );

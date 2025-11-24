@@ -24,6 +24,8 @@ export const fetchSettings = createAsyncThunk<SettingsData, void, { rejectValue:
         volume: settingsData.volume,
         language: settingsData.language,
         theme: settingsData.theme || 'system',
+        accentColorLight: settingsData.accentColorLight || '#4a90e2',
+        accentColorDark: settingsData.accentColorDark || '#4a90e2',
         sttProviderName: settingsData.sttProviderName || null,
         llmProviderName: settingsData.llmProviderName || null,
         llmModel: settingsData.llmModel || null,

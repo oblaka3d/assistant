@@ -226,9 +226,52 @@ export const createDarkTheme = (): Theme => {
 };
 
 /**
- * Создание темы на основе настройки (light/dark/system)
+ * Вычисление темных и светлых вариантов цвета
  */
-export const createAppTheme = (theme: 'light' | 'dark' | 'system'): Theme => {
+const getColorVariants = (color: string) => {
+  // Простое вычисление темного и светлого вариантов
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+
+  // Темный вариант (уменьшаем яркость на 20%)
+  const darkR = Math.max(0, Math.floor(r * 0.8));
+  const darkG = Math.max(0, Math.floor(g * 0.8));
+  const darkB = Math.max(0, Math.floor(b * 0.8));
+  const dark = `#${darkR.toString(16).padStart(2, '0')}${darkG.toString(16).padStart(2, '0')}${darkB.toString(16).padStart(2, '0')}`;
+
+  // Светлый вариант (увеличиваем яркость на 20%)
+  const lightR = Math.min(255, Math.floor(r + (255 - r) * 0.2));
+  const lightG = Math.min(255, Math.floor(g + (255 - g) * 0.2));
+  const lightB = Math.min(255, Math.floor(b + (255 - b) * 0.2));
+  const light = `#${lightR.toString(16).padStart(2, '0')}${lightG.toString(16).padStart(2, '0')}${lightB.toString(16).padStart(2, '0')}`;
+
+  return { main: color, dark, light };
+};
+
+/**
+ * Создание темы на основе настройки (light/dark/system) и акцентного цвета
+ */
+export const createAppTheme = (
+  theme: 'light' | 'dark' | 'system',
+  accentColor: string = '#4a90e2'
+): Theme => {
   const effectiveTheme = getEffectiveTheme(theme);
-  return effectiveTheme === 'dark' ? createDarkTheme() : createLightTheme();
+  const baseTheme = effectiveTheme === 'dark' ? createDarkTheme() : createLightTheme();
+  const colorVariants = getColorVariants(accentColor);
+
+  // Обновляем primary цвет в теме
+  return createTheme({
+    ...baseTheme,
+    palette: {
+      ...baseTheme.palette,
+      primary: {
+        ...baseTheme.palette.primary,
+        main: colorVariants.main,
+        dark: colorVariants.dark,
+        light: colorVariants.light,
+      },
+    },
+  });
 };

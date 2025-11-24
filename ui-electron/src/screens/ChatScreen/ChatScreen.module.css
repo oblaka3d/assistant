@@ -316,7 +316,7 @@
 :global(.rce-mbox-right) {
   background-color: var(--primary-color) !important;
   margin-left: auto !important;
-  color: #ffffff !important;
+  color: var(--primary-contrast-text, #ffffff) !important;
   text-align: right !important;
 }
 

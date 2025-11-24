@@ -68,6 +68,8 @@ export interface SettingsData {
   volume: number;
   language: string;
   theme: 'light' | 'dark' | 'system';
+  accentColorLight: string;
+  accentColorDark: string;
   sttProviderName: string | null;
   llmProviderName: string | null;
   llmModel: string | null;
@@ -86,6 +88,8 @@ export interface UpdateSettingsRequest {
   volume?: number;
   language?: string;
   theme?: 'light' | 'dark' | 'system';
+  accentColorLight?: string;
+  accentColorDark?: string;
   sttProviderName?: string | null;
   llmProviderName?: string | null;
   llmModel?: string | null;
@@ -337,5 +341,116 @@ export const saveApiKeys = async (keys: Record<string, string>): Promise<ApiKeys
   return fetchWithErrorHandling<ApiKeysResponse>('/api-keys', {
     method: 'PUT',
     body: JSON.stringify({ keys }),
+  });
+};
+
+// ==================== Chat API ====================
+
+export interface ChatMessage {
+  id: string;
+  position: 'left' | 'right';
+  type: 'text';
+  text: string;
+  date: Date | string;
+}
+
+export interface ChatDialog {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DialogsResponse {
+  success: boolean;
+  data: {
+    dialogs: ChatDialog[];
+  };
+}
+
+export interface DialogResponse {
+  success: boolean;
+  data: {
+    dialog: ChatDialog;
+  };
+}
+
+export interface CreateDialogRequest {
+  dialogId: string;
+  title?: string;
+}
+
+export interface UpdateDialogRequest {
+  title?: string;
+  messages?: ChatMessage[];
+}
+
+/**
+ * Получение всех диалогов пользователя
+ */
+export const getDialogs = async (): Promise<DialogsResponse> => {
+  return fetchWithErrorHandling<DialogsResponse>('/chats', {
+    method: 'GET',
+  });
+};
+
+/**
+ * Получение диалога по ID
+ */
+export const getDialogById = async (dialogId: string): Promise<DialogResponse> => {
+  return fetchWithErrorHandling<DialogResponse>(`/chats/${dialogId}`, {
+    method: 'GET',
+  });
+};
+
+/**
+ * Создание нового диалога
+ */
+export const createDialogApi = async (data: CreateDialogRequest): Promise<DialogResponse> => {
+  return fetchWithErrorHandling<DialogResponse>('/chats', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+};
+
+/**
+ * Обновление диалога
+ */
+export const updateDialogApi = async (
+  dialogId: string,
+  data: UpdateDialogRequest
+): Promise<DialogResponse> => {
+  return fetchWithErrorHandling<DialogResponse>(`/chats/${dialogId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+};
+
+/**
+ * Удаление диалога
+ */
+export const deleteDialogApi = async (
+  dialogId: string
+): Promise<{ success: boolean; message: string }> => {
+  return fetchWithErrorHandling<{ success: boolean; message: string }>(`/chats/${dialogId}`, {
+    method: 'DELETE',
+  });
+};
+
+/**
+ * Удаление всех диалогов пользователя
+ */
+export const deleteAllDialogs = async (): Promise<{
+  success: boolean;
+  message: string;
+  data: { deletedCount: number };
+}> => {
+  return fetchWithErrorHandling<{
+    success: boolean;
+    message: string;
+    data: { deletedCount: number };
+  }>('/chats', {
+    method: 'DELETE',
   });
 };

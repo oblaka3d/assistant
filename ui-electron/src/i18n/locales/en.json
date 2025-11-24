@@ -71,7 +71,10 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "accentColor": "Accent Color",
+    "accentColorLight": "Accent Color (Light Theme)",
+    "accentColorDark": "Accent Color (Dark Theme)"
   },
   "apiKeys": {
     "title": "API Keys",

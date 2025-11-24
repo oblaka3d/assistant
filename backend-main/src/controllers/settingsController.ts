@@ -32,6 +32,8 @@ export const getSettingsController: RequestHandler = async (
           volume: settings.volume,
           language: settings.language,
           theme: settings.theme,
+          accentColorLight: settings.accentColorLight,
+          accentColorDark: settings.accentColorDark,
           sttProviderName: settings.sttProviderName,
           llmProviderName: settings.llmProviderName,
           llmModel: settings.llmModel,
@@ -85,6 +87,12 @@ export const updateSettingsController: RequestHandler = async (
     if (req.body.theme !== undefined) {
       updateData.theme = req.body.theme;
     }
+    if (req.body.accentColorLight !== undefined) {
+      updateData.accentColorLight = req.body.accentColorLight;
+    }
+    if (req.body.accentColorDark !== undefined) {
+      updateData.accentColorDark = req.body.accentColorDark;
+    }
     if (req.body.sttProviderName !== undefined) {
       updateData.sttProviderName = req.body.sttProviderName;
     }
@@ -110,6 +118,8 @@ export const updateSettingsController: RequestHandler = async (
           volume: settings.volume,
           language: settings.language,
           theme: settings.theme,
+          accentColorLight: settings.accentColorLight,
+          accentColorDark: settings.accentColorDark,
           sttProviderName: settings.sttProviderName,
           llmProviderName: settings.llmProviderName,
           llmModel: settings.llmModel,
@@ -146,6 +156,14 @@ export const validateUpdateSettings = [
     .optional()
     .isIn(['light', 'dark', 'system'])
     .withMessage('Theme must be light, dark, or system'),
+  body('accentColorLight')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('accentColorLight must be a valid hex color (e.g., #4a90e2)'),
+  body('accentColorDark')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('accentColorDark must be a valid hex color (e.g., #4a90e2)'),
   body('sttProviderName')
     .optional()
     .custom((value) => {

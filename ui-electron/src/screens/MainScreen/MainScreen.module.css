@@ -276,8 +276,8 @@
   border-radius: 50% !important;
   background: linear-gradient(
     135deg,
-    rgba(74, 144, 226, var(--button-bg-opacity)) 0%,
-    rgba(53, 122, 189, var(--button-bg-opacity)) 100%
+    var(--primary-color) 0%,
+    var(--primary-hover) 100%
   ) !important;
   backdrop-filter: blur(var(--button-blur));
   display: flex !important;
@@ -291,7 +291,7 @@
     BlinkMacSystemFont,
     sans-serif;
   box-shadow:
-    0 8px 32px rgba(74, 144, 226, var(--button-shadow-opacity)),
+    0 8px 32px var(--glow-color),
     0 4px 16px rgba(0, 0, 0, 0.15);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: var(--button-border-width) solid rgba(255, 255, 255, var(--button-border-opacity));
@@ -344,7 +344,11 @@
 }
 
 .recordButton:hover {
-  background: linear-gradient(135deg, rgba(53, 122, 189, 0.6) 0%, rgba(46, 109, 164, 0.6) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-hover-light) 0%,
+    var(--primary-color) 100%
+  ) !important;
   transform: scale(1.05);
 }
 

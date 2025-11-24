@@ -71,7 +71,10 @@
     "theme": "Тема",
     "themeLight": "Светлая",
     "themeDark": "Темная",
-    "themeSystem": "Системная"
+    "themeSystem": "Системная",
+    "accentColor": "Акцентный цвет",
+    "accentColorLight": "Акцентный цвет (светлая тема)",
+    "accentColorDark": "Акцентный цвет (темная тема)"
   },
   "apiKeys": {
     "title": "API ключи",

@@ -99,20 +99,22 @@
 
 .settingIcon {
   margin-right: 1rem;
-  color: #4a90e2;
+  color: var(--primary-color);
+  transition: color 0.3s ease;
 }
 
 .slider {
-  color: #4a90e2;
+  color: var(--primary-color);
 }
 
 .slider :global(.MuiSlider-thumb:hover),
 .slider :global(.MuiSlider-thumb.Mui-focusVisible) {
-  box-shadow: 0 0 0 8px rgba(74, 144, 226, 0.16);
+  box-shadow: 0 0 0 8px var(--glow-color);
 }
 
 .listIcon {
-  color: #4a90e2;
+  color: var(--primary-color);
+  transition: color 0.3s ease;
 }
 
 .divider {

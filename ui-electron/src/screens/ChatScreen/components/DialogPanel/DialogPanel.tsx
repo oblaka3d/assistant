@@ -17,12 +17,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import {
-  createDialog,
-  deleteDialog,
-  selectDialog,
-  setDialogPanelOpen,
-} from '../../../../store/slices/chatSlice';
+import { selectDialog, setDialogPanelOpen } from '../../../../store/slices/chatSlice';
+import { createDialogOnServer, deleteDialogOnServer } from '../../../../store/thunks/chatThunks';
 
 import styles from './DialogPanel.module.css';
 
@@ -40,13 +36,23 @@ const DialogPanel: React.FC = () => {
     handleClose();
   };
 
-  const handleCreateDialog = () => {
-    dispatch(createDialog({}));
+  const handleCreateDialog = async () => {
+    const dialogId = Date.now().toString();
+    try {
+      await dispatch(createDialogOnServer({ dialogId, title: 'Новый диалог' })).unwrap();
+      dispatch(selectDialog(dialogId));
+    } catch (error) {
+      console.error('Failed to create dialog:', error);
+    }
   };
 
-  const handleDeleteDialog = (e: React.MouseEvent, dialogId: string) => {
+  const handleDeleteDialog = async (e: React.MouseEvent, dialogId: string) => {
     e.stopPropagation();
-    dispatch(deleteDialog(dialogId));
+    try {
+      await dispatch(deleteDialogOnServer(dialogId)).unwrap();
+    } catch (error) {
+      console.error('Failed to delete dialog:', error);
+    }
   };
 
   const getDialogPreview = (dialog: { messages: Array<{ text: string }> }) => {

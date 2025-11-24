@@ -14,6 +14,8 @@ export interface ISettings extends Document {
   volume: number;
   language: string;
   theme: 'light' | 'dark' | 'system';
+  accentColorLight: string;
+  accentColorDark: string;
   sttProviderName: string | null;
   llmProviderName: string | null;
   llmModel: string | null;
@@ -77,6 +79,16 @@ const SettingsSchema = new Schema<ISettings>(
       type: String,
       default: 'system',
       enum: ['light', 'dark', 'system'],
+    },
+    accentColorLight: {
+      type: String,
+      default: '#4a90e2',
+      match: /^#[0-9A-Fa-f]{6}$/, // Валидация hex цвета
+    },
+    accentColorDark: {
+      type: String,
+      default: '#4a90e2',
+      match: /^#[0-9A-Fa-f]{6}$/, // Валидация hex цвета
     },
     sttProviderName: {
       type: String,

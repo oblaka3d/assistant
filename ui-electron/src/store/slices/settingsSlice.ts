@@ -13,6 +13,8 @@ interface SettingsState {
   volume: number;
   language: string;
   theme: 'light' | 'dark' | 'system';
+  accentColorLight: string; // Акцентный цвет для светлой темы (hex)
+  accentColorDark: string; // Акцентный цвет для темной темы (hex)
   sttProviderName: string | null; // Название выбранного STT провайдера
   llmProviderName: string | null; // Название выбранного LLM провайдера
   llmModel: string | null; // Название выбранной LLM модели
@@ -24,6 +26,8 @@ const initialState: SettingsState = {
   volume: 70,
   language: 'ru',
   theme: 'system', // По умолчанию системная тема
+  accentColorLight: '#4a90e2', // По умолчанию синий цвет для светлой темы
+  accentColorDark: '#4a90e2', // По умолчанию синий цвет для темной темы
   sttProviderName: null, // Будет загружено при инициализации
   llmProviderName: null, // Будет загружено при инициализации
   llmModel: null, // Будет загружено при инициализации
@@ -50,6 +54,12 @@ const settingsSlice = createSlice({
     },
     setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
       state.theme = action.payload;
+    },
+    setAccentColorLight: (state, action: PayloadAction<string>) => {
+      state.accentColorLight = action.payload;
+    },
+    setAccentColorDark: (state, action: PayloadAction<string>) => {
+      state.accentColorDark = action.payload;
     },
     setModelPath: (state, action: PayloadAction<string>) => {
       state.modelScene.modelPath = action.payload;
@@ -97,6 +107,8 @@ export const {
   setVolume,
   setLanguage,
   setTheme,
+  setAccentColorLight,
+  setAccentColorDark,
   setSTTProviderName,
   setLLMProviderName,
   setLLMModel,

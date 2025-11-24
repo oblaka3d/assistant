@@ -10,6 +10,7 @@ import passport from './config/passport'; // Инициализация Passport
 import { errorHandler, notFound } from './middleware/errorHandler';
 import apiKeysRoutes from './routes/apiKeysRoutes';
 import authRoutes from './routes/authRoutes';
+import chatRoutes from './routes/chatRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 
 const app: Application = express();
@@ -53,6 +54,7 @@ app.get('/health', (_req, res) => {
 app.use(`${config.api.prefix}/auth`, authRoutes);
 app.use(`${config.api.prefix}/settings`, settingsRoutes);
 app.use(`${config.api.prefix}/api-keys`, apiKeysRoutes);
+app.use(`${config.api.prefix}/chats`, chatRoutes);
 
 // Error handling
 app.use(notFound);

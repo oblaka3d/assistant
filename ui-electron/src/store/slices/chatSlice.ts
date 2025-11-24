@@ -54,6 +54,8 @@ const chatSlice = createSlice({
             dialog.title = firstUserMessage.text.substring(0, 50) || 'Новый диалог';
           }
         }
+        // Помечаем диалог как требующий синхронизации
+        (dialog as any).needsSync = true;
       }
     },
     setMessages: (state, action: PayloadAction<{ dialogId: string; messages: Message[] }>) => {
@@ -77,9 +79,10 @@ const chatSlice = createSlice({
       }
     },
     // Диалоги
-    createDialog: (state, action: PayloadAction<{ title?: string }>) => {
+    createDialog: (state, action: PayloadAction<{ title?: string; dialogId?: string }>) => {
+      const dialogId = action.payload.dialogId || Date.now().toString();
       const newDialog: Dialog = {
-        id: Date.now().toString(),
+        id: dialogId,
         title: action.payload.title || 'Новый диалог',
         messages: [], // Пустой массив - приветствие показывается через экран приветствия
         createdAt: new Date(),
@@ -130,6 +133,29 @@ const chatSlice = createSlice({
     setDialogPanelOpen: (state, action: PayloadAction<boolean>) => {
       state.dialogPanelOpen = action.payload;
     },
+    setDialogs: (state, action: PayloadAction<Dialog[]>) => {
+      state.dialogs = action.payload;
+      // Если текущий диалог не найден в загруженных, выбираем первый
+      if (state.currentDialogId && !state.dialogs.some((d) => d.id === state.currentDialogId)) {
+        if (state.dialogs.length > 0) {
+          state.currentDialogId = state.dialogs[0].id;
+        } else {
+          state.currentDialogId = null;
+        }
+      }
+    },
+    syncDialog: (state, action: PayloadAction<Dialog>) => {
+      const index = state.dialogs.findIndex((d) => d.id === action.payload.id);
+      if (index !== -1) {
+        state.dialogs[index] = action.payload;
+      } else {
+        state.dialogs.unshift(action.payload);
+        // Если нет текущего диалога, выбираем новый
+        if (!state.currentDialogId) {
+          state.currentDialogId = action.payload.id;
+        }
+      }
+    },
   },
 });
 
@@ -145,5 +171,7 @@ export const {
   updateDialogTitle,
   toggleDialogPanel,
   setDialogPanelOpen,
+  setDialogs,
+  syncDialog,
 } = chatSlice.actions;
 export default chatSlice.reducer;

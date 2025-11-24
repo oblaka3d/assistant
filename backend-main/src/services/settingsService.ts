@@ -6,6 +6,8 @@ export interface SettingsUpdateData {
   volume?: number;
   language?: string;
   theme?: 'light' | 'dark' | 'system';
+  accentColorLight?: string;
+  accentColorDark?: string;
   sttProviderName?: string | null;
   llmProviderName?: string | null;
   llmModel?: string | null;

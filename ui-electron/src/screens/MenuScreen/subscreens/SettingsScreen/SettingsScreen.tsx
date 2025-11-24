@@ -19,6 +19,9 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
+  TextField,
+  Grid,
+  IconButton,
 } from '@mui/material';
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +34,8 @@ import {
   setVolume,
   setLanguage,
   setTheme,
+  setAccentColorLight,
+  setAccentColorDark,
   setModelPath,
   setSceneName,
   setEnableToonShader,
@@ -54,6 +59,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const volume = useAppSelector((state) => state.settings.volume);
   const language = useAppSelector((state) => state.settings.language);
   const theme = useAppSelector((state) => state.settings.theme);
+  const accentColorLight = useAppSelector((state) => state.settings.accentColorLight);
+  const accentColorDark = useAppSelector((state) => state.settings.accentColorDark);
   const modelScene = useAppSelector((state) => state.settings.modelScene);
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -86,6 +93,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           volume,
           language,
           theme,
+          accentColorLight,
+          accentColorDark,
           modelScene,
         })
       ).catch((error) => {
@@ -99,7 +108,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [volume, language, theme, modelScene, isAuthenticated, dispatch]);
+  }, [
+    volume,
+    language,
+    theme,
+    accentColorLight,
+    accentColorDark,
+    modelScene,
+    isAuthenticated,
+    dispatch,
+  ]);
 
   // Загружаем список моделей при открытии настроек
   useEffect(() => {
@@ -257,6 +275,148 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 </MenuItem>
               </Select>
             </FormControl>
+          </Box>
+        </Paper>
+
+        <Paper elevation={3} className={styles.settingPaper}>
+          <Box className={styles.settingHeader}>
+            <PaletteIcon className={styles.settingIcon} />
+            <Typography variant="h6" sx={{ color: 'text.primary' }}>
+              {t('settings.accentColor')}
+            </Typography>
+          </Box>
+          <Box sx={{ px: 2, pb: 2 }}>
+            {/* Акцентный цвет для светлой темы */}
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <LightModeIcon fontSize="small" />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {t('settings.accentColorLight')}
+                </Typography>
+              </Box>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={8}>
+                  <TextField
+                    fullWidth
+                    type="color"
+                    value={accentColorLight}
+                    onChange={(e) => dispatch(setAccentColorLight(e.target.value))}
+                    label={t('settings.accentColorLight')}
+                    size="small"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    inputProps={{
+                      style: { height: '40px' },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 1,
+                      flexWrap: 'wrap',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {[
+                      '#4a90e2', // Синий
+                      '#e74c3c', // Красный
+                      '#27ae60', // Зеленый
+                      '#f39c12', // Оранжевый
+                      '#9b59b6', // Фиолетовый
+                      '#1abc9c', // Бирюзовый
+                      '#e67e22', // Темно-оранжевый
+                      '#3498db', // Голубой
+                    ].map((color) => (
+                      <IconButton
+                        key={color}
+                        onClick={() => dispatch(setAccentColorLight(color))}
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: color,
+                          border: accentColorLight === color ? '2px solid' : '1px solid',
+                          borderColor: accentColorLight === color ? 'primary.main' : 'divider',
+                          '&:hover': {
+                            backgroundColor: color,
+                            opacity: 0.8,
+                          },
+                        }}
+                        title={color}
+                      />
+                    ))}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Акцентный цвет для темной темы */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <DarkModeIcon fontSize="small" />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {t('settings.accentColorDark')}
+                </Typography>
+              </Box>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={8}>
+                  <TextField
+                    fullWidth
+                    type="color"
+                    value={accentColorDark}
+                    onChange={(e) => dispatch(setAccentColorDark(e.target.value))}
+                    label={t('settings.accentColorDark')}
+                    size="small"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    inputProps={{
+                      style: { height: '40px' },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 1,
+                      flexWrap: 'wrap',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {[
+                      '#4a90e2', // Синий
+                      '#e74c3c', // Красный
+                      '#27ae60', // Зеленый
+                      '#f39c12', // Оранжевый
+                      '#9b59b6', // Фиолетовый
+                      '#1abc9c', // Бирюзовый
+                      '#e67e22', // Темно-оранжевый
+                      '#3498db', // Голубой
+                    ].map((color) => (
+                      <IconButton
+                        key={color}
+                        onClick={() => dispatch(setAccentColorDark(color))}
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: color,
+                          border: accentColorDark === color ? '2px solid' : '1px solid',
+                          borderColor: accentColorDark === color ? 'primary.main' : 'divider',
+                          '&:hover': {
+                            backgroundColor: color,
+                            opacity: 0.8,
+                          },
+                        }}
+                        title={color}
+                      />
+                    ))}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
           </Box>
         </Paper>
 

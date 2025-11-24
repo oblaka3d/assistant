@@ -71,7 +71,10 @@
     "theme": "主题",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "themeSystem": "跟随系统"
+    "themeSystem": "跟随系统",
+    "accentColor": "强调色",
+    "accentColorLight": "强调色（浅色主题）",
+    "accentColorDark": "强调色（深色主题）"
   },
   "apiKeys": {
     "title": "API密钥",

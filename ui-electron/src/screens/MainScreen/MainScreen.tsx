@@ -27,6 +27,8 @@ const MainScreen: React.FC = () => {
     (state) => state.voice
   );
   const theme = useAppSelector((state) => state.settings.theme);
+  const accentColorLight = useAppSelector((state) => state.settings.accentColorLight);
+  const accentColorDark = useAppSelector((state) => state.settings.accentColorDark);
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => getSystemTheme());
 
   // Отслеживаем изменения системной темы
@@ -58,6 +60,9 @@ const MainScreen: React.FC = () => {
 
   // Определяем эффективную тему
   const effectiveTheme = theme === 'system' ? systemTheme : theme;
+
+  // Выбираем акцентный цвет в зависимости от эффективной темы
+  const accentColor = effectiveTheme === 'dark' ? accentColorDark : accentColorLight;
 
   // Получаем последний ответ ассистента из чата для отображения на главном экране
   const { dialogs, currentDialogId } = useAppSelector((state) => state.chat);
@@ -291,6 +296,7 @@ const MainScreen: React.FC = () => {
               <Typography
                 variant="body1"
                 className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn}`}
+                sx={{ color: accentColor }}
               >
                 {userText}
               </Typography>

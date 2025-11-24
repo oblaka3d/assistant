@@ -2,7 +2,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import { Box, IconButton, TextField, Typography, Paper, CircularProgress } from '@mui/material';
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { MessageList } from 'react-chat-elements';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,8 @@ import {
   sendMessage,
   startChatRecording,
   stopChatRecordingAndTranscribe,
+  saveDialog,
+  createDialogOnServer,
 } from '../../store/thunks/chatThunks';
 import { createLogger } from '../../utils/logger';
 
@@ -33,8 +35,25 @@ const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { dialogs, currentDialogId, inputValue } = useAppSelector((state) => state.chat);
-  const { llmProviderName, llmModel } = useAppSelector((state) => state.settings);
+  const { llmProviderName, llmModel, theme, accentColorLight, accentColorDark } = useAppSelector(
+    (state) => state.settings
+  );
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
   const isRecording = useAppSelector((state) => state.voice.isRecording);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Определяем эффективную тему и акцентный цвет
+  const effectiveTheme = useMemo(() => {
+    if (theme === 'system') {
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      return 'dark';
+    }
+    return theme;
+  }, [theme]);
+
+  const accentColor = effectiveTheme === 'dark' ? accentColorDark : accentColorLight;
   const messageListRef = useRef<MessageListRef | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -74,11 +93,72 @@ const ChatScreen: React.FC = () => {
     }
   }, [messages]);
 
+  // Функция для сохранения диалога с debounce
+  const saveCurrentDialog = useCallback(() => {
+    if (!isAuthenticated || !currentDialogId) return;
+
+    const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+    if (!currentDialog) return;
+
+    // Очищаем предыдущий таймер
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Устанавливаем новый таймер для сохранения (1 секунда debounce)
+    saveTimeoutRef.current = setTimeout(() => {
+      dispatch(
+        saveDialog({
+          dialogId: currentDialog.id,
+          title: currentDialog.title,
+          messages: currentDialog.messages,
+        })
+      ).catch((error) => {
+        log.error('Failed to save dialog:', error);
+      });
+    }, 1000);
+  }, [isAuthenticated, currentDialogId, dialogs, dispatch]);
+
+  // Сохраняем диалог при изменении сообщений
+  useEffect(() => {
+    if (isAuthenticated && currentDialogId) {
+      const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+      if (currentDialog && currentDialog.messages.length > 0) {
+        saveCurrentDialog();
+      }
+    }
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [dialogs, currentDialogId, isAuthenticated, saveCurrentDialog]);
+
   const handleSend = async () => {
     if (!inputValue.trim()) return;
 
     const text = inputValue;
     dispatch(clearInput());
+
+    // Если пользователь авторизован и текущий диалог еще не создан на сервере, создаем его
+    if (isAuthenticated && currentDialogId) {
+      const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+      if (currentDialog && (currentDialog.id === 'default' || !currentDialog.id)) {
+        // Создаем новый диалог на сервере
+        const newDialogId = Date.now().toString();
+        try {
+          await dispatch(
+            createDialogOnServer({
+              dialogId: newDialogId,
+              title: 'Новый диалог',
+            })
+          ).unwrap();
+        } catch (error) {
+          log.error('Failed to create dialog on server:', error);
+        }
+      }
+    }
 
     try {
       await dispatch(sendMessage({ text, t })).unwrap();
@@ -256,6 +336,12 @@ const ChatScreen: React.FC = () => {
             onClick={handleRecord}
             className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
             title={isRecording ? t('chat.stopRecording') : t('chat.startRecording')}
+            sx={{
+              color: isRecording ? undefined : accentColor,
+              '&:hover': {
+                backgroundColor: isRecording ? undefined : `${accentColor}15`,
+              },
+            }}
           >
             {isRecording ? (
               <Box className={styles.recordButtonPulse}>
