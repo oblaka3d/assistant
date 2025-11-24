@@ -17,10 +17,10 @@ interface AssetListOptions {
 export function getAssetList({ folder, extensions }: AssetListOptions): string[] {
   try {
     // Путь к папке с ресурсами
-    // В development: app/ui/public/assets/{folder}
-    // В production: dist/app/ui/assets/{folder} (куда копируются файлы из public)
-    const assetPath1 = path.join(__dirname, `../ui/assets/${folder}`);
-    const assetPath2 = path.join(__dirname, `../ui/public/assets/${folder}`);
+    // В development: ui-electron/public/assets/{folder}
+    // В production: dist/ui-electron/assets/{folder} (куда копируются файлы из public)
+    const assetPath1 = path.join(__dirname, `../ui-electron/assets/${folder}`);
+    const assetPath2 = path.join(__dirname, `../ui-electron/public/assets/${folder}`);
 
     let assetPath = assetPath1;
     if (!fs.existsSync(assetPath1) && fs.existsSync(assetPath2)) {

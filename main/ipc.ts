@@ -1,11 +1,11 @@
 import { ipcMain } from 'electron';
 
-import type { OpenAIConfig, YandexGPTConfig, AnthropicConfig } from '../backend/config';
-import { checkDependencies } from '../backend/dependency-checker';
-import { generateResponse } from '../backend/llm';
-import { transcribe } from '../backend/stt';
-import { synthesize } from '../backend/tts';
-import { startRecord, stopRecord } from '../backend/voice';
+import type { OpenAIConfig, YandexGPTConfig, AnthropicConfig } from '../backend-electron/config';
+import { checkDependencies } from '../backend-electron/dependency-checker';
+import { generateResponse } from '../backend-electron/llm';
+import { transcribe } from '../backend-electron/stt';
+import { synthesize } from '../backend-electron/tts';
+import { startRecord, stopRecord } from '../backend-electron/voice';
 
 import { getAssetList } from './utils/assetList';
 import { readLogs, clearLogs, getLogFileSize, getLogFilePath } from './utils/fileLogger';
@@ -18,7 +18,7 @@ let getLLMConfigFn: (() => OpenAIConfig | YandexGPTConfig | AnthropicConfig) | u
 
 const loadLLMFunctions = async () => {
   if (!getLLMProviderFn || !getLLMConfigFn) {
-    const configModule = await import('../backend/config');
+    const configModule = await import('../backend-electron/config');
     getLLMProviderFn = configModule.getLLMProvider;
     getLLMConfigFn = configModule.getLLMConfig;
   }

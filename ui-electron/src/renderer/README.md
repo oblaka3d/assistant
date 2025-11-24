@@ -33,7 +33,7 @@ const animations = scene.getAvailableAnimations();
 
 ## Модели
 
-GLB модели должны находиться в `app/ui/public/assets/models/`.
+GLB модели должны находиться в `ui-electron/public/assets/models/`.
 
 При загрузке:
 

@@ -30,7 +30,7 @@
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": ["./tsconfig.json", "./app/ui/tsconfig.json"]
+        "project": ["./tsconfig.json", "./ui-electron/tsconfig.json"]
       },
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
@@ -78,6 +78,7 @@
         "ignore": [".css$", ".module.css$", ".scss$"]
       }
     ],
+    "import/no-named-as-default-member": "warn",
     "no-console": [
       "warn",
       {
@@ -87,7 +88,7 @@
   },
   "overrides": [
     {
-      "files": ["app/ui/src/**/*"],
+      "files": ["ui-electron/src/**/*"],
       "rules": {
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",
@@ -98,14 +99,15 @@
       }
     },
     {
-      "files": ["app/main/**/*", "app/backend/**/*"],
+      "files": ["main/**/*", "backend-electron/**/*", "backend-main/**/*"],
       "env": {
         "node": true,
         "browser": false
       },
       "rules": {
         "no-console": "off",
-        "@typescript-eslint/no-require-imports": "off"
+        "@typescript-eslint/no-require-imports": "off",
+        "import/no-named-as-default-member": "off"
       }
     }
   ],
@@ -117,7 +119,7 @@
     "*.d.ts",
     "coverage",
     ".eslintrc.json",
-    "app/ui/public/**/*",
-    "app/ui/src/styles/**/*"
+    "ui-electron/public/**/*",
+    "ui-electron/src/styles/**/*"
   ]
 }

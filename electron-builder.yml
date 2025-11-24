@@ -4,7 +4,7 @@ directories:
   output: release
 files:
   - dist/**/*
-  - app/ui/**/*
+  - ui-electron/**/*
   - package.json
 
 mac:

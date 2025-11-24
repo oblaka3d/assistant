@@ -38,20 +38,21 @@ npm start
 
 ```
 assistant/
-├── app/
-│   ├── main/          # Electron main процесс
-│   ├── backend/       # Backend логика (STT, LLM, TTS)
-│   └── ui/            # React UI приложение
-│       ├── src/
-│       │   ├── screens/      # Экраны приложения
-│       │   ├── components/   # React компоненты
-│       │   ├── renderer/     # THREE.js рендерер
-│       │   └── store/        # Redux store
-│       └── public/
-│           └── assets/
-│               ├── models/   # GLB модели персонажей
-│               └── scenes/   # Файлы сцен окружения
-├── dist/              # Собранные файлы
+├── main/                  # Electron main процесс
+├── backend-electron/      # Backend логика (STT, LLM, TTS)
+├── ui-electron/           # React UI приложение
+│   ├── src/
+│   │   ├── screens/      # Экраны приложения
+│   │   ├── components/   # React компоненты
+│   │   ├── renderer/     # THREE.js рендерер
+│   │   └── store/        # Redux store
+│   └── public/
+│       └── assets/
+│           ├── models/   # GLB модели персонажей
+│           └── scenes/   # Файлы сцен окружения
+├── backend-main/          # Основной бэкенд сервер (Node.js + MongoDB)
+├── docs/                  # Документация проекта
+├── dist/                  # Собранные файлы
 └── package.json
 ```
 

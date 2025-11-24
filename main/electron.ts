@@ -1,8 +1,12 @@
+import * as fs from 'fs';
 import * as path from 'path';
 
 import { app, BrowserWindow, dialog } from 'electron';
 
-import { checkDependenciesOnStartup, checkDependencies } from '../backend/dependency-checker';
+import {
+  checkDependenciesOnStartup,
+  checkDependencies,
+} from '../backend-electron/dependency-checker';
 
 import { setupIPC } from './ipc';
 import { initializeFileLogger } from './utils/fileLogger';
@@ -47,11 +51,11 @@ function createWindow(): void {
 
   // Путь к UI файлам
   // Всегда используем собранный файл из dist (работает и в dev, и в production)
-  const htmlPath = path.join(__dirname, '../ui/index.html');
+  const htmlPath = path.join(__dirname, '../ui-electron/index.html');
 
   console.log('Loading HTML from:', htmlPath);
   console.log('__dirname:', __dirname);
-  console.log('File exists:', require('fs').existsSync(htmlPath));
+  console.log('File exists:', fs.existsSync(htmlPath));
   console.log('Is dev mode:', isDev);
 
   // Логирование ошибок загрузки
@@ -118,7 +122,7 @@ if (process.env.ELECTRON_ENABLE_SECURITY_WARNINGS !== 'true') {
 if (!app || typeof app.whenReady !== 'function') {
   console.error('❌ Electron app is not available.');
   console.error('   Make sure the script is run with Electron:');
-  console.error('   - npm start (uses electron dist/app/main/electron.js)');
+  console.error('   - npm start (uses electron dist/main/electron.js)');
   console.error('   - npm run dev (uses ts-node, requires Electron runtime)');
   console.error('   Do not run this file directly with node or ts-node without Electron.');
   process.exit(1);
