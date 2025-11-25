@@ -86,6 +86,7 @@
     "@mui/icons-material": "^5.18.0",
     "@mui/material": "^5.15.0",
     "@reduxjs/toolkit": "^2.10.1",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "date-fns": "^4.1.0",
     "express": "^4.18.2",
     "form-data": "^4.0.0",
@@ -95,9 +96,13 @@
     "react-chat-elements": "^12.0.11",
     "react-dom": "^18.2.0",
     "react-i18next": "^16.3.5",
+    "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
     "react-simple-keyboard": "^3.8.137",
     "react-swipeable": "^7.0.1",
+    "react-syntax-highlighter": "^16.1.0",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "three": "^0.181.2"
   },
   "build": {

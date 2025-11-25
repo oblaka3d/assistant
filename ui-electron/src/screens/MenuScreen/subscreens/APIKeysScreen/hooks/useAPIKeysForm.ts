@@ -29,6 +29,7 @@ export const useAPIKeysForm = (): UseAPIKeysFormReturn => {
   const { sttProviderName, llmProviderName, llmModel, ttsProviderName } = useAppSelector(
     (state) => state.settings
   );
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
 
   const [localKeys, setLocalKeys] = useState<Record<string, string>>({});
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
@@ -64,14 +65,16 @@ export const useAPIKeysForm = (): UseAPIKeysFormReturn => {
   const handleSave = useCallback(async () => {
     const success = await saveAPIKeys(localKeys);
     if (success) {
-      await dispatch(
-        saveSettings({
-          sttProviderName,
-          llmProviderName,
-          llmModel,
-          ttsProviderName,
-        })
-      ).unwrap();
+      if (isAuthenticated) {
+        await dispatch(
+          saveSettings({
+            sttProviderName,
+            llmProviderName,
+            llmModel,
+            ttsProviderName,
+          })
+        ).unwrap();
+      }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }
@@ -83,6 +86,7 @@ export const useAPIKeysForm = (): UseAPIKeysFormReturn => {
     llmProviderName,
     llmModel,
     ttsProviderName,
+    isAuthenticated,
   ]);
 
   const toggleKeyVisibility = useCallback((keyName: string) => {

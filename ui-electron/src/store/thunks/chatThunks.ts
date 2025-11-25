@@ -10,6 +10,7 @@ import {
 } from '../../utils/api';
 import {
   addMessage,
+  selectDialog,
   setDialogs,
   syncDialog,
   deleteDialog as deleteDialogAction,

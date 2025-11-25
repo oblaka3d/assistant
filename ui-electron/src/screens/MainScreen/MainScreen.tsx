@@ -1,11 +1,15 @@
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import MicIcon from '@mui/icons-material/Mic';
-import { Box, Button, Typography, Paper } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { Box, Button, Typography, Paper, IconButton } from '@mui/material';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MessageRenderer from '../../components/MessageRenderer';
 import { DEFAULTS, TIMEOUTS } from '../../constants/app';
 import type { CharacterScene } from '../../renderer/main';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import type { Message } from '../../store/slices/chatSlice';
+import { setScreen } from '../../store/slices/uiSlice';
 import { initScene } from '../../store/thunks/sceneThunks';
 import { stopRecordingAndProcess, startRecording } from '../../store/thunks/voiceThunks';
 import { createLogger } from '../../utils/logger';
@@ -30,6 +34,8 @@ const MainScreen: React.FC = () => {
   const accentColorLight = useAppSelector((state) => state.settings.accentColorLight);
   const accentColorDark = useAppSelector((state) => state.settings.accentColorDark);
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => getSystemTheme());
+  const currentScreen = useAppSelector((state) => state.ui.currentScreen);
+  const isChatScreenActive = currentScreen === 'chat';
 
   // Отслеживаем изменения системной темы
   useEffect(() => {
@@ -69,6 +75,18 @@ const MainScreen: React.FC = () => {
   const currentDialog = dialogs.find((d) => d.id === currentDialogId);
   const messages = currentDialog?.messages || [];
   const lastAssistantMessage = messages.filter((msg) => msg.position === 'left').slice(-1)[0];
+  const liveAssistantMessage = useMemo<Message | null>(() => {
+    if (assistantText === DEFAULTS.EMPTY_TEXT) {
+      return null;
+    }
+    return {
+      id: 'live-assistant-message',
+      position: 'left',
+      type: 'markdown',
+      text: assistantText,
+      date: new Date(),
+    };
+  }, [assistantText]);
 
   // Обновляем цвет фона сцены при изменении темы
   useEffect(() => {
@@ -232,6 +250,22 @@ const MainScreen: React.FC = () => {
     }
   };
 
+  const handleOpenChat = useCallback(() => {
+    dispatch(setScreen('chat'));
+  }, [dispatch]);
+
+  const handleKeyOpenChat = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleOpenChat();
+      }
+    },
+    [handleOpenChat]
+  );
+
+  const openChatLabel = t('ui.openChat');
+
   return (
     <Box className={styles.container}>
       {/* Индикатор загрузки */}
@@ -282,7 +316,10 @@ const MainScreen: React.FC = () => {
       {/* Текстовые блоки - верхний левый угол */}
       {/* Показываем текущие тексты во время записи/обработки */}
       {(userText !== DEFAULTS.EMPTY_TEXT || assistantText !== DEFAULTS.EMPTY_TEXT) && (
-        <Box className={styles.textBlocks}>
+        <Box
+          className={`${styles.textBlocks} ${isChatScreenActive ? styles.textBlocksShifted : ''}`}
+          aria-hidden={isChatScreenActive}
+        >
           {/* Показываем "Вы сказали" только если есть распознанный текст И нет ответа (во время обработки) */}
           {userText !== DEFAULTS.EMPTY_TEXT && assistantText === DEFAULTS.EMPTY_TEXT && (
             <Paper elevation={3} className={styles.textBlock}>
@@ -305,7 +342,14 @@ const MainScreen: React.FC = () => {
 
           {/* Показываем "Ответ" только если есть ответ от ассистента */}
           {assistantText !== DEFAULTS.EMPTY_TEXT && (
-            <Paper elevation={3} className={styles.textBlock}>
+            <Paper
+              elevation={3}
+              className={`${styles.textBlock} ${styles.textBlockInteractive}`}
+              onClick={handleOpenChat}
+              role="button"
+              tabIndex={0}
+              onKeyDown={handleKeyOpenChat}
+            >
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -313,12 +357,23 @@ const MainScreen: React.FC = () => {
               >
                 {t('ui.answer')}:
               </Typography>
-              <Typography
-                variant="body1"
-                className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn}`}
+              <Box
+                className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn} ${styles.textBlockContentWithButton}`}
               >
-                {assistantText}
-              </Typography>
+                {liveAssistantMessage && <MessageRenderer message={liveAssistantMessage} />}
+              </Box>
+              <IconButton
+                size="small"
+                className={styles.openChatButton}
+                aria-label={openChatLabel}
+                title={openChatLabel}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleOpenChat();
+                }}
+              >
+                <ChatBubbleOutlineIcon fontSize="small" />
+              </IconButton>
             </Paper>
           )}
         </Box>
@@ -329,8 +384,18 @@ const MainScreen: React.FC = () => {
         userText === DEFAULTS.EMPTY_TEXT &&
         assistantText === DEFAULTS.EMPTY_TEXT &&
         lastAssistantMessage && (
-          <Box className={styles.textBlocks}>
-            <Paper elevation={3} className={styles.textBlock}>
+          <Box
+            className={`${styles.textBlocks} ${isChatScreenActive ? styles.textBlocksShifted : ''}`}
+            aria-hidden={isChatScreenActive}
+          >
+            <Paper
+              elevation={3}
+              className={`${styles.textBlock} ${styles.textBlockInteractive}`}
+              onClick={handleOpenChat}
+              role="button"
+              tabIndex={0}
+              onKeyDown={handleKeyOpenChat}
+            >
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -338,12 +403,23 @@ const MainScreen: React.FC = () => {
               >
                 {t('ui.answer')}:
               </Typography>
-              <Typography
-                variant="body1"
-                className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn}`}
+              <Box
+                className={`${styles.textBlockContent} ${styles.textBlockContentFadeIn} ${styles.textBlockContentWithButton}`}
               >
-                {lastAssistantMessage.text}
-              </Typography>
+                <MessageRenderer message={lastAssistantMessage} />
+              </Box>
+              <IconButton
+                size="small"
+                className={styles.openChatButton}
+                aria-label={openChatLabel}
+                title={openChatLabel}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleOpenChat();
+                }}
+              >
+                <ChatBubbleOutlineIcon fontSize="small" />
+              </IconButton>
             </Paper>
           </Box>
         )}

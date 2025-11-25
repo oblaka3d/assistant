@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { logout as apiLogout } from '../../utils/api';
+import { clearGuestApiKeys } from '../../utils/storage';
 import { registerUser, loginUser, fetchCurrentUser } from '../thunks';
 import type { User } from '../types/user';
 
@@ -37,6 +38,7 @@ const userSlice = createSlice({
     },
     logout: (state) => {
       apiLogout();
+      clearGuestApiKeys();
       state.currentUser = null;
       state.isAuthenticated = false;
       state.error = null;

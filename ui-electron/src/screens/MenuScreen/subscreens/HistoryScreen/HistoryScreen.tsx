@@ -22,8 +22,13 @@ interface HistoryScreenProps {
 const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
   const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
-  const messages = useAppSelector((state) => state.chat.messages);
+  const dialogs = useAppSelector((state) => state.chat.dialogs);
   const llmProviderName = useAppSelector((state) => state.settings.llmProviderName);
+
+  // Получаем все сообщения из всех диалогов
+  const messages = useMemo(() => {
+    return dialogs.flatMap((dialog) => dialog.messages);
+  }, [dialogs]);
 
   const dateLocale = useMemo(() => getDateLocale(i18n.language), [i18n.language]);
 
@@ -64,7 +69,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack }) => {
           </Box>
         ) : (
           <Box sx={{ py: 2 }}>
-            {messages.map((message, index) => {
+            {messages.map((message: any, index: number) => {
               const isUser = message.position === 'right';
               const firstInGroup = isFirstInGroup(index, messages);
 

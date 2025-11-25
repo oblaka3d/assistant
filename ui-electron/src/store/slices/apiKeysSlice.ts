@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { logout } from './userSlice';
+
 interface APIKeysState {
   keys: Record<string, string>;
   isLoading: boolean;
@@ -38,6 +40,9 @@ const apiKeysSlice = createSlice({
       state.error = null;
     },
     resetAPIKeys: () => initialState,
+  },
+  extraReducers: (builder) => {
+    builder.addCase(logout, () => initialState);
   },
 });
 

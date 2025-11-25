@@ -28,6 +28,9 @@
     "errorSorry": "Sorry, failed to get response.",
     "youSaid": "You said",
     "answer": "Answer",
+    "openChat": "Open chat",
+    "prevScreen": "Previous screen",
+    "nextScreen": "Next screen",
     "cancel": "Cancel"
   },
   "menu": {

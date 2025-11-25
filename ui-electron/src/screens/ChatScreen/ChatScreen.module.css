@@ -16,6 +16,9 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s ease;
+  will-change: transform;
+  transform: translateY(calc(var(--keyboard-offset, 0px) * -1));
 }
 
 .emptyState {
@@ -105,6 +108,8 @@
   overflow-y: auto;
   padding: 1rem;
   scroll-behavior: smooth;
+  transition: transform 0.3s ease;
+  transform: translateY(calc(var(--keyboard-offset, 0px) * -1));
 }
 
 .inputContainer {
@@ -243,6 +248,7 @@
   border-top: 1px solid var(--divider);
   position: relative;
   z-index: 100;
+  pointer-events: auto;
 }
 
 .keyboardTheme {
@@ -306,9 +312,11 @@
   line-height: 1.4;
 }
 
-/* Chat elements overrides - these need to be global */
-:global(.message-list) {
+/* Custom message list integration */
+.message-list {
   background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 :global(.rce-mlist) {

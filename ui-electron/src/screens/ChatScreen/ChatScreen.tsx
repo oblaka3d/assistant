@@ -16,16 +16,21 @@ import {
   MenuItem,
 } from '@mui/material';
 import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react';
-import { MessageList } from 'react-chat-elements';
 import { useTranslation } from 'react-i18next';
 import Keyboard, { KeyboardReactInterface } from 'react-simple-keyboard';
-import 'react-chat-elements/dist/main.css';
 import 'react-simple-keyboard/build/css/index.css';
 
+import CustomMessageList from '../../components/CustomMessageList';
 import ScreenHeader from '../../components/ScreenHeader';
 import { API_PROVIDERS } from '../../constants/apiProviders';
+import type { AppDispatch } from '../../store';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { clearInput, setInputValue, toggleDialogPanel } from '../../store/slices/chatSlice';
+import {
+  addMessage,
+  clearInput,
+  setInputValue,
+  toggleDialogPanel,
+} from '../../store/slices/chatSlice';
 import {
   loadLLMProviderInfo,
   sendMessage,
@@ -38,6 +43,80 @@ import { createLogger } from '../../utils/logger';
 
 import styles from './ChatScreen.module.css';
 import DialogPanel from './components/DialogPanel/DialogPanel';
+
+// Временная функция для тестирования - добавляет тестовые сообщения с markdown и изображениями
+const addTestMessage = (dispatch: AppDispatch, type: 'markdown' | 'image') => {
+  const testMessage =
+    type === 'markdown'
+      ? {
+          id: Date.now().toString(),
+          position: 'left' as const,
+          type: 'markdown' as const,
+          text: `# Пример отформатированного кода
+
+Вот пример кода на **JavaScript**:
+
+\`\`\`javascript
+function greet(name) {
+  console.log(\`Привет, \${name}!\`);
+  return \`Hello, \${name}!\`;
+}
+
+greet('Мир');
+\`\`\`
+
+И еще один пример на **Python**:
+
+\`\`\`python
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+print(fibonacci(10))
+\`\`\`
+
+## Списки и таблицы
+
+### Маркированный список:
+- Первый элемент
+- Второй элемент
+- ~~Зачеркнутый элемент~~
+
+### Нумерованный список:
+1. Первый шаг
+2. Второй шаг
+3. Третий шаг
+
+### Таблица:
+
+| Язык | Приветствие |
+|------|-------------|
+| Русский | Привет |
+| English | Hello |
+| Español | Hola |
+
+> Это цитата для демонстрации возможностей markdown.
+
+[Ссылка на Google](https://google.com)`,
+          date: new Date(),
+        }
+      : {
+          id: Date.now().toString(),
+          position: 'left' as const,
+          type: 'image' as const,
+          images: [
+            {
+              url: 'https://picsum.photos/400/300?random=' + Date.now(),
+              alt: 'Тестовое изображение',
+            },
+          ],
+          text: 'Это сообщение содержит изображение',
+          date: new Date(),
+        };
+
+  dispatch(addMessage(testMessage));
+};
 
 const log = createLogger('ChatScreen');
 
@@ -90,7 +169,7 @@ const KEYBOARD_LAYOUTS = {
       '{space}',
     ],
   },
-} as const;
+};
 
 type KeyboardLanguage = keyof typeof KEYBOARD_LAYOUTS;
 
@@ -99,10 +178,6 @@ const KEYBOARD_LANGUAGE_OPTIONS: readonly { id: KeyboardLanguage; label: string 
   { id: 'ru', label: 'РУ' },
   { id: 'zh', label: '拼' },
 ];
-
-interface MessageListRef {
-  scrollToBottom?: () => void;
-}
 
 const ChatScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -136,7 +211,7 @@ const ChatScreen: React.FC = () => {
   }, [theme]);
 
   const accentColor = effectiveTheme === 'dark' ? accentColorDark : accentColorLight;
-  const messageListRef = useRef<MessageListRef | null>(null);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Получаем текущий диалог и сообщения
@@ -168,10 +243,6 @@ const ChatScreen: React.FC = () => {
     // Прокрутка к последнему сообщению
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-    }
-    // Альтернативный способ через ref библиотеки, если доступен
-    if (messageListRef.current?.scrollToBottom) {
-      messageListRef.current.scrollToBottom();
     }
   }, [messages]);
 
@@ -353,6 +424,14 @@ const ChatScreen: React.FC = () => {
     };
   }, [isKeyboardVisible, updateKeyboardOffset]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    requestAnimationFrame(() => {
+      const offset = getComputedStyle(root).getPropertyValue('--keyboard-offset');
+      root.style.setProperty('--keyboard-offset', offset || '0px');
+    });
+  }, [isKeyboardVisible]);
+
   const toggleKeyboard = () => {
     setKeyboardVisible((prev) => {
       if (prev) {
@@ -443,9 +522,28 @@ const ChatScreen: React.FC = () => {
       <ScreenHeader
         title={chatTitle}
         startAction={
-          <IconButton onClick={handleTogglePanel} className={styles.menuButton} color="inherit">
-            <MenuIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton onClick={handleTogglePanel} className={styles.menuButton} color="inherit">
+              <MenuIcon />
+            </IconButton>
+            {/* Временные кнопки для тестирования - убрать в продакшене */}
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => addTestMessage(dispatch, 'markdown')}
+              sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
+            >
+              MD
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => addTestMessage(dispatch, 'image')}
+              sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
+            >
+              IMG
+            </Button>
+          </Box>
         }
       />
 
@@ -489,24 +587,10 @@ const ChatScreen: React.FC = () => {
           </Box>
         ) : (
           <Box ref={scrollContainerRef} className={styles.messagesList}>
-            <MessageList
-              referance={messageListRef}
+            <CustomMessageList
+              messages={messages}
               className="message-list"
-              lockable={true}
               toBottomHeight={'100%'}
-              dataSource={
-                // Type assertion needed due to react-chat-elements incomplete types
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                messages.map((msg) => ({
-                  id: msg.id,
-                  position: msg.position,
-                  type: msg.type,
-                  text: msg.text,
-                  date: msg.date,
-                  title: '', // Убираем подпись пользователя/ассистента
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                })) as unknown as any
-              }
             />
           </Box>
         )}

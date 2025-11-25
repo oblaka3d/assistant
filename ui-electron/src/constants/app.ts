@@ -50,3 +50,8 @@ export const ASSETS_PATHS = {
   MODELS: './assets/models/',
   SCENES: './assets/scenes/',
 } as const;
+
+// Ключи для localStorage
+export const STORAGE_KEYS = {
+  API_KEYS: 'assistant_api_keys',
+} as const;

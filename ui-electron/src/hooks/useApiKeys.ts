@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setAPIKeys, setLoading, setError, clearError } from '../store/slices/apiKeysSlice';
 import { getApiKeys as fetchApiKeys, saveApiKeys as persistApiKeys } from '../utils/api';
 import { createLogger } from '../utils/logger';
+import { loadGuestApiKeys, saveGuestApiKeys } from '../utils/storage';
 
 const log = createLogger('useApiKeys');
 
@@ -18,7 +19,10 @@ export function useApiKeys() {
   // Загружаем API ключи при монтировании компонента
   useEffect(() => {
     if (!isAuthenticated) {
-      dispatch(setAPIKeys({}));
+      const guestKeys = loadGuestApiKeys();
+      dispatch(setAPIKeys(guestKeys));
+      dispatch(setLoading(false));
+      dispatch(clearError());
       return;
     }
 
@@ -43,8 +47,18 @@ export function useApiKeys() {
 
   const saveAPIKeys = async (localKeys: Record<string, string>) => {
     if (!isAuthenticated) {
-      dispatch(setError('Please sign in to save API keys'));
-      return false;
+      try {
+        dispatch(clearError());
+        saveGuestApiKeys(localKeys);
+        dispatch(setAPIKeys(localKeys));
+        log.log('API keys saved locally for guest user');
+        return true;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        dispatch(setError(`Failed to save API keys locally: ${errorMessage}`));
+        log.error('Failed to save API keys locally:', err);
+        return false;
+      }
     }
 
     try {

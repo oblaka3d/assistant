@@ -1,6 +1,8 @@
-import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { ThemeProvider, CssBaseline, CircularProgress, Box, IconButton } from '@mui/material';
 import { lazy, Suspense, useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { useSwipeable } from 'react-swipeable';
+import { useTranslation } from 'react-i18next';
 
 import styles from './App.module.css';
 import NavigationIndicators from './components/NavigationIndicators';
@@ -27,6 +29,7 @@ const log = createLogger('App');
 
 function App() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const currentScreen = useAppSelector((state) => state.ui.currentScreen);
   const subScreen = useAppSelector((state) => state.ui.subScreen);
   const isTransitioning = useAppSelector((state) => state.ui.isTransitioning);
@@ -76,9 +79,6 @@ function App() {
     loadLLMProviderInfo();
   }, [dispatch]);
 
-  // Отключаем свайпы, если открыт вложенный экран
-  const canSwipe = subScreen === null;
-
   // Сброс isTransitioning после завершения анимации
   useEffect(() => {
     if (isTransitioning) {
@@ -88,29 +88,6 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [isTransitioning, dispatch]);
-
-  // Круговая навигация: влево = следующий экран справа, вправо = предыдущий экран слева
-  // Порядок экранов: chat (слева) -> main (центр) -> menu (справа)
-  // Свайп влево: main -> menu -> chat -> main (показываем экран справа)
-  // Свайп вправо: main -> chat -> menu -> main (показываем экран слева)
-  const handleSwipeLeft = () => {
-    if (canSwipe) {
-      dispatch(navigatePrev()); // Свайп влево = показываем экран справа = navigatePrev
-    }
-  };
-
-  const handleSwipeRight = () => {
-    if (canSwipe) {
-      dispatch(navigateNext()); // Свайп вправо = показываем экран слева = navigateNext
-    }
-  };
-
-  const handlers = useSwipeable({
-    onSwipedLeft: canSwipe ? handleSwipeLeft : undefined,
-    onSwipedRight: canSwipe ? handleSwipeRight : undefined,
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
 
   // Определяем порядок экранов для анимации
   const getScreenIndex = (screen: string) => {
@@ -127,6 +104,20 @@ function App() {
   };
 
   const screenIndex = getScreenIndex(currentScreen);
+
+  const canNavigate = !isTransitioning && subScreen === null;
+
+  const handleNavigateLeft = useCallback(() => {
+    if (canNavigate) {
+      dispatch(navigateNext());
+    }
+  }, [canNavigate, dispatch]);
+
+  const handleNavigateRight = useCallback(() => {
+    if (canNavigate) {
+      dispatch(navigatePrev());
+    }
+  }, [canNavigate, dispatch]);
 
   const handleWelcomeDismiss = useCallback(
     (targetScreen: MainScreen = 'main') => {
@@ -171,7 +162,7 @@ function App() {
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
-      <div {...handlers} ref={containerRef} className={styles.appContainer}>
+      <div ref={containerRef} className={styles.appContainer}>
         {/* Строка состояния */}
         <StatusBar />
         <div
@@ -217,6 +208,28 @@ function App() {
         </div>
         {/* Индикаторы навигации */}
         <NavigationIndicators />
+        <div className={styles.navButtons}>
+          <IconButton
+            size="large"
+            className={`${styles.navButton} ${styles.navButtonLeft}`}
+            onClick={handleNavigateLeft}
+            title={t('ui.prevScreen')}
+            aria-label={t('ui.prevScreen')}
+            disabled={!canNavigate}
+          >
+            <NavigateBeforeIcon />
+          </IconButton>
+          <IconButton
+            size="large"
+            className={`${styles.navButton} ${styles.navButtonRight}`}
+            onClick={handleNavigateRight}
+            title={t('ui.nextScreen')}
+            aria-label={t('ui.nextScreen')}
+            disabled={!canNavigate}
+          >
+            <NavigateNextIcon />
+          </IconButton>
+        </div>
       </div>
     </ThemeProvider>
   );

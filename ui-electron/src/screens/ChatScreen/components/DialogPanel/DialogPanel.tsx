@@ -55,7 +55,7 @@ const DialogPanel: React.FC = () => {
     }
   };
 
-  const getDialogPreview = (dialog: { messages: Array<{ text: string }> }) => {
+  const getDialogPreview = (dialog: { messages: Array<{ text?: string }> }) => {
     const lastMessage = dialog.messages[dialog.messages.length - 1];
     return lastMessage?.text?.substring(0, 50) || t('chat.empty');
   };

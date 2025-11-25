@@ -25,3 +25,62 @@
   align-items: center;
   justify-content: center;
 }
+
+.navButtons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2000;
+}
+
+.navButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 96px;
+  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  pointer-events: auto;
+  backdrop-filter: blur(6px);
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+  z-index: 1;
+}
+
+.navButtonLeft {
+  left: 16px;
+}
+
+.navButtonRight {
+  right: 16px;
+}
+
+.navButton:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.navButton:disabled {
+  opacity: 0.3;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 600px) {
+  .navButton {
+    width: 44px;
+    height: 80px;
+  }
+
+  .navButtonLeft {
+    left: 8px;
+  }
+
+  .navButtonRight {
+    right: 8px;
+  }
+}

@@ -349,8 +349,9 @@ export const saveApiKeys = async (keys: Record<string, string>): Promise<ApiKeys
 export interface ChatMessage {
   id: string;
   position: 'left' | 'right';
-  type: 'text';
-  text: string;
+  type: 'text' | 'markdown' | 'image';
+  text?: string;
+  images?: { url: string; alt?: string; width?: number; height?: number }[];
   date: Date | string;
 }
 

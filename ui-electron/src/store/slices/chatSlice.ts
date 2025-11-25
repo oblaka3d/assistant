@@ -3,9 +3,17 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface Message {
   id: string;
   position: 'left' | 'right';
-  type: 'text';
-  text: string;
+  type: 'text' | 'markdown' | 'image';
+  text?: string;
+  images?: MessageImage[];
   date: Date;
+}
+
+export interface MessageImage {
+  url: string;
+  alt?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface Dialog {
@@ -23,13 +31,15 @@ interface ChatState {
   dialogPanelOpen: boolean;
 }
 
-const defaultDialog: Dialog = {
-  id: 'default',
+const createEmptyDialog = (dialogId?: string): Dialog => ({
+  id: dialogId || Date.now().toString(),
   title: 'Новый диалог',
   messages: [], // Пустой массив - приветствие показывается через экран приветствия
   createdAt: new Date(),
   updatedAt: new Date(),
-};
+});
+
+const defaultDialog: Dialog = createEmptyDialog('default');
 
 const initialState: ChatState = {
   dialogs: [defaultDialog],
@@ -50,7 +60,7 @@ const chatSlice = createSlice({
         // Обновляем заголовок диалога на основе первого сообщения пользователя
         if (dialog.messages.length === 2 && dialog.title === 'Новый диалог') {
           const firstUserMessage = dialog.messages.find((m) => m.position === 'right');
-          if (firstUserMessage) {
+          if (firstUserMessage && firstUserMessage.text) {
             dialog.title = firstUserMessage.text.substring(0, 50) || 'Новый диалог';
           }
         }
@@ -78,14 +88,8 @@ const chatSlice = createSlice({
     },
     // Диалоги
     createDialog: (state, action: PayloadAction<{ title?: string; dialogId?: string }>) => {
-      const dialogId = action.payload.dialogId || Date.now().toString();
-      const newDialog: Dialog = {
-        id: dialogId,
-        title: action.payload.title || 'Новый диалог',
-        messages: [], // Пустой массив - приветствие показывается через экран приветствия
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const newDialog: Dialog = createEmptyDialog(action.payload.dialogId);
+      newDialog.title = action.payload.title || newDialog.title;
       state.dialogs.unshift(newDialog);
       state.currentDialogId = newDialog.id;
       state.inputValue = '';
@@ -94,22 +98,19 @@ const chatSlice = createSlice({
       const dialogIndex = state.dialogs.findIndex((d) => d.id === action.payload);
       if (dialogIndex !== -1) {
         state.dialogs.splice(dialogIndex, 1);
-        // Если удалили текущий диалог, переключаемся на первый доступный
-        if (state.currentDialogId === action.payload) {
-          if (state.dialogs.length > 0) {
-            state.currentDialogId = state.dialogs[0].id;
-          } else {
-            // Создаем новый диалог, если не осталось диалогов
-            const defaultDialog: Dialog = {
-              id: Date.now().toString(),
-              title: 'Новый диалог',
-              messages: [], // Пустой массив - приветствие показывается через экран приветствия
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-            state.dialogs.push(defaultDialog);
-            state.currentDialogId = defaultDialog.id;
-          }
+        const deletedCurrent = state.currentDialogId === action.payload;
+
+        if (state.dialogs.length === 0) {
+          const newDefaultDialog = createEmptyDialog('default');
+          state.dialogs.push(newDefaultDialog);
+          state.currentDialogId = newDefaultDialog.id;
+          state.inputValue = '';
+          return;
+        }
+
+        if (deletedCurrent) {
+          state.currentDialogId = state.dialogs[0].id;
+          state.inputValue = '';
         }
       }
     },

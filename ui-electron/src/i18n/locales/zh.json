@@ -28,6 +28,9 @@
     "errorSorry": "抱歉，无法获取回复。",
     "youSaid": "您说",
     "answer": "回答",
+    "openChat": "打开聊天",
+    "prevScreen": "上一屏",
+    "nextScreen": "下一屏",
     "cancel": "取消"
   },
   "menu": {
