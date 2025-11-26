@@ -21,6 +21,8 @@ export const DEFAULTS = {
   SCREEN_COUNT: 3, // Количество основных экранов
 } as const;
 
+export const DEFAULT_WELCOME_TITLE = 'Oblaka Voice Assistant';
+
 // Размеры UI элементов
 export const UI_SIZES = {
   STATUS_BAR_HEIGHT: 24,
@@ -55,3 +57,24 @@ export const ASSETS_PATHS = {
 export const STORAGE_KEYS = {
   API_KEYS: 'assistant_api_keys',
 } as const;
+
+export const DEFAULT_IDLE_TIMEOUT_SECONDS = 0;
+export const DEFAULT_IDLE_MODE: 'api' | 'custom' = 'api';
+export const DEFAULT_IDLE_PEXELS_QUERY = 'technology landscape';
+
+const idlePlaceholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#grad)"/>
+  <text x="50%" y="50%" fill="#cbd5f5" font-size="64" font-family="Inter,Helvetica,Arial,sans-serif" text-anchor="middle">
+    Idle Mode
+  </text>
+</svg>`;
+
+export const DEFAULT_IDLE_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(
+  idlePlaceholderSvg
+)}`;

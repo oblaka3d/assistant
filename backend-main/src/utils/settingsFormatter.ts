@@ -11,6 +11,11 @@ export const formatSettingsResponse = (settings: ISettings) => ({
     llmProviderName: settings.llmProviderName,
     llmModel: settings.llmModel,
     ttsProviderName: settings.ttsProviderName,
+    welcomeTitle: settings.welcomeTitle,
+    idleTimeoutSeconds: settings.idleTimeoutSeconds,
+    idleMode: settings.idleMode,
+    idleCustomImagePath: settings.idleCustomImagePath,
+    idleRemoteEndpoint: settings.idleRemoteEndpoint,
     modelScene: {
       modelPath: settings.modelScene.modelPath,
       sceneName: settings.modelScene.sceneName,

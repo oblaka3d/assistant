@@ -12,6 +12,7 @@ import { useCSSVariables } from './hooks/useCSSVariables';
 import { useLanguage } from './hooks/useLanguage';
 import { useOAuthCallback } from './hooks/useOAuthCallback';
 import { useTheme } from './hooks/useTheme';
+import IdleScreen from './screens/IdleScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setLLMProviderName } from './store/slices/settingsSlice';
 import { navigateNext, navigatePrev, setTransitioning, setScreen } from './store/slices/uiSlice';
@@ -33,8 +34,15 @@ function App() {
   const currentScreen = useAppSelector((state) => state.ui.currentScreen);
   const subScreen = useAppSelector((state) => state.ui.subScreen);
   const isTransitioning = useAppSelector((state) => state.ui.isTransitioning);
+  const idleTimeoutSeconds = useAppSelector((state) => state.settings.idleTimeoutSeconds);
+  const idleMode = useAppSelector((state) => state.settings.idleMode);
+  const idleCustomImagePath = useAppSelector((state) => state.settings.idleCustomImagePath);
+  const idleRemoteEndpoint = useAppSelector((state) => state.settings.idleRemoteEndpoint);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
+  const [isIdle, setIsIdle] = useState(false);
+  const [idleRefreshKey, setIdleRefreshKey] = useState(0);
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Используем хуки для темы и CSS переменных
   const { effectiveTheme } = useTheme();
@@ -60,6 +68,31 @@ function App() {
     }, 0);
   }, []);
 
+  const stopIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleIdleTimer = useCallback(() => {
+    stopIdleTimer();
+
+    if (idleTimeoutSeconds <= 0) {
+      return;
+    }
+
+    idleTimerRef.current = setTimeout(() => {
+      setIsIdle(true);
+      setIdleRefreshKey((prev) => prev + 1);
+    }, idleTimeoutSeconds * 1000);
+  }, [idleTimeoutSeconds, stopIdleTimer]);
+
+  const resetIdleTimer = useCallback(() => {
+    setIsIdle(false);
+    scheduleIdleTimer();
+  }, [scheduleIdleTimer]);
+
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
     const loadLLMProviderInfo = async () => {
@@ -78,6 +111,26 @@ function App() {
 
     loadLLMProviderInfo();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (showWelcome || idleTimeoutSeconds <= 0) {
+      stopIdleTimer();
+      return;
+    }
+
+    const handleActivity = () => {
+      resetIdleTimer();
+    };
+
+    const events = ['mousemove', 'mousedown', 'touchstart', 'keydown', 'scroll', 'wheel'];
+    events.forEach((event) => window.addEventListener(event, handleActivity));
+    scheduleIdleTimer();
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, handleActivity));
+      stopIdleTimer();
+    };
+  }, [resetIdleTimer, scheduleIdleTimer, stopIdleTimer, showWelcome, idleTimeoutSeconds]);
 
   // Сброс isTransitioning после завершения анимации
   useEffect(() => {
@@ -230,6 +283,16 @@ function App() {
             <NavigateNextIcon />
           </IconButton>
         </div>
+        {isIdle && (
+          <IdleScreen
+            key={idleRefreshKey}
+            mode={idleMode}
+            customImagePath={idleCustomImagePath}
+            remoteEndpoint={idleRemoteEndpoint}
+            refreshKey={idleRefreshKey}
+            onResume={resetIdleTimer}
+          />
+        )}
       </div>
     </ThemeProvider>
   );

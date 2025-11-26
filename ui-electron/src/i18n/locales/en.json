@@ -37,8 +37,7 @@
     "title": "Menu",
     "settings": "Settings",
     "apiKeys": "API Keys",
-    "history": "Dialogue History",
-    "chat": "Chat",
+    "history": "History",
     "logs": "Application Logs",
     "about": "About"
   },
@@ -80,6 +79,26 @@
     "accentColor": "Accent Color",
     "accentColorLight": "Accent Color (Light Theme)",
     "accentColorDark": "Accent Color (Dark Theme)",
+    "welcomeTitleSection": "Welcome title",
+    "welcomeTitle": "Welcome title text",
+    "welcomeTitleDescription": "Custom text displayed on the welcome screen before any messages arrive",
+    "idleScreenSection": "Idle screen",
+    "idleTimeout": "Idle timeout",
+    "idleTimeoutDescription": "Show the idle screen after the selected minutes of inactivity (0 disables it, increments of 5 min)",
+    "idleTimeoutDisabled": "Off",
+    "idleTimeoutMinutes": "{{minutes}} min",
+    "previewIdle": "Preview idle screen",
+    "idleMode": "Image source",
+    "idleModeApi": "API (random image)",
+    "idleModeCustom": "Custom image",
+    "idleModeApiHelper": "From the internet (Pexels)",
+    "idleModeCustomHelper": "Enter a path or URL",
+    "idleCustomImagePath": "Custom image path",
+    "idleCustomImagePathDescription": "Enter an absolute path or URL to an image",
+    "idleCustomImageHelper": "Supports absolute paths or file:// URLs",
+    "idleRemoteEndpoint": "Image topic",
+    "idleRemoteEndpointDescription": "Keywords for the Pexels search. Leave empty to use the default topic.",
+    "idleTopicPlaceholder": "e.g. aurora borealis",
     "resetSettings": "Reset Settings",
     "resetSettingsDescription": "Reset all settings to default values and show welcome screen on next launch",
     "resetSettingsConfirmTitle": "Reset Settings?",
@@ -104,17 +123,6 @@
     "noApiKeyRequired": "This provider does not require an API key",
     "description": "Select a provider for each category and enter the corresponding API keys. You can select only one provider for each task.",
     "securityNote": "⚠️ Keys are encrypted and stored on the server. Only your account has access to them."
-  },
-  "history": {
-    "title": "Dialogue History",
-    "empty": "History is empty",
-    "placeholder": "History will be available here in future versions",
-    "user": "User",
-    "assistant": "Assistant",
-    "clearHistory": "Clear History",
-    "confirmClear": "Are you sure you want to clear the dialogue history?",
-    "noMessages": "No messages in history",
-    "yesterday": "Yesterday"
   },
   "logs": {
     "title": "Application Logs",
@@ -166,6 +174,13 @@
     "russian": "Русский",
     "english": "English",
     "chinese": "中文"
+  },
+  "idle": {
+    "title": "Taking a break",
+    "subtitle": "Move the mouse or tap to continue",
+    "resume": "Resume",
+    "retry": "Retry",
+    "errorLoadingImage": "Image loading failed, try again"
   },
   "welcome": {
     "getStarted": "Get Started"

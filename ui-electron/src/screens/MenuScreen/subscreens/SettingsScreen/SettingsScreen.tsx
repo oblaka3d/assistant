@@ -1,4 +1,5 @@
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import ImageIcon from '@mui/icons-material/Image';
 import LanguageIcon from '@mui/icons-material/Language';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -6,6 +7,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SpeedIcon from '@mui/icons-material/Speed';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import {
@@ -18,21 +20,21 @@ import {
   DialogTitle,
   FormControlLabel,
   Switch,
+  TextField,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ColorPicker } from '../../../../components/ColorPicker';
+import { ModelSelector } from '../../../../components/ModelSelector';
 import ScreenHeader from '../../../../components/ScreenHeader';
 import ScrollableContent from '../../../../components/ScrollableContent';
-import {
-  ColorPicker,
-  ModelSelector,
-  SelectSetting,
-  SettingSection,
-  SliderSetting,
-} from '../../../../components/settings';
-import { SETTINGS_RANGES, ASSETS_PATHS } from '../../../../constants/app';
+import { SelectSetting } from '../../../../components/SelectSetting';
+import { SettingSection } from '../../../../components/SettingSection';
+import { SliderSetting } from '../../../../components/SliderSetting';
+import { DEFAULT_WELCOME_TITLE, SETTINGS_RANGES, ASSETS_PATHS } from '../../../../constants/app';
+import IdleScreen from '../../../../screens/IdleScreen';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setVolume,
@@ -46,6 +48,11 @@ import {
   setLightIntensity,
   setCameraDistance,
   setAnimationSpeed,
+  setWelcomeTitle,
+  setIdleTimeoutSeconds,
+  setIdleMode,
+  setIdleCustomImagePath,
+  setIdleRemoteEndpoint,
   resetSettings,
 } from '../../../../store/slices/settingsSlice';
 import { saveSettings } from '../../../../store/thunks';
@@ -58,6 +65,8 @@ interface SettingsScreenProps {
   onBack: () => void;
 }
 
+const IDLE_TIMEOUT_MINUTES = [0, 5, 10, 15, 20, 25, 30];
+
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -67,17 +76,41 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const accentColorLight = useAppSelector((state) => state.settings.accentColorLight);
   const accentColorDark = useAppSelector((state) => state.settings.accentColorDark);
   const modelScene = useAppSelector((state) => state.settings.modelScene);
+  const welcomeTitle = useAppSelector((state) => state.settings.welcomeTitle);
+  const idleTimeoutSeconds = useAppSelector((state) => state.settings.idleTimeoutSeconds);
+  const idleMode = useAppSelector((state) => state.settings.idleMode);
+  const idleCustomImagePath = useAppSelector((state) => state.settings.idleCustomImagePath);
+  const idleRemoteEndpoint = useAppSelector((state) => state.settings.idleRemoteEndpoint);
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
   const [availableScenes, setAvailableScenes] = useState<string[]>([]);
   const [loadingScenes, setLoadingScenes] = useState<boolean>(true);
   const [resetDialogOpen, setResetDialogOpen] = useState<boolean>(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
 
   // Ref для debounce таймера
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Флаг для отслеживания первой загрузки настроек
   const isInitialLoadRef = useRef<boolean>(true);
+
+  const idleTimeoutOptions = useMemo(
+    () =>
+      IDLE_TIMEOUT_MINUTES.map((minutes) => ({
+        value: (minutes * 60).toString(),
+        label:
+          minutes === 0
+            ? t('settings.idleTimeoutDisabled')
+            : t('settings.idleTimeoutMinutes', { minutes }),
+      })),
+    [t]
+  );
+
+  const handlePreviewIdle = () => {
+    setPreviewRefreshKey((prev) => prev + 1);
+    setShowPreview(true);
+  };
 
   // Сохранение настроек на сервер с debounce (1 секунда)
   useEffect(() => {
@@ -101,6 +134,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           theme,
           accentColorLight,
           accentColorDark,
+          welcomeTitle,
+          idleTimeoutSeconds,
+          idleMode,
+          idleCustomImagePath,
+          idleRemoteEndpoint,
           modelScene,
         })
       ).catch((error) => {
@@ -120,6 +158,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
     theme,
     accentColorLight,
     accentColorDark,
+    welcomeTitle,
+    idleTimeoutSeconds,
+    idleMode,
+    idleCustomImagePath,
+    idleRemoteEndpoint,
     modelScene,
     isAuthenticated,
     dispatch,
@@ -267,6 +310,82 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 icon: <SettingsBrightnessIcon fontSize="small" />,
               },
             ]}
+          />
+        </SettingSection>
+
+        {/* Экран ожидания */}
+        <SettingSection icon={<HourglassEmptyIcon />} title={t('settings.idleScreenSection')}>
+          <SelectSetting
+            id="idle-timeout-select"
+            label={t('settings.idleTimeout')}
+            value={idleTimeoutSeconds.toString()}
+            onChange={(value) => dispatch(setIdleTimeoutSeconds(Number(value)))}
+            options={idleTimeoutOptions}
+          />
+          <Typography variant="caption" sx={{ px: 2, pb: 2 }}>
+            {t('settings.idleTimeoutDescription')}
+          </Typography>
+          <SelectSetting
+            id="idle-mode-select"
+            label={t('settings.idleMode')}
+            value={idleMode}
+            onChange={(value) => dispatch(setIdleMode(value as 'api' | 'custom'))}
+            options={[
+              { value: 'api', label: t('settings.idleModeApi') },
+              { value: 'custom', label: t('settings.idleModeCustom') },
+            ]}
+          />
+          <Typography variant="caption" sx={{ px: 2, color: 'text.secondary' }}>
+            {idleMode === 'api'
+              ? t('settings.idleModeApiHelper')
+              : t('settings.idleModeCustomHelper')}
+          </Typography>
+          <Box sx={{ px: 2, pt: 2 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label={t('settings.idleCustomImagePath')}
+              placeholder={t('settings.idleCustomImagePathDescription')}
+              value={idleCustomImagePath}
+              disabled={idleMode !== 'custom'}
+              onChange={(event) => dispatch(setIdleCustomImagePath(event.target.value))}
+              helperText={t('settings.idleCustomImageHelper')}
+            />
+          </Box>
+          <Box sx={{ px: 2, pt: 2 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label={t('settings.idleRemoteEndpoint')}
+              placeholder={t('settings.idleTopicPlaceholder')}
+              value={idleRemoteEndpoint}
+              disabled={idleMode !== 'api'}
+              onChange={(event) => dispatch(setIdleRemoteEndpoint(event.target.value))}
+              helperText={t('settings.idleRemoteEndpointDescription')}
+            />
+          </Box>
+          <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+            <Button variant="outlined" onClick={handlePreviewIdle} disabled={showPreview} fullWidth>
+              {t('settings.previewIdle')}
+            </Button>
+          </Box>
+        </SettingSection>
+
+        {/* Заголовок приветственного экрана */}
+        <SettingSection icon={<TextFieldsIcon />} title={t('settings.welcomeTitleSection')}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            size="small"
+            label={t('settings.welcomeTitle')}
+            placeholder={DEFAULT_WELCOME_TITLE}
+            value={welcomeTitle}
+            onChange={(event) => dispatch(setWelcomeTitle(event.target.value))}
+            helperText={t('settings.welcomeTitleDescription')}
+            multiline
+            minRows={2}
           />
         </SettingSection>
 
@@ -434,6 +553,18 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </Box>
         </SettingSection>
       </ScrollableContent>
+      {showPreview && (
+        <IdleScreen
+          key={previewRefreshKey}
+          mode={idleMode}
+          customImagePath={idleCustomImagePath}
+          remoteEndpoint={idleRemoteEndpoint}
+          refreshKey={previewRefreshKey}
+          onResume={() => {
+            setShowPreview(false);
+          }}
+        />
+      )}
 
       {/* Диалог подтверждения сброса */}
       <Dialog open={resetDialogOpen} onClose={handleCancelReset}>

@@ -12,6 +12,11 @@ export interface SettingsUpdateData {
   llmProviderName?: string | null;
   llmModel?: string | null;
   ttsProviderName?: string | null;
+  welcomeTitle?: string;
+  idleTimeoutSeconds?: number;
+  idleMode?: 'api' | 'custom';
+  idleCustomImagePath?: string;
+  idleRemoteEndpoint?: string;
   modelScene?: Partial<IModelSceneSettings>;
 }
 

@@ -43,6 +43,14 @@ const CustomMessageList: React.FC<CustomMessageListProps> = ({
     };
   }, [isDarkTheme]);
 
+  const userBubbleStyle = useMemo(
+    () =>
+      ({
+        color: isDarkTheme ? '#ffffff' : '#1f1f1f',
+      }) as React.CSSProperties,
+    [isDarkTheme]
+  );
+
   // Прокрутка к последнему сообщению
   const lastMessageId = messages[messages.length - 1]?.id;
 
@@ -85,7 +93,7 @@ const CustomMessageList: React.FC<CustomMessageListProps> = ({
                 className={`${styles.messageBubble} ${
                   message.position === 'right' ? styles.bubbleRight : styles.bubbleLeft
                 }`}
-                style={message.position === 'left' ? assistantBubbleStyle : undefined}
+                style={message.position === 'left' ? assistantBubbleStyle : userBubbleStyle}
               >
                 <MessageRenderer message={message} />
               </Box>

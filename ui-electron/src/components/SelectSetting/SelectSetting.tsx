@@ -26,12 +26,14 @@ export const SelectSetting: React.FC<SelectSettingProps> = ({
     onChange(event.target.value);
   };
 
+  const labelId = id ? `${id}-label` : undefined;
+
   return (
     <Box sx={{ px: 2, pb: 2 }}>
       <FormControl fullWidth size="small">
-        <InputLabel id={`${id}-label`}>{label}</InputLabel>
+        <InputLabel id={labelId}>{label}</InputLabel>
         <Select
-          labelId={`${id}-label`}
+          labelId={labelId}
           id={id}
           value={value}
           label={label}

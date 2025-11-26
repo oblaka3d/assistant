@@ -1,0 +1,56 @@
+.keyboardToggle {
+  margin-left: 0.25rem;
+}
+
+.keyboardControls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.keyboardLanguageButton {
+  text-transform: none;
+  min-width: 64px;
+  padding: 0.2rem 0.6rem;
+  border-color: var(--divider);
+  color: var(--text-primary);
+}
+
+.keyboardWrapper {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--divider);
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.keyboardTheme {
+  width: 100%;
+}
+
+.keyboardWrapper :global(.hg-theme-default) {
+  background-color: var(--surface);
+  border-radius: 12px;
+  box-shadow: none;
+  padding: 0.5rem;
+}
+
+.keyboardWrapper :global(.hg-button) {
+  background-color: transparent;
+  border: 1px solid var(--divider);
+  color: var(--text-primary);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.keyboardWrapper :global(.hg-button:hover) {
+  background-color: var(--surface-hover);
+}
+
+.keyboardWrapper :global(.hg-button:active) {
+  background-color: var(--primary-hover-light);
+  color: var(--primary-contrast-text);
+}

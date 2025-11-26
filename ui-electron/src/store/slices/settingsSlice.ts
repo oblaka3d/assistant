@@ -1,5 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import {
+  DEFAULT_IDLE_MODE,
+  DEFAULT_IDLE_TIMEOUT_SECONDS,
+  DEFAULT_IDLE_PEXELS_QUERY,
+} from '../../constants/app';
+
 interface ModelSceneSettings {
   modelPath: string;
   sceneName: string | null; // Название выбранной сцены (null = не выбрана)
@@ -19,6 +25,11 @@ interface SettingsState {
   llmProviderName: string | null; // Название выбранного LLM провайдера
   llmModel: string | null; // Название выбранной LLM модели
   ttsProviderName: string | null; // Название выбранного TTS провайдера
+  welcomeTitle: string;
+  idleTimeoutSeconds: number;
+  idleMode: 'api' | 'custom';
+  idleCustomImagePath: string;
+  idleRemoteEndpoint: string;
   modelScene: ModelSceneSettings;
 }
 
@@ -32,6 +43,11 @@ const initialState: SettingsState = {
   llmProviderName: null, // Будет загружено при инициализации
   llmModel: null, // Будет загружено при инициализации
   ttsProviderName: null, // Будет загружено при инициализации
+  welcomeTitle: '',
+  idleTimeoutSeconds: DEFAULT_IDLE_TIMEOUT_SECONDS,
+  idleMode: DEFAULT_IDLE_MODE,
+  idleCustomImagePath: '',
+  idleRemoteEndpoint: DEFAULT_IDLE_PEXELS_QUERY,
   modelScene: {
     modelPath: './assets/models/character.glb',
     sceneName: null, // Сцена не выбрана по умолчанию
@@ -95,6 +111,21 @@ const settingsSlice = createSlice({
     setTTSProviderName: (state, action: PayloadAction<string | null>) => {
       state.ttsProviderName = action.payload;
     },
+    setWelcomeTitle: (state, action: PayloadAction<string>) => {
+      state.welcomeTitle = action.payload;
+    },
+    setIdleTimeoutSeconds: (state, action: PayloadAction<number>) => {
+      state.idleTimeoutSeconds = action.payload;
+    },
+    setIdleMode: (state, action: PayloadAction<'api' | 'custom'>) => {
+      state.idleMode = action.payload;
+    },
+    setIdleCustomImagePath: (state, action: PayloadAction<string>) => {
+      state.idleCustomImagePath = action.payload;
+    },
+    setIdleRemoteEndpoint: (state, action: PayloadAction<string>) => {
+      state.idleRemoteEndpoint = action.payload;
+    },
     setAllSettings: (state, action: PayloadAction<Partial<SettingsState>>) => {
       return { ...state, ...action.payload };
     },
@@ -116,6 +147,11 @@ export const {
   setLLMProviderName,
   setLLMModel,
   setTTSProviderName,
+  setWelcomeTitle,
+  setIdleTimeoutSeconds,
+  setIdleMode,
+  setIdleCustomImagePath,
+  setIdleRemoteEndpoint,
   setModelPath,
   setSceneName,
   setEnableToonShader,

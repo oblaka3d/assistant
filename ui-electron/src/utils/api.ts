@@ -2,7 +2,7 @@
  * API клиент для взаимодействия с backend-main
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
 
 /**
  * Получить URL для OAuth авторизации
@@ -74,6 +74,11 @@ export interface SettingsData {
   llmProviderName: string | null;
   llmModel: string | null;
   ttsProviderName: string | null;
+  welcomeTitle: string;
+  idleTimeoutSeconds: number;
+  idleMode: 'api' | 'custom';
+  idleCustomImagePath: string;
+  idleRemoteEndpoint: string;
   modelScene: ModelSceneSettings;
 }
 
@@ -94,6 +99,11 @@ export interface UpdateSettingsRequest {
   llmProviderName?: string | null;
   llmModel?: string | null;
   ttsProviderName?: string | null;
+  welcomeTitle?: string;
+  idleTimeoutSeconds?: number;
+  idleMode?: 'api' | 'custom';
+  idleCustomImagePath?: string;
+  idleRemoteEndpoint?: string;
   modelScene?: Partial<ModelSceneSettings>;
 }
 

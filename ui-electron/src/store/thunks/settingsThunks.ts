@@ -1,6 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import {
+  DEFAULT_IDLE_MODE,
+  DEFAULT_IDLE_PEXELS_QUERY,
+  DEFAULT_IDLE_TIMEOUT_SECONDS,
+} from '../../constants/app';
+import {
   getSettings,
   updateSettings as apiUpdateSettings,
   UpdateSettingsRequest,
@@ -30,6 +35,11 @@ export const fetchSettings = createAsyncThunk<SettingsData, void, { rejectValue:
         llmProviderName: settingsData.llmProviderName || null,
         llmModel: settingsData.llmModel || null,
         ttsProviderName: settingsData.ttsProviderName || null,
+        welcomeTitle: settingsData.welcomeTitle || '',
+        idleTimeoutSeconds: settingsData.idleTimeoutSeconds ?? DEFAULT_IDLE_TIMEOUT_SECONDS,
+        idleMode: settingsData.idleMode || DEFAULT_IDLE_MODE,
+        idleCustomImagePath: settingsData.idleCustomImagePath || '',
+        idleRemoteEndpoint: settingsData.idleRemoteEndpoint || DEFAULT_IDLE_PEXELS_QUERY,
         modelScene: {
           modelPath: settingsData.modelScene.modelPath,
           sceneName: settingsData.modelScene.sceneName,
@@ -71,6 +81,11 @@ export const saveSettings = createAsyncThunk<
       llmProviderName: settingsData.llmProviderName || null,
       llmModel: settingsData.llmModel || null,
       ttsProviderName: settingsData.ttsProviderName || null,
+      welcomeTitle: settingsData.welcomeTitle || '',
+      idleTimeoutSeconds: settingsData.idleTimeoutSeconds ?? DEFAULT_IDLE_TIMEOUT_SECONDS,
+      idleMode: settingsData.idleMode || DEFAULT_IDLE_MODE,
+      idleCustomImagePath: settingsData.idleCustomImagePath || '',
+      idleRemoteEndpoint: settingsData.idleRemoteEndpoint || DEFAULT_IDLE_PEXELS_QUERY,
       modelScene: {
         modelPath: settingsData.modelScene.modelPath,
         sceneName: settingsData.modelScene.sceneName,

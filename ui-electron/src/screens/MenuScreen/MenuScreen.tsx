@@ -1,6 +1,5 @@
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DescriptionIcon from '@mui/icons-material/Description';
-import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -39,7 +38,6 @@ import styles from './MenuScreen.module.css';
 import AboutScreen from './subscreens/AboutScreen/AboutScreen';
 import APIKeysScreen from './subscreens/APIKeysScreen/APIKeysScreen';
 import AuthScreen from './subscreens/AuthScreen/AuthScreen';
-import HistoryScreen from './subscreens/HistoryScreen/HistoryScreen';
 import LogsScreen from './subscreens/LogsScreen/LogsScreen';
 import SettingsScreen from './subscreens/SettingsScreen/SettingsScreen';
 
@@ -47,7 +45,6 @@ import SettingsScreen from './subscreens/SettingsScreen/SettingsScreen';
 const SUBSCREEN_COMPONENTS: Record<string, React.ComponentType<{ onBack: () => void }>> = {
   settings: SettingsScreen,
   apiKeys: APIKeysScreen,
-  history: HistoryScreen,
   logs: LogsScreen,
   about: AboutScreen,
   auth: AuthScreen,
@@ -117,11 +114,6 @@ const MenuScreen: React.FC = () => {
       icon: <VpnKeyIcon />,
       text: t('menu.apiKeys'),
       onClick: () => dispatch(openSubScreen('apiKeys')),
-    },
-    {
-      icon: <HistoryIcon />,
-      text: t('menu.chat'),
-      onClick: () => dispatch(openSubScreen('history')),
     },
     {
       icon: <DescriptionIcon />,

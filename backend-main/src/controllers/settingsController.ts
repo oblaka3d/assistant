@@ -82,6 +82,21 @@ export const updateSettingsController: RequestHandler = async (
     if (req.body.ttsProviderName !== undefined) {
       updateData.ttsProviderName = req.body.ttsProviderName;
     }
+    if (req.body.welcomeTitle !== undefined) {
+      updateData.welcomeTitle = req.body.welcomeTitle;
+    }
+    if (req.body.idleTimeoutSeconds !== undefined) {
+      updateData.idleTimeoutSeconds = req.body.idleTimeoutSeconds;
+    }
+    if (req.body.idleMode !== undefined) {
+      updateData.idleMode = req.body.idleMode;
+    }
+    if (req.body.idleCustomImagePath !== undefined) {
+      updateData.idleCustomImagePath = req.body.idleCustomImagePath;
+    }
+    if (req.body.idleRemoteEndpoint !== undefined) {
+      updateData.idleRemoteEndpoint = req.body.idleRemoteEndpoint;
+    }
     if (req.body.modelScene !== undefined) {
       updateData.modelScene = req.body.modelScene;
     }
@@ -150,6 +165,7 @@ export const validateUpdateSettings = [
       }
       throw new Error('ttsProviderName must be a string or null');
     }),
+  body('welcomeTitle').optional().isString().withMessage('welcomeTitle must be a string'),
   body('modelScene.modelPath').optional().isString().withMessage('modelPath must be a string'),
   body('modelScene.sceneName')
     .optional()
@@ -175,4 +191,17 @@ export const validateUpdateSettings = [
     .optional()
     .isFloat({ min: 0 })
     .withMessage('animationSpeed must be a positive number'),
+  body('idleTimeoutSeconds')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('idleTimeoutSeconds must be a non-negative number'),
+  body('idleMode').optional().isIn(['api', 'custom']).withMessage('idleMode must be api or custom'),
+  body('idleCustomImagePath')
+    .optional()
+    .isString()
+    .withMessage('idleCustomImagePath must be a string'),
+  body('idleRemoteEndpoint')
+    .optional()
+    .isString()
+    .withMessage('idleRemoteEndpoint must be a string'),
 ];

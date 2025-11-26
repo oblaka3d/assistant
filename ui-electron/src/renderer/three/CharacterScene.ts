@@ -611,12 +611,36 @@ export class CharacterScene {
       const b = colorObj.b;
       const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      if (luminance < 0.5) {
-        // Темная тема - темные цвета для сетки
-        this.gridHelper.setColors(0x444444, 0x222222);
-      } else {
-        // Светлая тема - светлые цвета для сетки
-        this.gridHelper.setColors(0xcccccc, 0xe0e0e0);
+      // В новых версиях three.js у GridHelper больше нет метода setColors.
+      // Меняем цвет материалов напрямую, учитывая что material может быть массивом.
+      const material = this.gridHelper.material as
+        | (THREE.Material & { color?: THREE.Color })
+        | (THREE.Material & { color?: THREE.Color })[]
+        | undefined;
+
+      const applyColor = (
+        mat: (THREE.Material & { color?: THREE.Color }) | undefined,
+        hex: number
+      ) => {
+        if (mat && mat.color && typeof mat.color.set === 'function') {
+          mat.color.set(hex);
+        }
+      };
+
+      if (Array.isArray(material)) {
+        if (luminance < 0.5) {
+          // Темная тема - темные цвета для линий
+          applyColor(material[0], 0x444444);
+          applyColor(material[1], 0x222222);
+        } else {
+          // Светлая тема - светлые цвета для линий
+          applyColor(material[0], 0xcccccc);
+          applyColor(material[1], 0xe0e0e0);
+        }
+      } else if (material) {
+        // Запасной вариант, если material не массив
+        const hex = luminance < 0.5 ? 0x444444 : 0xcccccc;
+        applyColor(material, hex);
       }
     }
   }

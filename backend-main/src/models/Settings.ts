@@ -20,6 +20,11 @@ export interface ISettings extends Document {
   llmProviderName: string | null;
   llmModel: string | null;
   ttsProviderName: string | null;
+  welcomeTitle: string;
+  idleTimeoutSeconds: number;
+  idleMode: 'api' | 'custom';
+  idleCustomImagePath: string;
+  idleRemoteEndpoint: string;
   modelScene: IModelSceneSettings;
   createdAt: Date;
   updatedAt: Date;
@@ -105,6 +110,28 @@ const SettingsSchema = new Schema<ISettings>(
     ttsProviderName: {
       type: String,
       default: null,
+    },
+    welcomeTitle: {
+      type: String,
+      default: '',
+    },
+    idleTimeoutSeconds: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    idleMode: {
+      type: String,
+      enum: ['api', 'custom'],
+      default: 'api',
+    },
+    idleCustomImagePath: {
+      type: String,
+      default: '',
+    },
+    idleRemoteEndpoint: {
+      type: String,
+      default: '',
     },
     modelScene: {
       type: ModelSceneSettingsSchema,

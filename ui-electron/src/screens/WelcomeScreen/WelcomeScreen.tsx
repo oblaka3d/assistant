@@ -1,7 +1,8 @@
 import { Avatar, Box, Button, Typography, Menu, MenuItem } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DEFAULT_WELCOME_TITLE } from '../../constants/app';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setLanguage } from '../../store/slices/settingsSlice';
 import type { MainScreen } from '../../store/slices/uiSlice';
@@ -87,6 +88,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onDismiss }) => {
     }
   }, [isAuthenticated, showAuthForm, onDismiss]);
 
+  const welcomeTitle = useAppSelector((state) => state.settings.welcomeTitle);
+
+  const welcomeScreenTitle = useMemo(() => {
+    return welcomeTitle?.trim() ? welcomeTitle : DEFAULT_WELCOME_TITLE;
+  }, [welcomeTitle]);
+
   const languages = [
     { code: 'ru', label: t('app.russian') },
     { code: 'en', label: t('app.english') },
@@ -112,7 +119,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onDismiss }) => {
     <Box className={styles.container}>
       {/* Логотип */}
       <Typography variant="h5" className={styles.logo}>
-        Oblaka Voice Assistant
+        {welcomeScreenTitle}
       </Typography>
 
       {/* Время */}

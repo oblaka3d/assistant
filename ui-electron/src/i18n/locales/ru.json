@@ -37,8 +37,7 @@
     "title": "Меню",
     "settings": "Настройки",
     "apiKeys": "API ключи",
-    "history": "История диалогов",
-    "chat": "Чат",
+    "history": "История",
     "logs": "Логи приложения",
     "about": "О приложении"
   },
@@ -80,6 +79,26 @@
     "accentColor": "Акцентный цвет",
     "accentColorLight": "Акцентный цвет (светлая тема)",
     "accentColorDark": "Акцентный цвет (темная тема)",
+    "welcomeTitleSection": "Заголовок приветственного экрана",
+    "welcomeTitle": "Текст заголовка",
+    "welcomeTitleDescription": "Этот текст отображается вместо стандартного приветствия до появления сообщений",
+    "idleScreenSection": "Экран ожидания",
+    "idleTimeout": "Тайм-аут бездействия",
+    "idleTimeoutDescription": "Показывать экран ожидания после выбранного количества минут (0 — отключить, шаг 5 минут)",
+    "idleTimeoutDisabled": "Отключено",
+    "idleTimeoutMinutes": "{{minutes}} мин",
+    "previewIdle": "Предпросмотр экрана ожидания",
+    "idleMode": "Источник изображения",
+    "idleModeApi": "API (рандомная заставка)",
+    "idleModeCustom": "Собственное изображение",
+    "idleModeApiHelper": "Из интернета (Pexels)",
+    "idleModeCustomHelper": "Введите путь или ссылку",
+    "idleCustomImagePath": "Путь к картинке",
+    "idleCustomImagePathDescription": "Укажите абсолютный путь или ссылку на изображение",
+    "idleCustomImageHelper": "Поддерживаются абсолютные пути или file:// URL",
+    "idleRemoteEndpoint": "Тема изображения",
+    "idleRemoteEndpointDescription": "Ключевые слова для поиска на Pexels. Оставьте пустым, чтобы использовать тему по умолчанию.",
+    "idleTopicPlaceholder": "например: северное сияние",
     "resetSettings": "Сбросить настройки",
     "resetSettingsDescription": "Сбросить все настройки к значениям по умолчанию и показать приветственный экран при следующем запуске",
     "resetSettingsConfirmTitle": "Сбросить настройки?",
@@ -104,17 +123,6 @@
     "noApiKeyRequired": "Этот провайдер не требует API ключа",
     "description": "Выберите провайдера для каждой категории и введите соответствующие API ключи. Вы можете выбрать только одного провайдера для каждой задачи.",
     "securityNote": "⚠️ Ключи шифруются и хранятся на сервере. Доступ к ним есть только у вашей учетной записи."
-  },
-  "history": {
-    "title": "История диалогов",
-    "empty": "История пуста",
-    "placeholder": "История будет доступна здесь в будущих версиях",
-    "user": "Пользователь",
-    "assistant": "Ассистент",
-    "clearHistory": "Очистить историю",
-    "confirmClear": "Вы уверены, что хотите очистить историю диалогов?",
-    "noMessages": "Нет сообщений в истории",
-    "yesterday": "Вчера"
   },
   "logs": {
     "title": "Логи приложения",
@@ -166,6 +174,13 @@
     "russian": "Русский",
     "english": "English",
     "chinese": "中文"
+  },
+  "idle": {
+    "title": "Небольшой перерыв",
+    "subtitle": "Нажмите или двигайтесь, чтобы вернуться",
+    "resume": "Продолжить",
+    "retry": "Повторить",
+    "errorLoadingImage": "Не удалось загрузить изображение"
   },
   "welcome": {
     "getStarted": "Начать"

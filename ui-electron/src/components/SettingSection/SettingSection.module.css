@@ -21,22 +21,3 @@
 .sectionTitle {
   color: var(--text-primary);
 }
-
-.sliderContainer {
-  padding: 0 1rem;
-}
-
-.slider {
-  color: var(--primary-color);
-}
-
-.sliderLabel {
-  margin-top: 0.5rem;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.slider :global(.MuiSlider-thumb:hover),
-.slider :global(.MuiSlider-thumb.Mui-focusVisible) {
-  box-shadow: 0 0 0 8px var(--glow-color);
-}

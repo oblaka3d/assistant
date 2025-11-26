@@ -1,36 +1,17 @@
-import KeyboardIcon from '@mui/icons-material/Keyboard';
-import KeyboardHideIcon from '@mui/icons-material/KeyboardHide';
-import LanguageIcon from '@mui/icons-material/Language';
 import MenuIcon from '@mui/icons-material/Menu';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
-import {
-  Box,
-  IconButton,
-  TextField,
-  Typography,
-  Paper,
-  CircularProgress,
-  Button,
-  Menu,
-  MenuItem,
-} from '@mui/material';
-import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react';
+import { Box, IconButton, TextField, Typography, Paper, CircularProgress } from '@mui/material';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import Keyboard, { KeyboardReactInterface } from 'react-simple-keyboard';
-import 'react-simple-keyboard/build/css/index.css';
 
+import ChatKeyboard from '../../components/ChatKeyboard/ChatKeyboard';
 import CustomMessageList from '../../components/CustomMessageList';
 import ScreenHeader from '../../components/ScreenHeader';
 import { API_PROVIDERS } from '../../constants/apiProviders';
-import type { AppDispatch } from '../../store';
+import { DEFAULT_WELCOME_TITLE } from '../../constants/app';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  addMessage,
-  clearInput,
-  setInputValue,
-  toggleDialogPanel,
-} from '../../store/slices/chatSlice';
+import { clearInput, setInputValue, toggleDialogPanel } from '../../store/slices/chatSlice';
 import {
   loadLLMProviderInfo,
   sendMessage,
@@ -44,160 +25,18 @@ import { createLogger } from '../../utils/logger';
 import styles from './ChatScreen.module.css';
 import DialogPanel from './components/DialogPanel/DialogPanel';
 
-// Временная функция для тестирования - добавляет тестовые сообщения с markdown и изображениями
-const addTestMessage = (dispatch: AppDispatch, type: 'markdown' | 'image') => {
-  const testMessage =
-    type === 'markdown'
-      ? {
-          id: Date.now().toString(),
-          position: 'left' as const,
-          type: 'markdown' as const,
-          text: `# Пример отформатированного кода
-
-Вот пример кода на **JavaScript**:
-
-\`\`\`javascript
-function greet(name) {
-  console.log(\`Привет, \${name}!\`);
-  return \`Hello, \${name}!\`;
-}
-
-greet('Мир');
-\`\`\`
-
-И еще один пример на **Python**:
-
-\`\`\`python
-def fibonacci(n):
-    if n <= 1:
-        return n
-    return fibonacci(n-1) + fibonacci(n-2)
-
-print(fibonacci(10))
-\`\`\`
-
-## Списки и таблицы
-
-### Маркированный список:
-- Первый элемент
-- Второй элемент
-- ~~Зачеркнутый элемент~~
-
-### Нумерованный список:
-1. Первый шаг
-2. Второй шаг
-3. Третий шаг
-
-### Таблица:
-
-| Язык | Приветствие |
-|------|-------------|
-| Русский | Привет |
-| English | Hello |
-| Español | Hola |
-
-> Это цитата для демонстрации возможностей markdown.
-
-[Ссылка на Google](https://google.com)`,
-          date: new Date(),
-        }
-      : {
-          id: Date.now().toString(),
-          position: 'left' as const,
-          type: 'image' as const,
-          images: [
-            {
-              url: 'https://picsum.photos/400/300?random=' + Date.now(),
-              alt: 'Тестовое изображение',
-            },
-          ],
-          text: 'Это сообщение содержит изображение',
-          date: new Date(),
-        };
-
-  dispatch(addMessage(testMessage));
-};
-
 const log = createLogger('ChatScreen');
 
-const KEYBOARD_LAYOUTS = {
-  en: {
-    default: [
-      '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
-      '{tab} q w e r t y u i o p [ ] \\',
-      "{lock} a s d f g h j k l ; ' {enter}",
-      '{shift} z x c v b n m , . / {shift}',
-      '{space}',
-    ],
-    shift: [
-      '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
-      '{tab} Q W E R T Y U I O P { } |',
-      '{lock} A S D F G H J K L : " {enter}',
-      '{shift} Z X C V B N M < > ? {shift}',
-      '{space}',
-    ],
-  },
-  ru: {
-    default: [
-      'ё 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
-      '{tab} й ц у к е н г ш щ з х ъ \\',
-      '{lock} ф ы в а п р о л д ж э {enter}',
-      '{shift} я ч с м и т ь б ю . {shift}',
-      '{space}',
-    ],
-    shift: [
-      'Ё ! " № ; % : ? * ( ) _ + {bksp}',
-      '{tab} Й Ц У К Е Н Г Ш Щ З Х Ъ /',
-      '{lock} Ф Ы В А П Р О Л Д Ж Э {enter}',
-      '{shift} Я Ч С М И Т Ь Б Ю , {shift}',
-      '{space}',
-    ],
-  },
-  zh: {
-    default: [
-      '· 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
-      '{tab} q w e r t y u i o p [ ] \\',
-      "{lock} a s d f g h j k l ; ' {enter}",
-      '{shift} z x c v b n m ， 。 / {shift}',
-      '{space}',
-    ],
-    shift: [
-      '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
-      '{tab} Q W E R T Y U I O P { } |',
-      '{lock} A S D F G H J K L : " {enter}',
-      '{shift} Z X C V B N M ， 。 ? {shift}',
-      '{space}',
-    ],
-  },
-};
-
-type KeyboardLanguage = keyof typeof KEYBOARD_LAYOUTS;
-
-const KEYBOARD_LANGUAGE_OPTIONS: readonly { id: KeyboardLanguage; label: string }[] = [
-  { id: 'en', label: 'EN' },
-  { id: 'ru', label: 'РУ' },
-  { id: 'zh', label: '拼' },
-];
-
 const ChatScreen: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { dialogs, currentDialogId, inputValue } = useAppSelector((state) => state.chat);
-  const { llmProviderName, llmModel, theme, accentColorLight, accentColorDark } = useAppSelector(
-    (state) => state.settings
-  );
+  const { llmProviderName, llmModel, theme, accentColorLight, accentColorDark, welcomeTitle } =
+    useAppSelector((state) => state.settings);
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
   const isRecording = useAppSelector((state) => state.voice.isRecording);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedMessagesRef = useRef<string>('');
-  const keyboardRef = useRef<KeyboardReactInterface | null>(null);
-  const keyboardWrapperRef = useRef<HTMLDivElement>(null);
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const initialLanguage =
-    i18n.language === 'ru' ? 'ru' : i18n.language === 'zh' ? 'zh' : ('en' as KeyboardLanguage);
-  const [keyboardLanguage, setKeyboardLanguage] = useState<KeyboardLanguage>(initialLanguage);
-  const [languageMenuAnchor, setLanguageMenuAnchor] = useState<null | HTMLElement>(null);
-  const [keyboardLayoutName, setKeyboardLayoutName] = useState<'default' | 'shift'>('default');
 
   // Определяем эффективную тему и акцентный цвет
   const effectiveTheme = useMemo(() => {
@@ -224,6 +63,10 @@ const ChatScreen: React.FC = () => {
   const isWelcomeState = useMemo(() => {
     return messages.length === 0;
   }, [messages]);
+
+  const welcomeScreenTitle = useMemo(() => {
+    return welcomeTitle?.trim() ? welcomeTitle : DEFAULT_WELCOME_TITLE;
+  }, [welcomeTitle]);
 
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
@@ -354,107 +197,6 @@ const ChatScreen: React.FC = () => {
     [handleSend]
   );
 
-  const handleKeyboardChange = useCallback(
-    (value: string) => {
-      dispatch(setInputValue(value));
-    },
-    [dispatch]
-  );
-
-  const handleKeyboardKeyPress = useCallback(
-    (button: string) => {
-      if (button === '{shift}' || button === '{lock}') {
-        setKeyboardLayoutName((prev) => {
-          const next = prev === 'default' ? 'shift' : 'default';
-          keyboardRef.current?.setOptions({ layoutName: next });
-          return next;
-        });
-      }
-
-      if (button === '{enter}') {
-        handleSend();
-      }
-    },
-    [handleSend]
-  );
-
-  useEffect(() => {
-    if (keyboardRef.current && keyboardRef.current.getInput() !== inputValue) {
-      keyboardRef.current.setInput(inputValue);
-    }
-  }, [inputValue]);
-
-  useEffect(() => {
-    keyboardRef.current?.setOptions({
-      layout: KEYBOARD_LAYOUTS[keyboardLanguage],
-      layoutName: keyboardLayoutName,
-    });
-  }, [keyboardLanguage, keyboardLayoutName]);
-
-  // Функция для вычисления и установки offset клавиатуры
-  const updateKeyboardOffset = useCallback(() => {
-    if (isKeyboardVisible && keyboardWrapperRef.current) {
-      // Вычисляем реальную высоту клавиатуры + отступы
-      const keyboardHeight = keyboardWrapperRef.current.offsetHeight;
-      const offsetValue = `${keyboardHeight + 16}px`; // +16px для дополнительного отступа
-      document.documentElement.style.setProperty('--keyboard-offset', offsetValue);
-    } else {
-      document.documentElement.style.setProperty('--keyboard-offset', '0px');
-    }
-  }, [isKeyboardVisible]);
-
-  useEffect(() => {
-    updateKeyboardOffset();
-
-    // Добавляем обработчик изменения размера для пересчёта высоты
-    let resizeObserver: ResizeObserver | null = null;
-
-    if (isKeyboardVisible && keyboardWrapperRef.current) {
-      resizeObserver = new ResizeObserver(() => {
-        updateKeyboardOffset();
-      });
-      resizeObserver.observe(keyboardWrapperRef.current);
-    }
-
-    return () => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-      document.documentElement.style.setProperty('--keyboard-offset', '0px');
-    };
-  }, [isKeyboardVisible, updateKeyboardOffset]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    requestAnimationFrame(() => {
-      const offset = getComputedStyle(root).getPropertyValue('--keyboard-offset');
-      root.style.setProperty('--keyboard-offset', offset || '0px');
-    });
-  }, [isKeyboardVisible]);
-
-  const toggleKeyboard = () => {
-    setKeyboardVisible((prev) => {
-      if (prev) {
-        setKeyboardLayoutName('default');
-        keyboardRef.current?.setOptions({ layoutName: 'default' });
-      }
-      return !prev;
-    });
-  };
-
-  const handleLanguageMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setLanguageMenuAnchor(event.currentTarget);
-  };
-
-  const handleLanguageMenuClose = () => {
-    setLanguageMenuAnchor(null);
-  };
-
-  const handleLanguageSelect = (lang: KeyboardLanguage) => {
-    setKeyboardLanguage(lang);
-    setLanguageMenuAnchor(null);
-  };
-
   // Формируем заголовок с названием LLM провайдера и модели
   const chatTitle = useMemo(() => {
     if (!llmProviderName) {
@@ -522,28 +264,9 @@ const ChatScreen: React.FC = () => {
       <ScreenHeader
         title={chatTitle}
         startAction={
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <IconButton onClick={handleTogglePanel} className={styles.menuButton} color="inherit">
-              <MenuIcon />
-            </IconButton>
-            {/* Временные кнопки для тестирования - убрать в продакшене */}
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => addTestMessage(dispatch, 'markdown')}
-              sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
-            >
-              MD
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => addTestMessage(dispatch, 'image')}
-              sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
-            >
-              IMG
-            </Button>
-          </Box>
+          <IconButton onClick={handleTogglePanel} className={styles.menuButton} color="inherit">
+            <MenuIcon />
+          </IconButton>
         }
       />
 
@@ -558,7 +281,7 @@ const ChatScreen: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="h4" className={styles.welcomeTitle} sx={{ mb: 1 }}>
-                {t('chat.welcome')}
+                {welcomeScreenTitle}
               </Typography>
               <Typography variant="body1" className={styles.welcomeSubtitle} sx={{ mb: 4 }}>
                 {t('chat.welcomeSubtitle')}
@@ -617,25 +340,11 @@ const ChatScreen: React.FC = () => {
               },
             }}
           />
-          <Box className={styles.keyboardControls}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<LanguageIcon fontSize="small" />}
-              className={styles.keyboardLanguageButton}
-              onClick={handleLanguageMenuOpen}
-              title={t('chat.keyboardLanguage')}
-            >
-              {keyboardLanguage.toUpperCase()}
-            </Button>
-            <IconButton
-              onClick={toggleKeyboard}
-              className={styles.keyboardToggle}
-              color={isKeyboardVisible ? 'primary' : 'default'}
-            >
-              {isKeyboardVisible ? <KeyboardHideIcon /> : <KeyboardIcon />}
-            </IconButton>
-          </Box>
+          <ChatKeyboard
+            value={inputValue}
+            onChange={(value) => dispatch(setInputValue(value))}
+            onEnter={handleSend}
+          />
           <IconButton
             color={isRecording ? 'error' : 'default'}
             onClick={handleRecord}
@@ -665,37 +374,7 @@ const ChatScreen: React.FC = () => {
             {isRecording ? <CircularProgress size={20} /> : <SendIcon />}
           </IconButton>
         </Box>
-        {isKeyboardVisible && (
-          <Box ref={keyboardWrapperRef} className={styles.keyboardWrapper}>
-            <Keyboard
-              keyboardRef={(instance) => {
-                keyboardRef.current = instance;
-              }}
-              layout={KEYBOARD_LAYOUTS[keyboardLanguage]}
-              layoutName={keyboardLayoutName}
-              onChange={handleKeyboardChange}
-              onKeyPress={handleKeyboardKeyPress}
-              theme={`hg-theme-default ${styles.keyboardTheme}`}
-              physicalKeyboardHighlight
-            />
-          </Box>
-        )}
       </Paper>
-      <Menu
-        anchorEl={languageMenuAnchor}
-        open={Boolean(languageMenuAnchor)}
-        onClose={handleLanguageMenuClose}
-      >
-        {KEYBOARD_LANGUAGE_OPTIONS.map((option) => (
-          <MenuItem
-            key={option.id}
-            selected={keyboardLanguage === option.id}
-            onClick={() => handleLanguageSelect(option.id)}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </Menu>
     </Box>
   );
 };
