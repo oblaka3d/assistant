@@ -3,6 +3,13 @@ import * as path from 'path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+const vendorChunkPatterns: Array<[string, RegExp]> = [
+  ['three', /[/\\]three[/\\]/],
+  ['mui', /[/\\]@mui[/\\]|[/\\]@emotion[/\\]/],
+  ['react-vendor', /react(-dom|-redux)?[/\\]/],
+  ['markdown', /react-markdown|remark|react-syntax-highlighter/],
+];
+
 export default defineConfig({
   plugins: [react()],
   root: 'ui-electron',
@@ -17,13 +24,18 @@ export default defineConfig({
         main: path.resolve(__dirname, 'ui-electron/index.html'),
       },
       output: {
-        manualChunks: {
-          // Выделяем THREE.js в отдельный чанк
-          three: ['three'],
-          // Выделяем Material-UI в отдельный чанк
-          mui: ['@mui/material', '@mui/icons-material'],
-          // Выделяем React в отдельный чанк
-          'react-vendor': ['react', 'react-dom', 'react-redux'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          for (const [chunkName, pattern] of vendorChunkPatterns) {
+            if (pattern.test(id)) {
+              return chunkName;
+            }
+          }
+
+          return 'vendor';
         },
       },
     },
