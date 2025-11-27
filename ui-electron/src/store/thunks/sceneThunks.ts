@@ -1,7 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { DEFAULTS, TIMEOUTS } from '../../constants/app';
-import { initCharacterScene } from '../../renderer/main';
 import type { CharacterScene } from '../../renderer/main';
 import {
   setIsLoading,
@@ -10,6 +9,15 @@ import {
   setStatus,
   VoiceStatusType,
 } from '../slices/voiceSlice';
+
+let rendererModulePromise: Promise<typeof import('../../renderer/main')> | null = null;
+
+const loadRendererModule = () => {
+  if (!rendererModulePromise) {
+    rendererModulePromise = import('../../renderer/main');
+  }
+  return rendererModulePromise;
+};
 
 interface InitSceneParams {
   canvas: HTMLCanvasElement;
@@ -37,6 +45,8 @@ export const initScene = createAsyncThunk(
 
     try {
       const modelPath = DEFAULTS.MODEL_PATH;
+
+      const { initCharacterScene } = await loadRendererModule();
 
       // Создаем THREE.js сцену
       const scene = await initCharacterScene({
