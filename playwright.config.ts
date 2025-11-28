@@ -14,7 +14,14 @@ export default defineConfig({
   expect: {
     /* Максимальное время ожидания для expect */
     timeout: 5000,
+    /* Настройки для скриншотов */
+    toHaveScreenshot: {
+      /* Используем кроссплатформенные снапшоты (без суффикса платформы) */
+      mode: 'precise',
+    },
   },
+  /* Шаблон пути для снапшотов без суффикса платформы (кроссплатформенные) */
+  snapshotPathTemplate: '{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   /* Запускать тесты в файлах параллельно */
   fullyParallel: true,
   /* Не запускать тесты в CI, если не указано явно */
@@ -47,7 +54,7 @@ export default defineConfig({
 
   /* Запускать локальный dev сервер перед тестами */
   webServer: {
-    command: 'npm run build:ui && npx vite preview --port 3000 --host',
+    command: 'npm run dev:ui',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
