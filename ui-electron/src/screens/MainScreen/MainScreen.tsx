@@ -118,32 +118,38 @@ const MainScreen: React.FC = () => {
         });
 
         // Создаем THREE.js сцену через thunk
-        const scene = await dispatch(
+        // CharacterScene передается через callback, чтобы не попадать в Redux store
+        let sceneInstance: CharacterScene | null = null;
+
+        await dispatch(
           initScene({
             canvas: canvasRef.current!,
             onProgress: (progress) => {
               log.debug('Character loading progress:', Math.round(progress * 100) + '%');
             },
             enableToonShader: false, // Отключаем toon shader, используем оригинальные материалы модели
+            onSceneCreated: (scene) => {
+              sceneInstance = scene;
+            },
           })
         ).unwrap();
 
-        if (!isMounted) {
-          scene.dispose();
+        if (!isMounted || !sceneInstance) {
+          sceneInstance?.dispose();
           return;
         }
 
         // Сохраняем ссылку на сцену
-        sceneRef.current = scene;
+        sceneRef.current = sceneInstance;
 
         // Устанавливаем начальный цвет фона на основе текущей темы
         const currentTheme = theme === 'system' ? systemTheme : theme;
         const initialBackgroundColor = currentTheme === 'dark' ? 0x1a1a1a : 0xf5f5f5;
-        scene.setBackgroundColor(initialBackgroundColor);
+        sceneInstance.setBackgroundColor(initialBackgroundColor);
         log.debug('Initial scene background color set to:', currentTheme, initialBackgroundColor);
 
         // Воспроизводим idle анимацию
-        scene.playIdle();
+        sceneInstance.playIdle();
 
         log.log('Character scene loaded successfully');
       } catch (error) {

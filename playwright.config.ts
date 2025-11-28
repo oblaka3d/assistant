@@ -18,10 +18,17 @@ export default defineConfig({
     toHaveScreenshot: {
       /* Используем кроссплатформенные снапшоты (без суффикса платформы) */
       mode: 'precise',
+      /* Сохраняем actual скриншоты рядом с тестовыми файлами */
+      animations: 'disabled',
     },
   },
   /* Шаблон пути для снапшотов без суффикса платформы (кроссплатформенные) */
-  snapshotPathTemplate: '{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
+  /* Снапшоты сохраняются рядом с тестовыми файлами: {testFileDir}/{testFileName}-snapshots/ */
+  snapshotPathTemplate: '{testFileDir}/{testFileName}.snapshots./{arg}-{projectName}{ext}',
+  /* Директория для сохранения результатов тестов */
+  /* Примечание: actual скриншоты при неудачных тестах сохраняются в test-results,
+     но их можно переместить рядом с тестовыми файлами через кастомный репортер */
+  outputDir: './test-results',
   /* Запускать тесты в файлах параллельно */
   fullyParallel: true,
   /* Не запускать тесты в CI, если не указано явно */
@@ -30,8 +37,6 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Оптимизация для CI */
   workers: process.env.CI ? 1 : undefined,
-  /* Репортер для использования */
-  reporter: [['html'], ['list'], ['json', { outputFile: './test-results/results.json' }]],
   /* Общие настройки для всех проектов */
   use: {
     /* Максимальное время для каждого действия (например, click) */

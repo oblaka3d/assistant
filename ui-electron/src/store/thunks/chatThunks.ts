@@ -8,8 +8,10 @@ import {
   deleteAllDialogs,
   type ChatMessage,
 } from '../../utils/api';
+import type { RootState } from '../index';
 import {
   addMessage,
+  createDialog,
   selectDialog,
   setDialogs,
   syncDialog,
@@ -278,18 +280,41 @@ export const createDialogOnServer = createAsyncThunk(
 /**
  * Удаление диалога с сервера
  */
-export const deleteDialogOnServer = createAsyncThunk(
-  'chat/deleteDialogOnServer',
-  async (dialogId: string, { dispatch, rejectWithValue }) => {
-    try {
-      await deleteDialogApi(dialogId);
-      dispatch(deleteDialogAction(dialogId));
-      return dialogId;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
+export const deleteDialogOnServer = createAsyncThunk<
+  string,
+  string,
+  { state: RootState; rejectValue: string }
+>('chat/deleteDialogOnServer', async (dialogId, { dispatch, getState, rejectWithValue }) => {
+  try {
+    await deleteDialogApi(dialogId);
+
+    // Проверяем, является ли это последним диалогом перед удалением
+    const stateBeforeDelete = getState();
+    const isLastDialog = stateBeforeDelete.chat.dialogs.length === 1;
+
+    dispatch(deleteDialogAction(dialogId));
+
+    // Если это был последний диалог, создаем новый на сервере
+    if (isLastDialog) {
+      const newDialogId = Date.now().toString();
+      try {
+        await dispatch(
+          createDialogOnServer({
+            dialogId: newDialogId,
+            title: 'Новый диалог',
+          })
+        ).unwrap();
+      } catch {
+        // Если не удалось создать на сервере, создаем локально
+        dispatch(createDialog({ dialogId: newDialogId, title: 'Новый диалог' }));
+      }
     }
+
+    return dialogId;
+  } catch (error) {
+    return rejectWithValue((error as Error).message);
   }
-);
+});
 
 /**
  * Удаление всех диалогов пользователя

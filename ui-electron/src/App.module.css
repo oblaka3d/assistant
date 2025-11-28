@@ -36,44 +36,65 @@
   z-index: 2000;
 }
 
-.navButton {
+.navButtonContainer {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-  width: 52px;
-  height: 96px;
-  border-radius: 16px;
-  background-color: rgba(0, 0, 0, 0.25);
-  color: #fff;
+  transform: translateY(calc(-50% + var(--keyboard-offset, 0px) / 2));
   pointer-events: auto;
-  backdrop-filter: blur(6px);
-  transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
   z-index: 1;
+  transition: transform 0.3s ease;
 }
 
 .navButtonLeft {
   left: 16px;
+  right: auto;
 }
 
 .navButtonRight {
   right: 16px;
+  left: auto;
 }
 
-.navButton:hover {
-  background-color: rgba(0, 0, 0, 0.4);
+.navButton {
+  width: 52px !important;
+  height: 96px !important;
+  min-width: 52px !important;
+  min-height: 96px !important;
+  max-width: 52px !important;
+  max-height: 96px !important;
+  border-radius: 12px !important;
+  background-color: transparent !important;
+  color: #fff;
+  padding: 0 !important;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.navButton:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(6px);
 }
 
 .navButton:disabled {
   opacity: 0.3;
-  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Переопределяем стили Material-UI для прямоугольной формы */
+.navButton svg {
+  width: 24px;
+  height: 24px;
 }
 
 @media (max-width: 600px) {
   .navButton {
-    width: 44px;
-    height: 80px;
+    width: 44px !important;
+    height: 80px !important;
+    min-width: 44px !important;
+    min-height: 80px !important;
+    max-width: 44px !important;
+    max-height: 80px !important;
+    border-radius: 10px !important;
   }
 
   .navButtonLeft {

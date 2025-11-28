@@ -56,6 +56,7 @@ export const ASSETS_PATHS = {
 // Ключи для localStorage
 export const STORAGE_KEYS = {
   API_KEYS: 'assistant_api_keys',
+  GUEST_DIALOGS: 'assistant_guest_dialogs',
 } as const;
 
 export const DEFAULT_IDLE_TIMEOUT_SECONDS = 0;

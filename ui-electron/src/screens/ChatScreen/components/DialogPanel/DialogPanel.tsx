@@ -17,7 +17,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { selectDialog, setDialogPanelOpen } from '../../../../store/slices/chatSlice';
+import {
+  createDialog,
+  deleteDialog,
+  selectDialog,
+  setDialogPanelOpen,
+} from '../../../../store/slices/chatSlice';
 import { createDialogOnServer, deleteDialogOnServer } from '../../../../store/thunks/chatThunks';
 
 import styles from './DialogPanel.module.css';
@@ -26,6 +31,7 @@ const DialogPanel: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { dialogs, currentDialogId, dialogPanelOpen } = useAppSelector((state) => state.chat);
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
 
   const handleClose = () => {
     dispatch(setDialogPanelOpen(false));
@@ -38,20 +44,49 @@ const DialogPanel: React.FC = () => {
 
   const handleCreateDialog = async () => {
     const dialogId = Date.now().toString();
-    try {
-      await dispatch(createDialogOnServer({ dialogId, title: 'Новый диалог' })).unwrap();
-      dispatch(selectDialog(dialogId));
-    } catch (error) {
-      console.error('Failed to create dialog:', error);
+
+    if (isAuthenticated) {
+      // Для авторизованных пользователей создаем диалог на сервере
+      try {
+        await dispatch(createDialogOnServer({ dialogId, title: 'Новый диалог' })).unwrap();
+        dispatch(selectDialog(dialogId));
+      } catch (error) {
+        console.error('Failed to create dialog:', error);
+      }
+    } else {
+      // Для неавторизованных пользователей создаем диалог локально
+      dispatch(createDialog({ dialogId, title: 'Новый диалог' }));
     }
   };
 
   const handleDeleteDialog = async (e: React.MouseEvent, dialogId: string) => {
     e.stopPropagation();
-    try {
-      await dispatch(deleteDialogOnServer(dialogId)).unwrap();
-    } catch (error) {
-      console.error('Failed to delete dialog:', error);
+
+    const isLastDialog = dialogs.length === 1;
+
+    if (isAuthenticated) {
+      // Для авторизованных пользователей удаляем диалог с сервера
+      try {
+        await dispatch(deleteDialogOnServer(dialogId)).unwrap();
+        // Если это был последний диалог, chatSlice автоматически создаст новый
+        // Закрываем панель после удаления последнего диалога
+        if (isLastDialog) {
+          handleClose();
+        }
+      } catch (error) {
+        console.error('Failed to delete dialog:', error);
+      }
+    } else {
+      // Для неавторизованных пользователей удаляем диалог локально
+      dispatch(deleteDialog(dialogId));
+      // Если это был последний диалог, chatSlice автоматически создаст новый
+      // Закрываем панель после удаления последнего диалога
+      // Используем setTimeout, чтобы дать Redux время обновить состояние
+      if (isLastDialog) {
+        setTimeout(() => {
+          handleClose();
+        }, 0);
+      }
     }
   };
 
@@ -107,7 +142,6 @@ const DialogPanel: React.FC = () => {
                       size="small"
                       onClick={(e) => handleDeleteDialog(e, dialog.id)}
                       className={styles.deleteButton}
-                      disabled={dialogs.length === 1}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

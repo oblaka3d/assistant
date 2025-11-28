@@ -12,7 +12,12 @@ import ScreenHeader from '../../components/ScreenHeader';
 import { API_PROVIDERS } from '../../constants/apiProviders';
 import { DEFAULT_WELCOME_TITLE } from '../../constants/app';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { clearInput, setInputValue, toggleDialogPanel } from '../../store/slices/chatSlice';
+import {
+  clearInput,
+  setInputValue,
+  toggleDialogPanel,
+  type Dialog,
+} from '../../store/slices/chatSlice';
 import {
   loadLLMProviderInfo,
   sendMessage,
@@ -93,7 +98,7 @@ const ChatScreen: React.FC = () => {
 
   // Получаем текущий диалог и сообщения
   const messages = useMemo(() => {
-    const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+    const currentDialog = dialogs.find((d: { id: string }) => d.id === currentDialogId);
     return currentDialog?.messages || [];
   }, [dialogs, currentDialogId]);
 
@@ -108,13 +113,25 @@ const ChatScreen: React.FC = () => {
 
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
 
+  // Вычисляем высоту контейнера сообщений
+  const messagesContainerHeight = useMemo(() => {
+    // Высота экрана минус высота StatusBar (24px), высота header (56px), высота input контейнера (примерно 60px) и высота клавиатуры
+    const statusBarHeight = 24; // Высота StatusBar
+    const headerHeight = 56; // Высота ScreenHeader (AppBar с Toolbar)
+    const inputContainerHeight = 60; // Примерная высота input контейнера
+    const totalFixedHeight = statusBarHeight + headerHeight + inputContainerHeight;
+    const availableHeight = `calc(100vh - ${totalFixedHeight}px - ${keyboardOffset}px)`;
+    return availableHeight;
+  }, [keyboardOffset]);
+
   const containerStyle = useMemo(
     () =>
       ({
         '--keyboard-offset': `${keyboardOffset}px`,
         '--keyboard-open': isVirtualKeyboardOpen ? '1' : '0',
+        '--messages-container-height': messagesContainerHeight,
       }) as React.CSSProperties,
-    [keyboardOffset, isVirtualKeyboardOpen]
+    [keyboardOffset, isVirtualKeyboardOpen, messagesContainerHeight]
   );
 
   // Загружаем информацию о LLM провайдере при монтировании
@@ -122,10 +139,10 @@ const ChatScreen: React.FC = () => {
     if (!llmProviderName) {
       dispatch(loadLLMProviderInfo())
         .unwrap()
-        .then((info) => {
+        .then((info: { name: string }) => {
           log.debug('LLM provider info loaded:', info);
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           log.error('Failed to load LLM provider info:', error);
         });
     }
@@ -142,7 +159,7 @@ const ChatScreen: React.FC = () => {
   const saveCurrentDialog = useCallback(() => {
     if (!isAuthenticated || !currentDialogId) return;
 
-    const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+    const currentDialog = dialogs.find((d: Dialog) => d.id === currentDialogId);
     if (!currentDialog || currentDialog.messages.length === 0) return;
 
     // Создаем уникальный ключ для проверки изменений (длина + последнее сообщение)
@@ -171,7 +188,7 @@ const ChatScreen: React.FC = () => {
           // Обновляем ключ после успешного сохранения
           lastSavedMessagesRef.current = messagesKey;
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           log.error('Failed to save dialog:', error);
         });
     }, 5000); // Увеличено с 1 до 5 секунд
@@ -212,7 +229,7 @@ const ChatScreen: React.FC = () => {
 
     // Если пользователь авторизован и текущий диалог еще не создан на сервере, создаем его
     if (isAuthenticated && currentDialogId) {
-      const currentDialog = dialogs.find((d) => d.id === currentDialogId);
+      const currentDialog = dialogs.find((d: Dialog) => d.id === currentDialogId);
       if (currentDialog && (currentDialog.id === 'default' || !currentDialog.id)) {
         // Создаем новый диалог на сервере
         const newDialogId = Date.now().toString();
@@ -346,7 +363,7 @@ const ChatScreen: React.FC = () => {
       />
 
       {/* Список сообщений */}
-      <Box className={styles.messagesContainer}>
+      <Box className={styles.messagesContainer} style={{ height: messagesContainerHeight }}>
         {isWelcomeState ? (
           <Box className={styles.welcomeState}>
             <Box className={styles.welcomeContent}>

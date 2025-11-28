@@ -108,6 +108,7 @@ const ChatKeyboard: React.FC<ChatKeyboardProps> = ({
   const { t, i18n } = useTranslation();
   const keyboardRef = useRef<KeyboardReactInterface | null>(null);
   const keyboardWrapperRef = useRef<HTMLDivElement>(null);
+  const keyboardPanelRef = useRef<HTMLDivElement>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [isEmojiPanelVisible, setEmojiPanelVisible] = useState(false);
   const initialLanguage =
@@ -169,9 +170,10 @@ const ChatKeyboard: React.FC<ChatKeyboardProps> = ({
   }, [keyboardLanguage, keyboardLayoutName]);
 
   const reportKeyboardHeight = useCallback(() => {
+    // Измеряем высоту всего панели клавиатуры, включая padding
     const height =
-      isKeyboardVisible && keyboardWrapperRef.current
-        ? keyboardWrapperRef.current.offsetHeight + KEYBOARD_EXTRA_OFFSET
+      isKeyboardVisible && keyboardPanelRef.current
+        ? keyboardPanelRef.current.offsetHeight + KEYBOARD_EXTRA_OFFSET
         : 0;
     onHeightChange?.(height);
   }, [isKeyboardVisible, onHeightChange]);
@@ -194,11 +196,11 @@ const ChatKeyboard: React.FC<ChatKeyboardProps> = ({
     reportKeyboardHeight();
     let resizeObserver: ResizeObserver | null = null;
 
-    if (isKeyboardVisible && keyboardWrapperRef.current) {
+    if (isKeyboardVisible && keyboardPanelRef.current) {
       resizeObserver = new ResizeObserver(() => {
         reportKeyboardHeight();
       });
-      resizeObserver.observe(keyboardWrapperRef.current);
+      resizeObserver.observe(keyboardPanelRef.current);
     }
 
     return () => {
@@ -210,9 +212,10 @@ const ChatKeyboard: React.FC<ChatKeyboardProps> = ({
   }, [isKeyboardVisible, reportKeyboardHeight, onHeightChange]);
 
   useEffect(() => {
+    // Измеряем высоту всего панели клавиатуры, включая padding
     const height =
-      isKeyboardVisible && keyboardWrapperRef.current
-        ? keyboardWrapperRef.current.offsetHeight + KEYBOARD_EXTRA_OFFSET
+      isKeyboardVisible && keyboardPanelRef.current
+        ? keyboardPanelRef.current.offsetHeight + KEYBOARD_EXTRA_OFFSET
         : 0;
     dispatchKeyboardEvent(
       isKeyboardVisible ? 'virtualKeyboardOpen' : 'virtualKeyboardClose',
@@ -299,7 +302,10 @@ const ChatKeyboard: React.FC<ChatKeyboardProps> = ({
 
   const panel = isKeyboardVisible ? (
     <div className={styles.keyboardPortal}>
-      <Box className={`${styles.keyboardPanel} ${isDarkTheme ? styles.keyboardPanelDark : ''}`}>
+      <Box
+        ref={keyboardPanelRef}
+        className={`${styles.keyboardPanel} ${isDarkTheme ? styles.keyboardPanelDark : ''}`}
+      >
         <Box
           ref={keyboardWrapperRef}
           className={`${styles.keyboardWrapper} ${isDarkTheme ? styles.keyboardWrapperDark : ''}`}

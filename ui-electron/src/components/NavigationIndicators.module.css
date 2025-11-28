@@ -13,7 +13,7 @@
   backdrop-filter: blur(10px);
   border-radius: 16px 16px 0 0;
   z-index: 2000;
-  pointer-events: auto;
+  pointer-events: none;
   transition: background 0.3s ease;
 }
 
@@ -33,6 +33,7 @@
   width: 28px;
   height: 28px;
   position: relative;
+  pointer-events: auto;
 }
 
 .indicator:hover {

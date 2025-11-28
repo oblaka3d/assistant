@@ -16,6 +16,7 @@ import { useOAuthCallback } from './hooks/useOAuthCallback';
 import { useTheme } from './hooks/useTheme';
 import IdleScreen from './screens/IdleScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
+import { setDialogs, selectDialog } from './store/slices/chatSlice';
 import { setLLMProviderName } from './store/slices/settingsSlice';
 import {
   navigateNext,
@@ -28,6 +29,7 @@ import {
   type SubScreen,
 } from './store/slices/uiSlice';
 import { createLogger } from './utils/logger';
+import { loadGuestDialogs } from './utils/storage';
 import { createAppTheme } from './utils/theme';
 
 // Ленивая загрузка экранов для улучшения производительности
@@ -123,7 +125,9 @@ function AppContent() {
   const idleRemoteEndpoint = useAppSelector((state) => state.settings.idleRemoteEndpoint);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
-  const [isVirtualKeyboardOpen, setVirtualKeyboardOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
+  const currentDialogId = useAppSelector((state) => state.chat.currentDialogId);
 
   // Используем хуки для темы и CSS переменных
   const { effectiveTheme } = useTheme();
@@ -176,13 +180,51 @@ function AppContent() {
     loadLLMProviderInfo();
   }, [dispatch]);
 
+  // Загружаем локальные чаты для неавторизованных пользователей
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const guestDialogs = loadGuestDialogs();
+      if (guestDialogs.length > 0) {
+        dispatch(setDialogs(guestDialogs));
+        // Выбираем первый диалог, если текущий не найден
+        if (currentDialogId && !guestDialogs.some((d) => d.id === currentDialogId)) {
+          dispatch(selectDialog(guestDialogs[0].id));
+        } else if (!currentDialogId && guestDialogs.length > 0) {
+          dispatch(selectDialog(guestDialogs[0].id));
+        }
+      }
+    }
+  }, [isAuthenticated, dispatch, currentDialogId]);
+
+  // Отслеживаем изменения авторизации для загрузки локальных чатов при выходе
+  const prevIsAuthenticatedRef = useRef(isAuthenticated);
+  useEffect(() => {
+    // Если пользователь вышел из системы (был авторизован, стал неавторизован)
+    if (prevIsAuthenticatedRef.current && !isAuthenticated) {
+      const guestDialogs = loadGuestDialogs();
+      if (guestDialogs.length > 0) {
+        dispatch(setDialogs(guestDialogs));
+        if (guestDialogs.length > 0) {
+          dispatch(selectDialog(guestDialogs[0].id));
+        }
+      }
+    }
+    prevIsAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated, dispatch]);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
     }
 
-    const handleKeyboardOpen = () => setVirtualKeyboardOpen(true);
-    const handleKeyboardClose = () => setVirtualKeyboardOpen(false);
+    const handleKeyboardOpen = (event: Event) => {
+      const customEvent = event as CustomEvent<{ height: number }>;
+      setKeyboardHeight(customEvent.detail?.height || 0);
+    };
+    const handleKeyboardClose = (event: Event) => {
+      const customEvent = event as CustomEvent<{ height: number }>;
+      setKeyboardHeight(customEvent.detail?.height || 0);
+    };
 
     window.addEventListener('virtualKeyboardOpen', handleKeyboardOpen);
     window.addEventListener('virtualKeyboardClose', handleKeyboardClose);
@@ -277,7 +319,15 @@ function AppContent() {
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
       <RouterSync />
-      <div ref={containerRef} className={styles.appContainer}>
+      <div
+        ref={containerRef}
+        className={styles.appContainer}
+        style={
+          {
+            '--keyboard-offset': `${keyboardHeight}px`,
+          } as React.CSSProperties
+        }
+      >
         <StatusBar />
         <div
           className={styles.screensContainer}
@@ -320,29 +370,33 @@ function AppContent() {
             </Suspense>
           </div>
         </div>
-        {!isVirtualKeyboardOpen && <NavigationIndicators />}
-        {!isVirtualKeyboardOpen && (
+        <NavigationIndicators />
+        {keyboardHeight === 0 && (
           <div className={styles.navButtons}>
-            <IconButton
-              size="large"
-              className={`${styles.navButton} ${styles.navButtonLeft}`}
-              onClick={handleNavigateLeft}
-              title={t('ui.prevScreen')}
-              aria-label={t('ui.prevScreen')}
-              disabled={!canNavigate}
-            >
-              <NavigateBeforeIcon />
-            </IconButton>
-            <IconButton
-              size="large"
-              className={`${styles.navButton} ${styles.navButtonRight}`}
-              onClick={handleNavigateRight}
-              title={t('ui.nextScreen')}
-              aria-label={t('ui.nextScreen')}
-              disabled={!canNavigate}
-            >
-              <NavigateNextIcon />
-            </IconButton>
+            <div className={`${styles.navButtonContainer} ${styles.navButtonLeft}`}>
+              <IconButton
+                size="large"
+                className={styles.navButton}
+                onClick={handleNavigateLeft}
+                title={t('ui.prevScreen')}
+                aria-label={t('ui.prevScreen')}
+                disabled={!canNavigate}
+              >
+                <NavigateBeforeIcon />
+              </IconButton>
+            </div>
+            <div className={`${styles.navButtonContainer} ${styles.navButtonRight}`}>
+              <IconButton
+                size="large"
+                className={styles.navButton}
+                onClick={handleNavigateRight}
+                title={t('ui.nextScreen')}
+                aria-label={t('ui.nextScreen')}
+                disabled={!canNavigate}
+              >
+                <NavigateNextIcon />
+              </IconButton>
+            </div>
           </div>
         )}
         {isIdle && (

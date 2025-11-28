@@ -23,15 +23,18 @@ interface InitSceneParams {
   canvas: HTMLCanvasElement;
   onProgress?: (progress: number) => void;
   enableToonShader?: boolean;
+  onSceneCreated?: (scene: CharacterScene) => void;
 }
 
 /**
  * Инициализация 3D сцены персонажа
+ * CharacterScene передается через callback, а не возвращается,
+ * чтобы избежать попадания несериализуемых объектов в Redux store.
  */
 export const initScene = createAsyncThunk(
   'scene/initScene',
   async (params: InitSceneParams, { dispatch }) => {
-    const { canvas, onProgress, enableToonShader = false } = params;
+    const { canvas, onProgress, enableToonShader = false, onSceneCreated } = params;
 
     dispatch(setIsLoading(true));
     dispatch(setLoadError(false));
@@ -63,7 +66,11 @@ export const initScene = createAsyncThunk(
       dispatch(setIsLoading(false));
       dispatch(setStatus(VoiceStatusType.READY));
 
-      return scene as CharacterScene;
+      // Передаем scene через callback, а не возвращаем из thunk
+      onSceneCreated?.(scene);
+
+      // Возвращаем только сериализуемые данные
+      return { success: true, ready: scene.ready } as const;
     } catch (error) {
       clearTimeout(timeoutId);
 

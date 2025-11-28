@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import { chatStorageMiddleware } from './middleware/chatStorageMiddleware';
 import apiKeysReducer from './slices/apiKeysSlice';
 import chatReducer from './slices/chatSlice';
 import settingsReducer from './slices/settingsSlice';
@@ -16,7 +17,7 @@ export const store = configureStore({
     user: userReducer,
     apiKeys: apiKeysReducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(chatStorageMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
