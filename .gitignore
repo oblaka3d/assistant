@@ -13,16 +13,6 @@ release/
 .idea/
 *.tsbuildinfo
 
-# Unity WebGL build files (but keep directories)
-unity/Build/*.js
-unity/Build/*.wasm
-unity/Build/*.data
-unity/Build/*.mem
-unity/Build/*.br
-unity/Build/*.gz
-unity/Build/*.symbols.json
-unity/Build/*.data.br
-unity/Build/*.wasm.br
-unity/Build/*.js.br
-unity/Build/*.framework.js.br
-
+# Playwright test results
+test-results/
+playwright-report/

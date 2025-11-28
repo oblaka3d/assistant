@@ -3,13 +3,13 @@ import MicIcon from '@mui/icons-material/Mic';
 import { Box, Button, Typography, Paper, IconButton } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import MessageRenderer from '../../components/MessageRenderer';
 import { DEFAULTS, TIMEOUTS } from '../../constants/app';
 import type { CharacterScene } from '../../renderer/main';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { Message } from '../../store/slices/chatSlice';
-import { setScreen } from '../../store/slices/uiSlice';
 import { initScene } from '../../store/thunks/sceneThunks';
 import { stopRecordingAndProcess, startRecording } from '../../store/thunks/voiceThunks';
 import { createLogger } from '../../utils/logger';
@@ -21,7 +21,7 @@ const log = createLogger('MainScreen');
 
 const MainScreen: React.FC = () => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch(); // Используется для других действий (не навигации)
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CharacterScene | null>(null);
@@ -250,9 +250,11 @@ const MainScreen: React.FC = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   const handleOpenChat = useCallback(() => {
-    dispatch(setScreen('chat'));
-  }, [dispatch]);
+    navigate('/chat');
+  }, [navigate]);
 
   const handleKeyOpenChat = useCallback(
     (event: React.KeyboardEvent) => {

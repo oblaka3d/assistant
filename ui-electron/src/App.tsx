@@ -3,20 +3,30 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { ThemeProvider, CssBaseline, CircularProgress, Box, IconButton } from '@mui/material';
 import { lazy, Suspense, useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BrowserRouter, HashRouter, useNavigate, useLocation } from 'react-router-dom';
 
 import styles from './App.module.css';
 import NavigationIndicators from './components/NavigationIndicators';
 import StatusBar from './components/StatusBar';
 import { TIMEOUTS } from './constants/app';
 import { useCSSVariables } from './hooks/useCSSVariables';
+import { useIdleTimer } from './hooks/useIdleTimer';
 import { useLanguage } from './hooks/useLanguage';
 import { useOAuthCallback } from './hooks/useOAuthCallback';
 import { useTheme } from './hooks/useTheme';
 import IdleScreen from './screens/IdleScreen';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setLLMProviderName } from './store/slices/settingsSlice';
-import { navigateNext, navigatePrev, setTransitioning, setScreen } from './store/slices/uiSlice';
-import type { MainScreen } from './store/slices/uiSlice';
+import {
+  navigateNext,
+  navigatePrev,
+  setTransitioning,
+  setScreen,
+  openSubScreen,
+  closeSubScreen,
+  type MainScreen,
+  type SubScreen,
+} from './store/slices/uiSlice';
 import { createLogger } from './utils/logger';
 import { createAppTheme } from './utils/theme';
 
@@ -28,7 +38,67 @@ const WelcomeScreen = lazy(() => import('./screens/WelcomeScreen/WelcomeScreen')
 
 const log = createLogger('App');
 
-function App() {
+// Компонент для синхронизации роутера с Redux
+function RouterSync() {
+  const dispatch = useAppDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentScreen = useAppSelector((state) => state.ui.currentScreen);
+  const subScreen = useAppSelector((state) => state.ui.subScreen);
+
+  // Синхронизация URL -> Redux при изменении URL
+  useEffect(() => {
+    const path = location.pathname;
+    let screen: MainScreen = 'main';
+    let sub: string | null = null;
+
+    // Парсим URL
+    if (path === '/' || path === '/main' || path === '') {
+      screen = 'main';
+    } else if (path.startsWith('/chat')) {
+      screen = 'chat';
+    } else if (path.startsWith('/menu')) {
+      screen = 'menu';
+      const parts = path.split('/').filter(Boolean);
+      if (parts.length >= 2) {
+        sub = parts[1];
+      }
+    }
+
+    // Обновляем Redux только если отличается
+    if (screen !== currentScreen) {
+      dispatch(setScreen(screen));
+    }
+
+    // Обновляем подэкран если нужно
+    if (screen === 'menu') {
+      const validSubScreens = ['settings', 'apiKeys', 'logs', 'about', 'auth'];
+      if (sub && validSubScreens.includes(sub)) {
+        if (sub !== subScreen) {
+          dispatch(openSubScreen(sub as SubScreen));
+        }
+      } else if (subScreen !== null) {
+        dispatch(closeSubScreen());
+      }
+    }
+  }, [location.pathname, dispatch, currentScreen, subScreen]);
+
+  // Синхронизация Redux -> URL при изменении экрана
+  useEffect(() => {
+    let targetPath = `/${currentScreen}`;
+    if (currentScreen === 'menu' && subScreen) {
+      targetPath = `/menu/${subScreen}`;
+    }
+
+    if (location.pathname !== targetPath) {
+      navigate(targetPath, { replace: true });
+    }
+  }, [currentScreen, subScreen, navigate, location.pathname]);
+
+  return null;
+}
+
+function AppContent() {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const currentScreen = useAppSelector((state) => state.ui.currentScreen);
@@ -40,9 +110,6 @@ function App() {
   const idleRemoteEndpoint = useAppSelector((state) => state.settings.idleRemoteEndpoint);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
-  const [isIdle, setIsIdle] = useState(false);
-  const [idleRefreshKey, setIdleRefreshKey] = useState(0);
-  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Используем хуки для темы и CSS переменных
   const { effectiveTheme } = useTheme();
@@ -60,6 +127,8 @@ function App() {
   // Обработка OAuth callback
   useOAuthCallback();
 
+  // Синхронизация роутера с Redux (через компонент RouterSync)
+
   // Проверяем, нужно ли показать приветственный экран
   useEffect(() => {
     const welcomeShown = localStorage.getItem('welcomeScreenShown');
@@ -68,30 +137,11 @@ function App() {
     }, 0);
   }, []);
 
-  const stopIdleTimer = useCallback(() => {
-    if (idleTimerRef.current) {
-      clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = null;
-    }
-  }, []);
-
-  const scheduleIdleTimer = useCallback(() => {
-    stopIdleTimer();
-
-    if (idleTimeoutSeconds <= 0) {
-      return;
-    }
-
-    idleTimerRef.current = setTimeout(() => {
-      setIsIdle(true);
-      setIdleRefreshKey((prev) => prev + 1);
-    }, idleTimeoutSeconds * 1000);
-  }, [idleTimeoutSeconds, stopIdleTimer]);
-
-  const resetIdleTimer = useCallback(() => {
-    setIsIdle(false);
-    scheduleIdleTimer();
-  }, [scheduleIdleTimer]);
+  // Таймер бездействия вынесен в отдельный хук, чтобы AppContent был проще
+  const { isIdle, idleRefreshKey, resetIdleTimer } = useIdleTimer({
+    idleTimeoutSeconds,
+    enabled: !showWelcome && idleTimeoutSeconds > 0,
+  });
 
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
@@ -111,26 +161,6 @@ function App() {
 
     loadLLMProviderInfo();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (showWelcome || idleTimeoutSeconds <= 0) {
-      stopIdleTimer();
-      return;
-    }
-
-    const handleActivity = () => {
-      resetIdleTimer();
-    };
-
-    const events = ['mousemove', 'mousedown', 'touchstart', 'keydown', 'scroll', 'wheel'];
-    events.forEach((event) => window.addEventListener(event, handleActivity));
-    scheduleIdleTimer();
-
-    return () => {
-      events.forEach((event) => window.removeEventListener(event, handleActivity));
-      stopIdleTimer();
-    };
-  }, [resetIdleTimer, scheduleIdleTimer, stopIdleTimer, showWelcome, idleTimeoutSeconds]);
 
   // Сброс isTransitioning после завершения анимации
   useEffect(() => {
@@ -215,6 +245,7 @@ function App() {
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
+      <RouterSync />
       <div ref={containerRef} className={styles.appContainer}>
         {/* Строка состояния */}
         <StatusBar />
@@ -295,6 +326,19 @@ function App() {
         )}
       </div>
     </ThemeProvider>
+  );
+}
+
+function App() {
+  // В Electron приложение работает под file://, где BrowserRouter пытается навигировать на file:///main
+  // и вызывает ERR_FILE_NOT_FOUND. Для этого случая используем HashRouter.
+  const isFileProtocol = typeof window !== 'undefined' && window.location.protocol === 'file:';
+  const RouterComponent = isFileProtocol ? HashRouter : BrowserRouter;
+
+  return (
+    <RouterComponent>
+      <AppContent />
+    </RouterComponent>
   );
 }
 

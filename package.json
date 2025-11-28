@@ -40,7 +40,14 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run format:check && npm run typecheck",
-    "prepare": "husky && node scripts/load-scripts.js"
+    "prepare": "husky && node scripts/load-scripts.js",
+    "test": "playwright test",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:ui": "playwright test --ui",
+    "test:unit": "echo 'Unit tests not yet implemented'",
+    "test:integration": "echo 'Integration tests not yet implemented'",
+    "test:e2e": "echo 'E2E tests not yet implemented'"
   },
   "keywords": [
     "voice-assistant",
@@ -51,6 +58,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@types/express": "^4.17.21",
     "@types/form-data": "^2.5.0",
     "@types/node": "^20.19.25",
@@ -86,6 +94,7 @@
     "@mui/icons-material": "^5.18.0",
     "@mui/material": "^5.15.0",
     "@reduxjs/toolkit": "^2.10.1",
+    "@types/react-router-dom": "^5.3.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "date-fns": "^4.1.0",
     "express": "^4.18.2",
@@ -98,6 +107,7 @@
     "react-i18next": "^16.3.5",
     "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
+    "react-router-dom": "^7.9.6",
     "react-simple-keyboard": "^3.8.137",
     "react-swipeable": "^7.0.1",
     "react-syntax-highlighter": "^16.1.0",

@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import ScreenHeader from '../../components/ScreenHeader';
 import ScrollableContent from '../../components/ScrollableContent';
@@ -30,7 +31,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { resetAPIKeys } from '../../store/slices/apiKeysSlice';
 import { resetChat } from '../../store/slices/chatSlice';
 import { setTheme } from '../../store/slices/settingsSlice';
-import { goBack, openSubScreen } from '../../store/slices/uiSlice';
+import { goBack } from '../../store/slices/uiSlice';
 import { logout } from '../../store/slices/userSlice';
 import { saveSettings } from '../../store/thunks';
 
@@ -53,6 +54,7 @@ const SUBSCREEN_COMPONENTS: Record<string, React.ComponentType<{ onBack: () => v
 const MenuScreen: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const subScreen = useAppSelector((state) => state.ui.subScreen);
   const theme = useAppSelector((state) => state.settings.theme);
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
@@ -108,22 +110,22 @@ const MenuScreen: React.FC = () => {
     {
       icon: <SettingsIcon />,
       text: t('menu.settings'),
-      onClick: () => dispatch(openSubScreen('settings')),
+      onClick: () => navigate('/menu/settings'),
     },
     {
       icon: <VpnKeyIcon />,
       text: t('menu.apiKeys'),
-      onClick: () => dispatch(openSubScreen('apiKeys')),
+      onClick: () => navigate('/menu/apiKeys'),
     },
     {
       icon: <DescriptionIcon />,
       text: t('menu.logs'),
-      onClick: () => dispatch(openSubScreen('logs')),
+      onClick: () => navigate('/menu/logs'),
     },
     {
       icon: <InfoIcon />,
       text: t('menu.about'),
-      onClick: () => dispatch(openSubScreen('about')),
+      onClick: () => navigate('/menu/about'),
     },
   ];
 
@@ -198,7 +200,7 @@ const MenuScreen: React.FC = () => {
         {/* Плашка пользователя */}
         <UserBar
           onLoginClick={() => {
-            dispatch(openSubScreen('auth'));
+            navigate('/menu/auth');
           }}
         />
 

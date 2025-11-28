@@ -27,6 +27,12 @@ if (!rootElement) {
 
     const root = createRoot(rootElement);
 
+    // Экспортируем store в window для тестов и отладки
+    // Включаем и в production для скриншотных тестов
+    if (typeof window !== 'undefined') {
+      (window as any).__REDUX_STORE__ = store;
+    }
+
     root.render(
       <React.StrictMode>
         <Provider store={store}>

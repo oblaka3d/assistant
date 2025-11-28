@@ -21,12 +21,34 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
+    // Установить маршрут (основной экран + необязательный подэкран) одним действием.
+    // Удобно для тестов и прямой программной навигации.
+    setRoute: (
+      state,
+      action: PayloadAction<{ screen: MainScreen; subScreen?: SubScreen | null }>
+    ) => {
+      const { screen, subScreen = null } = action.payload;
+
+      state.currentScreen = screen;
+      state.subScreen = screen === 'menu' ? subScreen : null;
+      state.isTransitioning = false;
+      state.navigationHistory = [screen];
+    },
     setScreen: (state, action: PayloadAction<MainScreen>) => {
       if (!state.isTransitioning) {
         state.isTransitioning = true;
-        state.navigationHistory.push(state.currentScreen);
+        // Добавляем в историю только если переходим на другой экран
+        if (state.currentScreen !== action.payload) {
+          state.navigationHistory.push(state.currentScreen);
+        }
         state.currentScreen = action.payload;
-        state.subScreen = null; // Сбрасываем вложенный экран при переходе на основной
+        // Сбрасываем вложенный экран только если переходим на другой основной экран (не menu)
+        // Если переходим на menu, подэкран сохраняем (он может быть установлен через openSubScreen)
+        if (action.payload !== 'menu') {
+          state.subScreen = null;
+        }
+        // Если уже на menu и переходим на menu, не сбрасываем подэкран
+        // (он может быть установлен через openSubScreen сразу после)
       }
     },
     setTransitioning: (state, action: PayloadAction<boolean>) => {
@@ -72,8 +94,16 @@ const uiSlice = createSlice({
     },
     // Открыть вложенный экран в меню
     openSubScreen: (state, action: PayloadAction<SubScreen>) => {
-      if (state.currentScreen === 'menu' && !state.isTransitioning) {
+      if (state.currentScreen === 'menu') {
+        // Если уже на menu, просто открываем подэкран (даже если isTransitioning)
         state.subScreen = action.payload;
+        // Сбрасываем isTransitioning, так как подэкран открыт
+        state.isTransitioning = false;
+      } else {
+        // Если не в меню, сначала переключаемся на меню
+        state.currentScreen = 'menu';
+        state.subScreen = action.payload;
+        state.isTransitioning = true;
       }
     },
     // Вернуться из вложенного экрана в меню
@@ -98,6 +128,7 @@ const uiSlice = createSlice({
 });
 
 export const {
+  setRoute,
   setScreen,
   setTransitioning,
   goToMain,

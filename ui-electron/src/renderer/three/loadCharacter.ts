@@ -124,7 +124,7 @@ export async function loadCharacterGLB(
                     ];
 
                     textureProps.forEach((prop) => {
-                      const texture = (mat as Record<string, unknown>)[prop];
+                      const texture = (mat as unknown as Record<string, unknown>)[prop];
                       if (texture && texture instanceof THREE.Texture) {
                         textureCount++;
                         texture.needsUpdate = true;

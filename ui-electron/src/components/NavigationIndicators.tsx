@@ -3,17 +3,28 @@ import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Box } from '@mui/material';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setScreen } from '../store/slices/uiSlice';
+import { useAppSelector } from '../store/hooks';
 
 import styles from './NavigationIndicators.module.css';
 
 const NavigationIndicators: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const currentScreen = useAppSelector((state) => state.ui.currentScreen);
-  const subScreen = useAppSelector((state) => state.ui.subScreen);
+  const navigate = useNavigate();
+  const location = useLocation();
   const isTransitioning = useAppSelector((state) => state.ui.isTransitioning);
+  const subScreen = useAppSelector((state) => state.ui.subScreen);
+
+  // Получаем текущий экран из URL
+  const getCurrentScreen = () => {
+    const path = location.pathname;
+    if (path === '/' || path === '/main' || path === '') return 'main';
+    if (path.startsWith('/chat')) return 'chat';
+    if (path.startsWith('/menu')) return 'menu';
+    return 'main';
+  };
+
+  const currentScreen = getCurrentScreen();
 
   // Не показываем индикаторы во вложенных экранах
   if (subScreen !== null) {
@@ -26,9 +37,9 @@ const NavigationIndicators: React.FC = () => {
     { id: 'menu' as const, icon: <SettingsIcon />, label: 'Меню' },
   ];
 
-  const handleIndicatorClick = (screenId: typeof currentScreen) => {
+  const handleIndicatorClick = (screenId: 'main' | 'chat' | 'menu') => {
     if (!isTransitioning && screenId !== currentScreen) {
-      dispatch(setScreen(screenId));
+      navigate(`/${screenId}`);
     }
   };
 
