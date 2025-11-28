@@ -1,0 +1,259 @@
+# 🔧 Технические детали
+
+## Важные технические решения
+
+### 1. Vite Configuration
+
+**Файл**: `vite.config.ts`
+
+**Ключевые моменты:**
+
+1. **React bundling**: React, react-redux, @emotion/react должны быть в основном bundle
+
+   ```typescript
+   const reactPattern = /react(-dom|-redux)?[/\\]|@emotion[/\\]react[/\\]/;
+   ```
+
+   Это предотвращает ошибки типа `Cannot read properties of undefined (reading '__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED')`
+
+2. **Sourcemaps**: Только в dev режиме
+
+   ```typescript
+   sourcemap: command === 'serve';
+   ```
+
+3. **Chunk splitting**:
+   - `three` - отдельный chunk для THREE.js
+   - `mui` - отдельный chunk для Material-UI
+   - `markdown` - отдельный chunk для markdown библиотек
+   - React и связанные - в основном bundle
+
+### 2. Redux State Serialization
+
+**Проблема**: Redux требует сериализуемые данные
+
+**Решение**: Все `Date` объекты конвертируются в ISO строки
+
+```typescript
+// ❌ Плохо
+createdAt: new Date();
+
+// ✅ Хорошо
+createdAt: new Date().toISOString();
+```
+
+**Где применять:**
+
+- Redux slices (`chatSlice.ts`, `voiceSlice.ts`)
+- API интерфейсы (`api.ts`)
+- Redux thunks (`chatThunks.ts`, `voiceThunks.ts`)
+
+### 3. Роутинг и Redux синхронизация
+
+**Файл**: `ui-electron/src/App.tsx` → `RouterSync`
+
+**Проблема**: Race conditions при изменении URL и Redux state
+
+**Решение**: Использование `useRef` для хранения текущего состояния
+
+```typescript
+const currentScreenRef = useRef(currentScreen);
+const subScreenRef = useRef(subScreen);
+
+useEffect(() => {
+  // Обновляем только если изменился URL
+  // Используем ref для проверки текущего состояния
+}, [location.pathname]);
+```
+
+### 4. IPC Communication
+
+**Структура:**
+
+- `main/preload.ts` - экспортирует безопасные API в `window.electron`
+- `main/ipc.ts` - обработчики IPC в main процессе
+- Renderer использует `window.electron.*` для коммуникации
+
+**Паттерн:**
+
+```typescript
+// preload.ts
+contextBridge.exposeInMainWorld('electron', {
+  ipcRenderer: { ... }
+});
+
+// renderer
+window.electron.ipcRenderer.invoke('action', data);
+```
+
+### 5. Виртуальная клавиатура
+
+**Компонент**: `ui-electron/src/components/ChatKeyboard/`
+
+**Особенности:**
+
+- Использует `react-simple-keyboard`
+- Рендерится через React Portal в `document.body`
+- Отслеживает высоту через `ResizeObserver`
+- Диспатчит события `virtualKeyboardOpen`/`virtualKeyboardClose`
+- Поддерживает несколько языков (EN/RU/ZH)
+- Интегрирован emoji picker
+
+**CSS переменные:**
+
+- `--keyboard-offset` - высота клавиатуры
+- `--keyboard-open` - флаг открытия (0/1)
+
+### 6. Emoji Picker
+
+**Интеграция:**
+
+- Использует `emoji-picker-react`
+- Отображается вместо клавиатуры при нажатии на emoji кнопку
+- Кнопка переключения меняет иконку (клавиатура ↔ emoji)
+- Back button для возврата к клавиатуре
+
+### 7. Playwright Snapshots
+
+**Конфигурация:**
+
+- Шаблон пути: `{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}`
+- Кроссплатформенные (без суффикса платформы)
+- Хранятся в обычном Git (не LFS)
+
+**Доступ к Redux в тестах:**
+
+```typescript
+const win = window as WindowWithStore;
+const store = win.__REDUX_STORE__;
+```
+
+**Утилиты тестов:**
+
+- `compareScreenshot()` - сравнение скриншотов
+- `waitForAppReady()` - ожидание загрузки приложения
+- `setTheme()` - установка темы через Redux
+- `navigateToScreen()` - навигация через Redux
+
+### 8. Environment Variables
+
+**Vite**: Использует `import.meta.env.VITE_*`
+**Node.js**: Использует `process.env.*`
+
+**Важно:**
+
+- В renderer процессе нет доступа к `process.env`
+- Используйте `import.meta.env` для UI
+- Используйте `process.env` для main процесса и backend
+
+### 9. TypeScript Configuration
+
+**Множественные tsconfig:**
+
+- `tsconfig.json` - корневой, для main процесса
+- `ui-electron/tsconfig.json` - для UI
+- `ui-electron/tsconfig.node.json` - для Vite конфигурации
+- `backend-main/tsconfig.json` - для backend
+
+### 10. CSS Modules
+
+**Использование:**
+
+- Все стили в `.module.css` файлах
+- Импорт: `import styles from './Component.module.css'`
+- Типы: `ui-electron/src/types/css-modules.d.ts`
+
+### 11. i18n
+
+**Библиотека**: `react-i18next`
+
+**Файлы переводов:**
+
+- `ui-electron/src/i18n/locales/en.json`
+- `ui-electron/src/i18n/locales/ru.json`
+- `ui-electron/src/i18n/locales/zh.json`
+
+**Использование:**
+
+```typescript
+const { t } = useTranslation();
+t('chat.sendMessage');
+```
+
+### 12. 3D Scene (THREE.js)
+
+**Компонент**: `MainScreen`
+
+**Особенности:**
+
+- Загрузка 3D модели из `ui-electron/public/assets/*.glb`
+- Анимации через `@react-three/fiber` и `@react-three/drei`
+- WebGL может быть недоступен в тестовом окружении
+
+### 13. API Client
+
+**Файл**: `ui-electron/src/utils/api.ts`
+
+**Особенности:**
+
+- Базовый URL из `import.meta.env.VITE_API_URL`
+- По умолчанию: `http://localhost:3001/api/v1`
+- Все даты в ISO строках для сериализации
+
+### 14. OAuth Callback
+
+**Файл**: `ui-electron/src/hooks/useOAuthCallback.ts`
+
+**Процесс:**
+
+1. Открытие OAuth URL в новом окне
+2. Ожидание callback
+3. Закрытие окна после успеха
+4. Обновление состояния пользователя
+
+## Известные проблемы и решения
+
+### 1. React Internals Error
+
+**Ошибка**: `Cannot read properties of undefined (reading '__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED')`
+
+**Причина**: Множественные экземпляры React
+
+**Решение**: React, react-redux, @emotion/react в основном bundle
+
+### 2. Redux Serializable Check
+
+**Ошибка**: `A non-serializable value was detected in the state`
+
+**Причина**: Date объекты в Redux state
+
+**Решение**: Конвертация в ISO строки
+
+### 3. Menu Sub-screens Flickering
+
+**Проблема**: Экран мерцает при открытии подэкранов
+
+**Причина**: Race condition в RouterSync
+
+**Решение**: Использование useRef для хранения состояния
+
+### 4. Keyboard Overlapping UI
+
+**Проблема**: Клавиатура перекрывает элементы UI
+
+**Решение**: CSS переменные для offset, условный рендеринг навигации
+
+### 5. Cross-platform Snapshots
+
+**Проблема**: Снапшоты не работают в CI (Linux vs macOS)
+
+**Решение**: Кроссплатформенные снапшоты без суффикса платформы
+
+## Best Practices
+
+1. **Всегда используйте ISO строки для дат в Redux**
+2. **Проверяйте доступность Redux store в тестах**
+3. **Используйте CSS переменные для динамических значений**
+4. **Портал для модальных окон и клавиатуры**
+5. **useRef для предотвращения race conditions**
+6. **Типизация через TypeScript для всех компонентов**
