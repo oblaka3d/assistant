@@ -59,7 +59,11 @@
     "recording": "Recording...",
     "startRecording": "Start voice recording",
     "stopRecording": "Stop recording",
-    "keyboardLanguage": "Keyboard language"
+    "keyboardLanguage": "Keyboard language",
+    "showKeyboard": "Show keyboard",
+    "hideKeyboard": "Hide keyboard",
+    "emojiPickerLabel": "Emoji picker",
+    "emojiSearchPlaceholder": "Search emoji"
   },
   "settings": {
     "title": "Settings",

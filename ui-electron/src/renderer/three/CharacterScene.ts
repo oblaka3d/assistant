@@ -150,7 +150,7 @@ export class CharacterScene {
   }
 
   /**
-   * Загружает модель персонажа
+   * Загружает и подготавливает модель персонажа
    */
   private async loadCharacter(
     modelUrl?: string,
@@ -160,177 +160,11 @@ export class CharacterScene {
     console.log('[CharacterScene] loadCharacter called with URL:', modelUrl);
 
     try {
-      let model: CharacterModel;
-
-      if (modelUrl) {
-        console.log('[CharacterScene] Starting to load GLB model from:', modelUrl);
-        model = await loadCharacterGLB(modelUrl, onProgress);
-        console.log('[CharacterScene] GLB model loaded, processing...');
-      } else {
-        // Используем placeholder, если модель не указана
-        console.warn('[CharacterScene] Character model URL not provided, using placeholder');
-        model = createPlaceholderCharacter();
-      }
-
-      // Поворачиваем модель, если она лежит на спине
-      // Убираем поворот по X, так как модель должна стоять вертикально
-      model.scene.rotation.x = 0; // Без поворота по X - модель стоит вертикально
-
-      // Вычисляем размеры модели для правильного позиционирования (после поворота)
-      const box = new THREE.Box3().setFromObject(model.scene);
-      if (!box.isEmpty()) {
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-
-        console.log('[CharacterScene] Character model bounds:', {
-          center: center.toArray(),
-          size: size.toArray(),
-          isEmpty: box.isEmpty(),
-          rotation: model.scene.rotation.toArray(),
-        });
-
-        // Позиционируем модель так, чтобы она стояла на сетке (y=0) и была в центре
-        // Центрируем модель относительно её bounding box
-        model.scene.position.x = -center.x;
-        model.scene.position.z = -center.z;
-        // Ставим модель так, чтобы её нижняя точка была на y=0 (на сетке)
-        model.scene.position.y = -box.min.y;
-
-        console.log('[CharacterScene] Model positioned:', {
-          originalCenter: center.toArray(),
-          originalSize: size.toArray(),
-          boundingBoxMin: box.min.toArray(),
-          boundingBoxMax: box.max.toArray(),
-          calculatedPosition: model.scene.position.toArray(),
-          rotation: model.scene.rotation.toArray(),
-        });
-
-        // Масштабируем модель, чтобы она была видна (примерно 1.5-2 единицы высотой)
-        const height = size.y;
-        const maxDimension = Math.max(size.x, size.y, size.z);
-        const targetHeight = 1.8; // Целевая высота персонажа
-
-        if (height > 0) {
-          // Масштабируем так, чтобы максимальная размерность была ~2 единицы
-          const scale = targetHeight / maxDimension;
-          model.scene.scale.set(scale, scale, scale);
-          console.log(
-            '[CharacterScene] Model scaled by',
-            scale.toFixed(3),
-            'to target height',
-            targetHeight,
-            '(original max dimension:',
-            maxDimension.toFixed(2) + ')'
-          );
-        }
-
-        // Пересчитываем позицию после масштабирования
-        const scaledBox = new THREE.Box3().setFromObject(model.scene);
-        if (!scaledBox.isEmpty()) {
-          const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-          model.scene.position.y = -scaledBox.min.y; // Ноги на уровне сетки
-          model.scene.position.x = -scaledCenter.x; // Центр по X
-          model.scene.position.z = -scaledCenter.z; // Центр по Z
-          console.log('[CharacterScene] Repositioned after scaling:', {
-            position: model.scene.position.toArray(),
-            rotation: model.scene.rotation.toArray(),
-          });
-        }
-      } else {
-        // Если не удалось вычислить границы, используем позицию по умолчанию
-        // Это может произойти, если модель еще не загрузилась полностью
-        console.warn('[CharacterScene] Could not compute model bounds, using default position');
-        model.scene.position.set(0, 0, 0); // Центрируем в начале координат
-        model.scene.scale.set(1, 1, 1);
-
-        // Пробуем вычислить границы после небольшой задержки
-        setTimeout(() => {
-          const delayedBox = new THREE.Box3().setFromObject(model.scene);
-          if (!delayedBox.isEmpty()) {
-            const center = delayedBox.getCenter(new THREE.Vector3());
-            const size = delayedBox.getSize(new THREE.Vector3());
-            console.log('[CharacterScene] Delayed bounds calculation:', {
-              center: center.toArray(),
-              size: size.toArray(),
-            });
-            model.scene.position.y = -center.y + size.y / 2;
-            model.scene.position.x = -center.x;
-            model.scene.position.z = -center.z;
-          }
-        }, 500);
-      }
-
-      // Применяем toon shader, если нужно (после позиционирования)
-      if (enableToonShader) {
-        try {
-          applyToonShader(model.scene);
-          console.log('[CharacterScene] Toon shader applied successfully');
-        } catch (shaderError) {
-          console.warn('[CharacterScene] Failed to apply toon shader:', shaderError);
-          // Продолжаем без toon shader
-        }
-      } else {
-        console.log('[CharacterScene] Toon shader disabled, using original materials');
-      }
-
-      // Добавляем в сцену
-      this.scene.add(model.scene);
-      this.characterModel = model;
-
-      console.log('[CharacterScene] Character model added to scene:', {
-        modelUrl: modelUrl || 'placeholder',
-        position: model.scene.position.toArray(),
-        scale: model.scene.scale.toArray(),
-        rotation: model.scene.rotation.toArray(),
-        visible: model.scene.visible,
-        childrenCount: model.scene.children.length,
-        animationsCount: model.animations.length,
-        hasMixer: !!model.mixer,
-        worldPosition: model.scene.getWorldPosition(new THREE.Vector3()).toArray(),
-      });
-
-      // Проверяем, что модель в сцене и видна с камеры
-      const modelWorldPos = model.scene.getWorldPosition(new THREE.Vector3());
-      const distanceToCamera = this.camera.position.distanceTo(modelWorldPos);
-      console.log('[CharacterScene] Camera position:', this.camera.position.toArray());
-      console.log('[CharacterScene] Camera looking at:', [0, 0, 0]);
-      console.log('[CharacterScene] Model world position:', modelWorldPos.toArray());
-      console.log('[CharacterScene] Model distance from camera:', distanceToCamera);
-
-      // Проверяем, что модель в поле зрения камеры
-      const frustum = new THREE.Frustum();
-      const matrix = new THREE.Matrix4().multiplyMatrices(
-        this.camera.projectionMatrix,
-        this.camera.matrixWorldInverse
-      );
-      frustum.setFromProjectionMatrix(matrix);
-      const modelInFrustum = frustum.containsPoint(modelWorldPos);
-      console.log('[CharacterScene] Model in camera frustum:', modelInFrustum);
-
-      // Выводим все объекты в сцене для отладки
-      console.log(
-        '[CharacterScene] All scene objects:',
-        this.scene.children.map((child) => ({
-          type: child.type,
-          name: child.name || 'unnamed',
-          position: child.position.toArray(),
-          visible: child.visible,
-        }))
-      );
-
-      // Создаем контроллер анимаций
-      if (model.mixer) {
-        this.animationController = new CharacterAnimationController(model);
-        // Пробуем воспроизвести T-pose, если доступен, иначе используем default/idle
-        const [tposeAction] = this.animationController.playAnimation('tpose');
-        if (!tposeAction) {
-          // Если T-pose не найден, используем default или idle
-          const [defaultAction] = this.animationController.playAnimation('default');
-          if (!defaultAction) {
-            this.animationController.playIdle();
-          }
-        }
-      }
+      const model = await this.loadModel(modelUrl, onProgress);
+      this.normalizeAndPositionModel(model);
+      this.applyToonShaderIfNeeded(model, enableToonShader);
+      this.attachModelToScene(model, modelUrl);
+      this.setupAnimationController(model);
 
       // Запускаем анимационный цикл
       this.startAnimation();
@@ -360,6 +194,177 @@ export class CharacterScene {
       });
 
       this.startAnimation();
+    }
+  }
+
+  /**
+   * Загружает модель или возвращает placeholder, если URL не указан
+   */
+  private async loadModel(
+    modelUrl?: string,
+    onProgress?: (progress: number) => void
+  ): Promise<CharacterModel> {
+    if (modelUrl) {
+      console.log('[CharacterScene] Starting to load GLB model from:', modelUrl);
+      const model = await loadCharacterGLB(modelUrl, onProgress);
+      console.log('[CharacterScene] GLB model loaded, processing...');
+      return model;
+    }
+
+    console.warn('[CharacterScene] Character model URL not provided, using placeholder');
+    return createPlaceholderCharacter();
+  }
+
+  /**
+   * Нормализует ориентацию, позицию и масштаб модели, чтобы она корректно стояла на сцене
+   */
+  private normalizeAndPositionModel(model: CharacterModel): void {
+    // Модель должна стоять вертикально
+    model.scene.rotation.x = 0;
+
+    const box = new THREE.Box3().setFromObject(model.scene);
+    if (!box.isEmpty()) {
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+
+      console.log('[CharacterScene] Character model bounds:', {
+        center: center.toArray(),
+        size: size.toArray(),
+        isEmpty: box.isEmpty(),
+        rotation: model.scene.rotation.toArray(),
+      });
+
+      // Центрируем модель и ставим на "пол"
+      model.scene.position.x = -center.x;
+      model.scene.position.z = -center.z;
+      model.scene.position.y = -box.min.y;
+
+      const maxDimension = Math.max(size.x, size.y, size.z);
+      const targetHeight = 1.8;
+
+      if (maxDimension > 0) {
+        const scale = targetHeight / maxDimension;
+        model.scene.scale.set(scale, scale, scale);
+        console.log('[CharacterScene] Model scaled:', {
+          scale,
+          targetHeight,
+          maxDimension,
+        });
+      }
+
+      // Повторно вычисляем bounding box после масштабирования и центрируем ещё раз
+      const scaledBox = new THREE.Box3().setFromObject(model.scene);
+      if (!scaledBox.isEmpty()) {
+        const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+        model.scene.position.y = -scaledBox.min.y;
+        model.scene.position.x = -scaledCenter.x;
+        model.scene.position.z = -scaledCenter.z;
+        console.log('[CharacterScene] Repositioned after scaling:', {
+          position: model.scene.position.toArray(),
+          rotation: model.scene.rotation.toArray(),
+        });
+      }
+    } else {
+      console.warn('[CharacterScene] Could not compute model bounds, using default position');
+      model.scene.position.set(0, 0, 0);
+      model.scene.scale.set(1, 1, 1);
+
+      // Попытка пересчёта границ позже (модель могла не до конца прогрузиться)
+      setTimeout(() => {
+        const delayedBox = new THREE.Box3().setFromObject(model.scene);
+        if (!delayedBox.isEmpty()) {
+          const center = delayedBox.getCenter(new THREE.Vector3());
+          const size = delayedBox.getSize(new THREE.Vector3());
+          console.log('[CharacterScene] Delayed bounds calculation:', {
+            center: center.toArray(),
+            size: size.toArray(),
+          });
+          model.scene.position.y = -center.y + size.y / 2;
+          model.scene.position.x = -center.x;
+          model.scene.position.z = -center.z;
+        }
+      }, 500);
+    }
+  }
+
+  /**
+   * Применяет toon shader, если он включён
+   */
+  private applyToonShaderIfNeeded(model: CharacterModel, enableToonShader: boolean): void {
+    if (!enableToonShader) {
+      console.log('[CharacterScene] Toon shader disabled, using original materials');
+      return;
+    }
+
+    try {
+      applyToonShader(model.scene);
+      console.log('[CharacterScene] Toon shader applied successfully');
+    } catch (shaderError) {
+      console.warn('[CharacterScene] Failed to apply toon shader:', shaderError);
+    }
+  }
+
+  /**
+   * Добавляет модель в сцену и логирует её положение относительно камеры
+   */
+  private attachModelToScene(model: CharacterModel, modelUrl?: string): void {
+    this.scene.add(model.scene);
+    this.characterModel = model;
+
+    console.log('[CharacterScene] Character model added to scene:', {
+      modelUrl: modelUrl || 'placeholder',
+      position: model.scene.position.toArray(),
+      scale: model.scene.scale.toArray(),
+      rotation: model.scene.rotation.toArray(),
+      visible: model.scene.visible,
+      childrenCount: model.scene.children.length,
+      animationsCount: model.animations.length,
+      hasMixer: !!model.mixer,
+      worldPosition: model.scene.getWorldPosition(new THREE.Vector3()).toArray(),
+    });
+
+    const modelWorldPos = model.scene.getWorldPosition(new THREE.Vector3());
+    const distanceToCamera = this.camera.position.distanceTo(modelWorldPos);
+    console.log('[CharacterScene] Camera position:', this.camera.position.toArray());
+    console.log('[CharacterScene] Camera looking at:', [0, 0, 0]);
+    console.log('[CharacterScene] Model world position:', modelWorldPos.toArray());
+    console.log('[CharacterScene] Model distance from camera:', distanceToCamera);
+
+    const frustum = new THREE.Frustum();
+    const matrix = new THREE.Matrix4().multiplyMatrices(
+      this.camera.projectionMatrix,
+      this.camera.matrixWorldInverse
+    );
+    frustum.setFromProjectionMatrix(matrix);
+    const modelInFrustum = frustum.containsPoint(modelWorldPos);
+    console.log('[CharacterScene] Model in camera frustum:', modelInFrustum);
+
+    console.log(
+      '[CharacterScene] All scene objects:',
+      this.scene.children.map((child) => ({
+        type: child.type,
+        name: child.name || 'unnamed',
+        position: child.position.toArray(),
+        visible: child.visible,
+      }))
+    );
+  }
+
+  /**
+   * Создаёт контроллер анимаций и запускает дефолтную позу
+   */
+  private setupAnimationController(model: CharacterModel): void {
+    if (!model.mixer) {
+      return;
+    }
+
+    this.animationController = new CharacterAnimationController(model);
+    const [tposeAction] = this.animationController.playAnimation('tpose');
+    if (!tposeAction) {
+      const [defaultAction] = this.animationController.playAnimation('default');
+      if (!defaultAction) {
+        this.animationController.playIdle();
+      }
     }
   }
 

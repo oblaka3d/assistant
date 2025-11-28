@@ -2,7 +2,32 @@
  * API клиент для взаимодействия с backend-main
  */
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
+const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
+
+const normalizeBaseUrl = (url: string): string => {
+  // Удаляем завершающий слэш, чтобы не получать двойные слэши при конкатенации
+  return url.replace(/\/+$/, '');
+};
+
+const resolveApiBaseUrl = (): string => {
+  const envValue = import.meta.env?.VITE_API_URL;
+  if (typeof envValue === 'string' && envValue.trim().length > 0) {
+    return normalizeBaseUrl(envValue.trim());
+  }
+  return DEFAULT_API_BASE_URL;
+};
+
+export const API_BASE_URL = resolveApiBaseUrl();
+
+const resolveApiOrigin = (): string => {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return new URL(DEFAULT_API_BASE_URL).origin;
+  }
+};
+
+export const API_ORIGIN = resolveApiOrigin();
 
 /**
  * Получить URL для OAuth авторизации
@@ -362,15 +387,15 @@ export interface ChatMessage {
   type: 'text' | 'markdown' | 'image';
   text?: string;
   images?: { url: string; alt?: string; width?: number; height?: number }[];
-  date: Date | string;
+  date: string;
 }
 
 export interface ChatDialog {
   id: string;
   title: string;
   messages: ChatMessage[];
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DialogsResponse {

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { useAppDispatch } from '../store/hooks';
 import { oauthLogin } from '../store/thunks/userThunks';
+import { API_ORIGIN } from '../utils/api';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('useOAuthCallback');
@@ -37,8 +38,7 @@ export const useOAuthCallback = () => {
     // Обработка postMessage от OAuth callback страницы
     const handleMessage = (event: MessageEvent) => {
       // Проверяем origin для безопасности (разрешаем сообщения от backend)
-      const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      const baseOrigin = apiBaseUrl.replace('/api/v1', '');
+      const baseOrigin = API_ORIGIN;
 
       if (event.origin.startsWith(baseOrigin) || event.origin === 'null') {
         try {

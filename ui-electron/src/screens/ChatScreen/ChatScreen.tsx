@@ -1,8 +1,9 @@
 import MenuIcon from '@mui/icons-material/Menu';
 import MicIcon from '@mui/icons-material/Mic';
-import SendIcon from '@mui/icons-material/Send';
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import { Box, IconButton, TextField, Typography, Paper, CircularProgress } from '@mui/material';
-import React, { useRef, useEffect, useMemo, useCallback } from 'react';
+import { EmojiClickData } from 'emoji-picker-react';
+import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ChatKeyboard from '../../components/ChatKeyboard/ChatKeyboard';
@@ -33,6 +34,8 @@ const ChatScreen: React.FC = () => {
   const { dialogs, currentDialogId, inputValue } = useAppSelector((state) => state.chat);
   const { llmProviderName, llmModel, theme, accentColorLight, accentColorDark, welcomeTitle } =
     useAppSelector((state) => state.settings);
+  const currentScreen = useAppSelector((state) => state.ui.currentScreen);
+  const isChatScreenActive = currentScreen === 'chat';
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
   const isRecording = useAppSelector((state) => state.voice.isRecording);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -49,9 +52,44 @@ const ChatScreen: React.FC = () => {
     return theme;
   }, [theme]);
 
-  const accentColor = effectiveTheme === 'dark' ? accentColorDark : accentColorLight;
+  const isDarkTheme = effectiveTheme === 'dark';
+  const accentColor = isDarkTheme ? accentColorDark : accentColorLight;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const latestInputValueRef = useRef(inputValue);
+  const [keyboardPortalEl, setKeyboardPortalEl] = useState<HTMLElement | null>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [isVirtualKeyboardOpen, setVirtualKeyboardOpen] = useState(false);
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const frame = requestAnimationFrame(() => {
+        setKeyboardPortalEl(document.body);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    return undefined;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleOpen: EventListener = () => {
+      setVirtualKeyboardOpen(true);
+    };
+    const handleClose: EventListener = () => {
+      setVirtualKeyboardOpen(false);
+    };
+
+    window.addEventListener('virtualKeyboardOpen', handleOpen);
+    window.addEventListener('virtualKeyboardClose', handleClose);
+
+    return () => {
+      window.removeEventListener('virtualKeyboardOpen', handleOpen);
+      window.removeEventListener('virtualKeyboardClose', handleClose);
+    };
+  }, []);
 
   // Получаем текущий диалог и сообщения
   const messages = useMemo(() => {
@@ -67,6 +105,17 @@ const ChatScreen: React.FC = () => {
   const welcomeScreenTitle = useMemo(() => {
     return welcomeTitle?.trim() ? welcomeTitle : DEFAULT_WELCOME_TITLE;
   }, [welcomeTitle]);
+
+  const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
+
+  const containerStyle = useMemo(
+    () =>
+      ({
+        '--keyboard-offset': `${keyboardOffset}px`,
+        '--keyboard-open': isVirtualKeyboardOpen ? '1' : '0',
+      }) as React.CSSProperties,
+    [keyboardOffset, isVirtualKeyboardOpen]
+  );
 
   // Загружаем информацию о LLM провайдере при монтировании
   useEffect(() => {
@@ -255,8 +304,34 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    latestInputValueRef.current = inputValue;
+  }, [inputValue]);
+
+  const handleEmojiSelect = useCallback(
+    (emojiData: EmojiClickData) => {
+      const currentValue = latestInputValueRef.current ?? '';
+      dispatch(setInputValue(`${currentValue}${emojiData.emoji}`));
+    },
+    [dispatch]
+  );
+
+  useEffect(() => {
+    if (!isChatScreenActive) {
+      const frame = requestAnimationFrame(() => {
+        setVirtualKeyboardOpen(false);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    return undefined;
+  }, [isChatScreenActive]);
+
   return (
-    <Box className={styles.container}>
+    <Box
+      className={styles.container}
+      data-keyboard-open={isVirtualKeyboardOpen ? 'true' : 'false'}
+      style={containerStyle}
+    >
       {/* Панель диалогов */}
       <DialogPanel />
 
@@ -320,7 +395,7 @@ const ChatScreen: React.FC = () => {
       </Box>
 
       {/* Поле ввода */}
-      <Paper elevation={3} className={styles.inputContainer}>
+      <Paper elevation={0} className={styles.inputContainer}>
         <Box className={styles.inputWrapper}>
           <TextField
             fullWidth
@@ -340,21 +415,15 @@ const ChatScreen: React.FC = () => {
               },
             }}
           />
-          <ChatKeyboard
-            value={inputValue}
-            onChange={(value) => dispatch(setInputValue(value))}
-            onEnter={handleSend}
-          />
           <IconButton
             color={isRecording ? 'error' : 'default'}
             onClick={handleRecord}
-            className={`${styles.recordButton} ${isRecording ? styles.recordButtonRecording : ''}`}
+            className={`${styles.actionButton} ${styles.recordButton} ${
+              isRecording ? styles.recordButtonRecording : ''
+            }`}
             title={isRecording ? t('chat.stopRecording') : t('chat.startRecording')}
             sx={{
               color: isRecording ? undefined : accentColor,
-              '&:hover': {
-                backgroundColor: isRecording ? undefined : `${accentColor}15`,
-              },
             }}
           >
             {isRecording ? (
@@ -365,13 +434,31 @@ const ChatScreen: React.FC = () => {
               <MicIcon />
             )}
           </IconButton>
+          {isChatScreenActive && (
+            <ChatKeyboard
+              value={inputValue}
+              onChange={(value) => dispatch(setInputValue(value))}
+              onEnter={handleSend}
+              portalContainer={keyboardPortalEl}
+              isDarkTheme={isDarkTheme}
+              onHeightChange={setKeyboardOffset}
+              onEmojiSelect={handleEmojiSelect}
+            />
+          )}
           <IconButton
-            color="primary"
+            className={`${styles.actionButton} ${styles.sendButton}`}
+            color="inherit"
             onClick={handleSend}
-            disabled={!inputValue.trim() || isRecording}
-            className={styles.sendButton}
+            disabled={!canSend || isRecording}
+            sx={{
+              color: !isRecording && canSend ? accentColor : 'var(--text-secondary)',
+            }}
           >
-            {isRecording ? <CircularProgress size={20} /> : <SendIcon />}
+            {isRecording ? (
+              <CircularProgress size={20} />
+            ) : (
+              <SendOutlinedIcon fontSize="small" className={styles.sendIcon} />
+            )}
           </IconButton>
         </Box>
       </Paper>

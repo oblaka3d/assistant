@@ -30,7 +30,7 @@ if (!rootElement) {
     // Экспортируем store в window для тестов и отладки
     // Включаем и в production для скриншотных тестов
     if (typeof window !== 'undefined') {
-      (window as any).__REDUX_STORE__ = store;
+      (window as unknown as { __REDUX_STORE__?: typeof store }).__REDUX_STORE__ = store;
     }
 
     root.render(

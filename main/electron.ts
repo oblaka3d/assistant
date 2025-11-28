@@ -49,14 +49,18 @@ function createWindow(): void {
   // Определяем dev режим
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
-  // Путь к UI файлам
-  // Всегда используем собранный файл из dist (работает и в dev, и в production)
+  // Пути к UI
   const htmlPath = path.join(__dirname, '../ui-electron/index.html');
+  const devServerUrl = process.env.UI_DEV_SERVER_URL || 'http://localhost:3000';
 
-  console.log('Loading HTML from:', htmlPath);
-  console.log('__dirname:', __dirname);
-  console.log('File exists:', fs.existsSync(htmlPath));
   console.log('Is dev mode:', isDev);
+  if (isDev) {
+    console.log('Loading UI from dev server:', devServerUrl);
+  } else {
+    console.log('Loading HTML from:', htmlPath);
+    console.log('__dirname:', __dirname);
+    console.log('File exists:', fs.existsSync(htmlPath));
+  }
 
   // Обработка OAuth callback - перехватываем навигацию на callback URL с токенами
   mainWindow.webContents.on('did-navigate', (_event, url) => {
@@ -104,16 +108,15 @@ function createWindow(): void {
     console.error('Render process gone:', details);
   });
 
-  // В dev режиме можно использовать Vite dev server (раскомментировать если нужно):
-  // if (isDev) {
-  //   mainWindow.loadURL('http://localhost:3000');
-  // } else {
-  //   mainWindow.loadFile(htmlPath);
-  // }
-
-  mainWindow.loadFile(htmlPath).catch((error) => {
-    console.error('Error loading file:', error);
-  });
+  if (isDev) {
+    mainWindow.loadURL(devServerUrl).catch((error) => {
+      console.error('Error loading dev server URL:', error);
+    });
+  } else {
+    mainWindow.loadFile(htmlPath).catch((error) => {
+      console.error('Error loading file:', error);
+    });
+  }
 
   mainWindow.on('closed', () => {
     mainWindow = null;

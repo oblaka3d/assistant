@@ -83,7 +83,7 @@ export const stopRecordingAndProcess = createAsyncThunk(
           position: 'right',
           type: 'text',
           text: transcribedText,
-          date: new Date(),
+          date: new Date().toISOString(),
         })
       );
 
@@ -100,7 +100,7 @@ export const stopRecordingAndProcess = createAsyncThunk(
             position: 'left',
             type: 'text',
             text: response,
-            date: new Date(),
+            date: new Date().toISOString(),
           })
         );
       }

@@ -59,7 +59,11 @@
     "recording": "录音中...",
     "startRecording": "开始语音录音",
     "stopRecording": "停止录音",
-    "keyboardLanguage": "键盘语言"
+    "keyboardLanguage": "键盘语言",
+    "showKeyboard": "显示键盘",
+    "hideKeyboard": "隐藏键盘",
+    "emojiPickerLabel": "表情选择器",
+    "emojiSearchPlaceholder": "搜索表情"
   },
   "settings": {
     "title": "设置",

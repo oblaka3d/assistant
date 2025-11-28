@@ -16,15 +16,7 @@ export const store = configureStore({
     user: userReducer,
     apiKeys: apiKeysReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        // Игнорируем Date объекты и другие несериализуемые значения
-        ignoredActions: ['chat/addMessage', 'chat/setMessages'],
-        ignoredActionPaths: ['payload.date', 'payload.timestamp'],
-        ignoredPaths: ['chat.messages'],
-      },
-    }),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

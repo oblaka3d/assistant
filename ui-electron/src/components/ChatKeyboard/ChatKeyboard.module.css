@@ -1,29 +1,59 @@
 .keyboardToggle {
-  margin-left: 0.25rem;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
 }
 
 .keyboardControls {
   display: flex;
   align-items: center;
+  margin-left: 0;
   gap: 0.25rem;
-  margin-left: 0.5rem;
 }
 
-.keyboardLanguageButton {
-  text-transform: none;
-  min-width: 64px;
-  padding: 0.2rem 0.6rem;
-  border-color: var(--divider);
-  color: var(--text-primary);
+.keyboardPortal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4000;
+}
+
+.keyboardPanel {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background-color: var(--surface);
+  pointer-events: auto;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.keyboardPanelDark {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .keyboardWrapper {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--divider);
-  position: relative;
-  z-index: 100;
-  pointer-events: auto;
+  width: 100%;
+  padding: 0.5rem 1rem 1rem;
+}
+
+.keyboardWrapperDark :global(.hg-theme-default) {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.keyboardWrapperDark :global(.hg-button) {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #f5f5f5 !important;
+  background-color: transparent !important;
 }
 
 .keyboardTheme {
@@ -31,26 +61,122 @@
 }
 
 .keyboardWrapper :global(.hg-theme-default) {
-  background-color: var(--surface);
-  border-radius: 12px;
-  box-shadow: none;
-  padding: 0.5rem;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.keyboardWrapper :global(.hg-button[data-skbtn='{space}']) {
+  flex: 1 1 auto !important;
+  min-width: 220px !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+.keyboardWrapper :global(.hg-button[data-skbtn='{lang}']),
+.keyboardWrapper :global(.hg-button[data-skbtn='{emoji}']) {
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.95rem !important;
+}
+
+:global(.chat-emoji-key),
+:global(.chat-language-key) {
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.95rem !important;
+}
+
+:global(.chat-emoji-key) {
+  font-size: 1.1rem !important;
 }
 
 .keyboardWrapper :global(.hg-button) {
-  background-color: transparent;
-  border: 1px solid var(--divider);
-  color: var(--text-primary);
+  background-color: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-primary) !important;
+  border-radius: 10px !important;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
 }
 
 .keyboardWrapper :global(.hg-button:hover) {
-  background-color: var(--surface-hover);
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .keyboardWrapper :global(.hg-button:active) {
-  background-color: var(--primary-hover-light);
-  color: var(--primary-contrast-text);
+  background-color: var(--primary-hover-light) !important;
+  color: var(--primary-contrast-text) !important;
+}
+
+.keyboardWrapperDark :global(.hg-button:hover) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.keyboardWrapperDark :global(.hg-button:active) {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #1a1a1a !important;
+}
+
+.emojiPanel {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background-color: var(--surface);
+  padding: 0;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.emojiInlineBackButton:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+.emojiInlineBackButton:active {
+  transform: scale(0.96);
+}
+
+/* Стили скролла для emojiPanel */
+.emojiPanel :global(.EmojiPickerReact .epr-body) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb, rgba(0, 0, 0, 0.2)) transparent;
+  padding-bottom: 0.5rem !important;
+}
+
+.emojiPanel :global(.EmojiPickerReact .epr-body::-webkit-scrollbar) {
+  width: 6px;
+}
+
+.emojiPanel :global(.EmojiPickerReact .epr-body::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.emojiPanel :global(.EmojiPickerReact .epr-body::-webkit-scrollbar-thumb) {
+  background: var(--scrollbar-thumb, rgba(0, 0, 0, 0.18));
+  border-radius: 3px;
+}
+
+.emojiPanel :global(.EmojiPickerReact .epr-body::-webkit-scrollbar-thumb:hover) {
+  background: var(--scrollbar-thumb-hover, rgba(0, 0, 0, 0.28));
+}
+
+@media (prefers-color-scheme: dark) {
+  .emojiPanel :global(.EmojiPickerReact .epr-body) {
+    scrollbar-color: var(--scrollbar-thumb-dark, rgba(255, 255, 255, 0.25)) transparent;
+  }
 }

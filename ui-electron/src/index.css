@@ -22,6 +22,7 @@
   --nav-base-offset: 8px;
   --nav-chat-offset: 72px;
   --keyboard-offset: 0px;
+  --keyboard-open: 0;
 }
 
 /* Light theme */
@@ -46,6 +47,7 @@
   --nav-base-offset: 8px;
   --nav-chat-offset: 72px;
   --keyboard-offset: 0px;
+  --keyboard-open: 0;
 }
 
 * {

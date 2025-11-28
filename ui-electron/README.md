@@ -27,9 +27,30 @@ src/
 
 Круговая навигация свайпами: `main ↔ chat ↔ menu`
 
+## Особенности Chat Screen
+
+- Экранная клавиатура с поддержкой EN/RU/ZH и переключением раскладки
+- Авто-смещение поля ввода и истории чата по высоте клавиатуры (`--keyboard-offset`)
+- Управление с клавиатуры Playwright-тестами через `data-testid` (`chat-keyboard-toggle`)
+
 ## Разработка
 
 ```bash
-npm run dev:ui    # Hot reload
-npm run build:ui  # Production сборка
+# Из корня репозитория: полный dev-режим (Vite + Electron)
+npm run dev
+
+# Только UI (без Electron) — полезно для работы с компонентами
+npm run dev:ui
+
+# Прод-сборка UI
+npm run build:ui
+```
+
+### Переменные окружения
+
+UI может использовать `VITE_API_URL` для указания backend API (по умолчанию `http://localhost:3001/api/v1`):
+
+```bash
+# ui-electron/.env.local
+VITE_API_URL=http://localhost:3001/api/v1
 ```

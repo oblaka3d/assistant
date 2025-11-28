@@ -415,7 +415,7 @@
   ```bash
   cd /home/pi/voice-assistant-arm
   npm run build
-  npm run electron:window
+  npm run start:window
   ```
 - [ ] Проверка загрузки Unity персонажа
 - [ ] Проверка переключения анимаций (Idle, Listening, Thinking, Talking)
@@ -494,7 +494,7 @@
   Environment="DISPLAY=:0"
   Environment="XAUTHORITY=/home/pi/.Xauthority"
   Environment="NODE_ENV=production"
-  ExecStart=/usr/bin/npm run electron
+  ExecStart=/usr/bin/npm run start
   Restart=always
   RestartSec=10
   StandardOutput=journal
@@ -686,7 +686,7 @@
 - [ ] API ключи настроены в `.env`
 - [ ] Unity билд скопирован в `unity/Build/`
 - [ ] Приложение собирается без ошибок: `npm run build`
-- [ ] Тестовый запуск прошел успешно: `npm run electron:window`
+- [ ] Тестовый запуск прошел успешно: `npm run start:window`
 
 ---
 

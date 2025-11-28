@@ -13,8 +13,7 @@ interface ScreenHeaderProps {
 }
 
 const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack, action, startAction }) => {
-  const currentScreen = useAppSelector((state) => state.ui.currentScreen);
-  const isChatScreenActive = currentScreen === 'chat';
+  useAppSelector((state) => state.ui.currentScreen);
   return (
     <AppBar
       position="static"
@@ -45,10 +44,6 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, onBack, action, star
               mr: onBack ? 1 : 2,
               display: 'flex',
               alignItems: 'center',
-              transform: isChatScreenActive
-                ? `translateY(calc(var(--keyboard-offset, 0px) * -1))`
-                : 'none',
-              transition: 'transform 0.3s ease',
             }}
           >
             {startAction}

@@ -6,7 +6,7 @@ export interface Message {
   type: 'text' | 'markdown' | 'image';
   text?: string;
   images?: MessageImage[];
-  date: Date;
+  date: string; // ISO string to keep state serializable
 }
 
 export interface MessageImage {
@@ -20,8 +20,8 @@ export interface Dialog {
   id: string;
   title: string;
   messages: Message[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ChatState {
@@ -31,13 +31,16 @@ interface ChatState {
   dialogPanelOpen: boolean;
 }
 
-const createEmptyDialog = (dialogId?: string): Dialog => ({
-  id: dialogId || Date.now().toString(),
-  title: 'Новый диалог',
-  messages: [], // Пустой массив - приветствие показывается через экран приветствия
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
+const createEmptyDialog = (dialogId?: string): Dialog => {
+  const now = new Date().toISOString();
+  return {
+    id: dialogId || Date.now().toString(),
+    title: 'Новый диалог',
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+};
 
 const defaultDialog: Dialog = createEmptyDialog('default');
 
@@ -55,8 +58,12 @@ const chatSlice = createSlice({
     addMessage: (state, action: PayloadAction<Message>) => {
       const dialog = state.dialogs.find((d) => d.id === state.currentDialogId);
       if (dialog) {
-        dialog.messages.push(action.payload);
-        dialog.updatedAt = new Date();
+        const message: Message = {
+          ...action.payload,
+          date: action.payload.date || new Date().toISOString(),
+        };
+        dialog.messages.push(message);
+        dialog.updatedAt = new Date().toISOString();
         // Обновляем заголовок диалога на основе первого сообщения пользователя
         if (dialog.messages.length === 2 && dialog.title === 'Новый диалог') {
           const firstUserMessage = dialog.messages.find((m) => m.position === 'right');
@@ -70,7 +77,7 @@ const chatSlice = createSlice({
       const dialog = state.dialogs.find((d) => d.id === action.payload.dialogId);
       if (dialog) {
         dialog.messages = action.payload.messages;
-        dialog.updatedAt = new Date();
+        dialog.updatedAt = new Date().toISOString();
       }
     },
     setInputValue: (state, action: PayloadAction<string>) => {
@@ -83,7 +90,7 @@ const chatSlice = createSlice({
       const dialog = state.dialogs.find((d) => d.id === state.currentDialogId);
       if (dialog) {
         dialog.messages = [];
-        dialog.updatedAt = new Date();
+        dialog.updatedAt = new Date().toISOString();
       }
     },
     // Диалоги

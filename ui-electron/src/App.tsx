@@ -46,6 +46,17 @@ function RouterSync() {
   const currentScreen = useAppSelector((state) => state.ui.currentScreen);
   const subScreen = useAppSelector((state) => state.ui.subScreen);
 
+  const currentScreenRef = useRef(currentScreen);
+  const subScreenRef = useRef(subScreen);
+
+  useEffect(() => {
+    currentScreenRef.current = currentScreen;
+  }, [currentScreen]);
+
+  useEffect(() => {
+    subScreenRef.current = subScreen;
+  }, [subScreen]);
+
   // Синхронизация URL -> Redux при изменении URL
   useEffect(() => {
     const path = location.pathname;
@@ -66,7 +77,7 @@ function RouterSync() {
     }
 
     // Обновляем Redux только если отличается
-    if (screen !== currentScreen) {
+    if (screen !== currentScreenRef.current) {
       dispatch(setScreen(screen));
     }
 
@@ -74,14 +85,16 @@ function RouterSync() {
     if (screen === 'menu') {
       const validSubScreens = ['settings', 'apiKeys', 'logs', 'about', 'auth'];
       if (sub && validSubScreens.includes(sub)) {
-        if (sub !== subScreen) {
+        if (sub !== subScreenRef.current) {
           dispatch(openSubScreen(sub as SubScreen));
         }
-      } else if (subScreen !== null) {
+      } else if (subScreenRef.current !== null) {
         dispatch(closeSubScreen());
       }
+    } else if (subScreenRef.current !== null) {
+      dispatch(closeSubScreen());
     }
-  }, [location.pathname, dispatch, currentScreen, subScreen]);
+  }, [location.pathname, dispatch]);
 
   // Синхронизация Redux -> URL при изменении экрана
   useEffect(() => {
@@ -110,6 +123,7 @@ function AppContent() {
   const idleRemoteEndpoint = useAppSelector((state) => state.settings.idleRemoteEndpoint);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
+  const [isVirtualKeyboardOpen, setVirtualKeyboardOpen] = useState(false);
 
   // Используем хуки для темы и CSS переменных
   const { effectiveTheme } = useTheme();
@@ -161,6 +175,23 @@ function AppContent() {
 
     loadLLMProviderInfo();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleKeyboardOpen = () => setVirtualKeyboardOpen(true);
+    const handleKeyboardClose = () => setVirtualKeyboardOpen(false);
+
+    window.addEventListener('virtualKeyboardOpen', handleKeyboardOpen);
+    window.addEventListener('virtualKeyboardClose', handleKeyboardClose);
+
+    return () => {
+      window.removeEventListener('virtualKeyboardOpen', handleKeyboardOpen);
+      window.removeEventListener('virtualKeyboardClose', handleKeyboardClose);
+    };
+  }, []);
 
   // Сброс isTransitioning после завершения анимации
   useEffect(() => {
@@ -247,7 +278,6 @@ function AppContent() {
       <CssBaseline />
       <RouterSync />
       <div ref={containerRef} className={styles.appContainer}>
-        {/* Строка состояния */}
         <StatusBar />
         <div
           className={styles.screensContainer}
@@ -290,30 +320,31 @@ function AppContent() {
             </Suspense>
           </div>
         </div>
-        {/* Индикаторы навигации */}
-        <NavigationIndicators />
-        <div className={styles.navButtons}>
-          <IconButton
-            size="large"
-            className={`${styles.navButton} ${styles.navButtonLeft}`}
-            onClick={handleNavigateLeft}
-            title={t('ui.prevScreen')}
-            aria-label={t('ui.prevScreen')}
-            disabled={!canNavigate}
-          >
-            <NavigateBeforeIcon />
-          </IconButton>
-          <IconButton
-            size="large"
-            className={`${styles.navButton} ${styles.navButtonRight}`}
-            onClick={handleNavigateRight}
-            title={t('ui.nextScreen')}
-            aria-label={t('ui.nextScreen')}
-            disabled={!canNavigate}
-          >
-            <NavigateNextIcon />
-          </IconButton>
-        </div>
+        {!isVirtualKeyboardOpen && <NavigationIndicators />}
+        {!isVirtualKeyboardOpen && (
+          <div className={styles.navButtons}>
+            <IconButton
+              size="large"
+              className={`${styles.navButton} ${styles.navButtonLeft}`}
+              onClick={handleNavigateLeft}
+              title={t('ui.prevScreen')}
+              aria-label={t('ui.prevScreen')}
+              disabled={!canNavigate}
+            >
+              <NavigateBeforeIcon />
+            </IconButton>
+            <IconButton
+              size="large"
+              className={`${styles.navButton} ${styles.navButtonRight}`}
+              onClick={handleNavigateRight}
+              title={t('ui.nextScreen')}
+              aria-label={t('ui.nextScreen')}
+              disabled={!canNavigate}
+            >
+              <NavigateNextIcon />
+            </IconButton>
+          </div>
+        )}
         {isIdle && (
           <IdleScreen
             key={idleRefreshKey}

@@ -18,12 +18,7 @@ test.describe('MainScreen Visual Tests', () => {
     await waitForAppReady(page);
 
     // Переключаемся на главный экран (с небольшим запасом по времени)
-    try {
-      await navigateToScreen(page, 'main');
-    } catch (error) {
-      // Если навигация не сработала, даем короткий запас и продолжаем
-      await page.waitForTimeout(500);
-    }
+    await navigateToScreen(page, 'main').catch(() => page.waitForTimeout(500));
   });
 
   test('MainScreen - Light Theme', async ({ page }) => {

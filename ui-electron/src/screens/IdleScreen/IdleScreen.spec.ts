@@ -36,7 +36,7 @@ test.describe('IdleScreen Visual Tests', () => {
       // Пытаемся найти и вызвать функцию активации idle через React компонент
       // Или используем прямое изменение через глобальный объект
       // Для тестов создаем специальный триггер
-      (window as any).__FORCE_IDLE__ = true;
+      (window as Window & { __FORCE_IDLE__?: boolean }).__FORCE_IDLE__ = true;
       const event = new CustomEvent('forceIdle', { detail: { force: true } });
       window.dispatchEvent(event);
     });

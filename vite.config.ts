@@ -5,16 +5,23 @@ import { defineConfig } from 'vite';
 
 const vendorChunkPatterns: Array<[string, RegExp]> = [
   ['three', /[/\\]three[/\\]/],
-  ['mui', /[/\\]@mui[/\\]|[/\\]@emotion[/\\]/],
-  ['react-vendor', /react(-dom|-redux)?[/\\]/],
+  // MUI выносим отдельно, но @emotion/react оставляем рядом с React в основном bundle
+  ['mui', /[/\\]@mui[/\\]/],
   ['markdown', /react-markdown|remark|react-syntax-highlighter/],
 ];
 
-export default defineConfig({
+// React и react-redux должны быть в основном bundle, чтобы избежать проблем с порядком загрузки
+// и ошибок типа "Cannot read properties of undefined (reading 'useSyncExternalStore')"
+// Также держим @emotion/react рядом с React
+const reactPattern = /react(-dom|-redux)?[/\\]|@emotion[/\\]react[/\\]/;
+
+export default defineConfig(({ command }) => ({
   plugins: [react()],
   root: 'ui-electron',
   base: './', // Используем относительные пути для работы в Electron
   build: {
+    // Sourcemap только в dev (serve), чтобы не раздувать прод-сборку
+    sourcemap: command === 'serve',
     outDir: '../dist/ui-electron',
     emptyOutDir: true,
     copyPublicDir: true, // Явно указываем, что нужно копировать public директорию
@@ -26,6 +33,12 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          // React и react-redux должны оставаться в основном bundle
+          // чтобы избежать ошибок с useSyncExternalStore
+          if (reactPattern.test(id)) {
             return undefined;
           }
 
@@ -52,4 +65,4 @@ export default defineConfig({
     port: 3000,
   },
   publicDir: 'public', // Относительно root (ui-electron)
-});
+}));

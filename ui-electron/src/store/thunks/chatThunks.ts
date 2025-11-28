@@ -59,7 +59,7 @@ export const sendMessage = createAsyncThunk(
       position: 'right' as const,
       type: 'text' as const,
       text,
-      date: new Date(),
+      date: new Date().toISOString(),
     };
 
     dispatch(addMessage(userMessage));
@@ -75,7 +75,7 @@ export const sendMessage = createAsyncThunk(
         position: 'left' as const,
         type: 'text' as const,
         text: response || t('ui.errorSorry'),
-        date: new Date(),
+        date: new Date().toISOString(),
       };
 
       dispatch(addMessage(assistantMessage));
@@ -95,7 +95,7 @@ export const sendMessage = createAsyncThunk(
         position: 'left' as const,
         type: 'text' as const,
         text: t('ui.errorMessage'),
-        date: new Date(),
+        date: new Date().toISOString(),
       };
 
       dispatch(addMessage(errorMessage));
@@ -172,10 +172,10 @@ export const fetchDialogs = createAsyncThunk(
         title: dialog.title,
         messages: dialog.messages.map((msg) => ({
           ...msg,
-          date: new Date(msg.date),
+          date: new Date(msg.date).toISOString(),
         })),
-        createdAt: new Date(dialog.createdAt),
-        updatedAt: new Date(dialog.updatedAt),
+        createdAt: new Date(dialog.createdAt).toISOString(),
+        updatedAt: new Date(dialog.updatedAt).toISOString(),
       }));
 
       dispatch(setDialogs(dialogs));
@@ -219,10 +219,10 @@ export const saveDialog = createAsyncThunk(
         title: response.data.dialog.title,
         messages: response.data.dialog.messages.map((msg) => ({
           ...msg,
-          date: new Date(msg.date),
+          date: new Date(msg.date).toISOString(),
         })),
-        createdAt: new Date(response.data.dialog.createdAt),
-        updatedAt: new Date(response.data.dialog.updatedAt),
+        createdAt: new Date(response.data.dialog.createdAt).toISOString(),
+        updatedAt: new Date(response.data.dialog.updatedAt).toISOString(),
       };
 
       dispatch(syncDialog(dialog));
@@ -260,10 +260,10 @@ export const createDialogOnServer = createAsyncThunk(
         title: response.data.dialog.title,
         messages: response.data.dialog.messages.map((msg) => ({
           ...msg,
-          date: new Date(msg.date),
+          date: new Date(msg.date).toISOString(),
         })),
-        createdAt: new Date(response.data.dialog.createdAt),
-        updatedAt: new Date(response.data.dialog.updatedAt),
+        createdAt: new Date(response.data.dialog.createdAt).toISOString(),
+        updatedAt: new Date(response.data.dialog.updatedAt).toISOString(),
       };
 
       dispatch(syncDialog(dialog));

@@ -59,7 +59,11 @@
     "recording": "Запись...",
     "startRecording": "Начать запись голоса",
     "stopRecording": "Остановить запись",
-    "keyboardLanguage": "Язык клавиатуры"
+    "keyboardLanguage": "Язык клавиатуры",
+    "showKeyboard": "Показать клавиатуру",
+    "hideKeyboard": "Скрыть клавиатуру",
+    "emojiPickerLabel": "Выбор смайликов",
+    "emojiSearchPlaceholder": "Поиск эмодзи"
   },
   "settings": {
     "title": "Настройки",
