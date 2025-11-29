@@ -62,6 +62,44 @@ function createWindow(): void {
     console.log('File exists:', fs.existsSync(htmlPath));
   }
 
+  // Разрешаем навигацию на внешние URL (для OAuth)
+  mainWindow.webContents.setWindowOpenHandler(() => {
+    // Разрешаем открытие внешних URL в том же окне
+    return { action: 'allow' };
+  });
+
+  // Обработка навигации - разрешаем внешние URL для OAuth
+  mainWindow.webContents.on('will-navigate', (_event, navigationUrl) => {
+    if (!mainWindow) return;
+
+    try {
+      const urlObj = new URL(navigationUrl);
+
+      // Разрешаем навигацию на backend URL (для OAuth)
+      if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+        // Разрешаем навигацию на localhost (OAuth backend)
+        return;
+      }
+
+      // Разрешаем навигацию на внешние OAuth провайдеры (Google, Yandex, GitHub)
+      if (
+        urlObj.hostname.includes('google.com') ||
+        urlObj.hostname.includes('yandex.ru') ||
+        urlObj.hostname.includes('github.com') ||
+        urlObj.hostname.includes('accounts.google.com') ||
+        urlObj.hostname.includes('oauth.yandex.ru')
+      ) {
+        // Разрешаем навигацию на OAuth провайдеры
+        return;
+      }
+
+      // Для всех остальных внешних URL - разрешаем (может быть callback)
+      // Electron по умолчанию блокирует внешние URL, но для OAuth нужно разрешить
+    } catch {
+      // Игнорируем ошибки парсинга URL
+    }
+  });
+
   // Обработка OAuth callback - перехватываем навигацию на callback URL с токенами
   mainWindow.webContents.on('did-navigate', (_event, url) => {
     if (!mainWindow) return;
@@ -71,16 +109,46 @@ function createWindow(): void {
       const token = urlObj.searchParams.get('token');
       const refreshToken = urlObj.searchParams.get('refreshToken');
 
-      // Если это OAuth callback с токенами, загружаем index.html с токенами
-      if (token && refreshToken && urlObj.pathname.includes('/auth/')) {
-        const htmlPath = path.join(__dirname, '../ui-electron/index.html');
-        const callbackUrl = `file://${htmlPath}?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken)}`;
-        mainWindow.loadURL(callbackUrl).catch((error) => {
-          console.error('Error loading OAuth callback:', error);
-        });
+      // Проверяем, что это callback URL с токенами (не главная страница приложения)
+      const isCallbackUrl =
+        urlObj.pathname.includes('/auth/') || urlObj.pathname.includes('/callback-success');
+      const isMainAppUrl =
+        urlObj.hostname === 'localhost' && (urlObj.port === '3000' || urlObj.port === '');
+      const isFileUrl = urlObj.protocol === 'file:';
+
+      // Если это OAuth callback с токенами И это не главная страница приложения
+      if (token && refreshToken && (isCallbackUrl || (!isMainAppUrl && !isFileUrl))) {
+        const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+        const devServerUrl = process.env.UI_DEV_SERVER_URL || 'http://localhost:3000';
+
+        console.log('OAuth callback detected, redirecting to main app...');
+        console.log('Token present:', !!token);
+        console.log('RefreshToken present:', !!refreshToken);
+
+        if (isDev) {
+          // В dev режиме редиректим на dev server с токенами
+          const callbackUrl = `${devServerUrl}/?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken)}`;
+          console.log('Redirecting to:', callbackUrl);
+          // Используем setTimeout для гарантии, что навигация завершена
+          setTimeout(() => {
+            mainWindow?.loadURL(callbackUrl).catch((error) => {
+              console.error('Error loading OAuth callback:', error);
+            });
+          }, 100);
+        } else {
+          // В production загружаем файл с токенами
+          const htmlPath = path.join(__dirname, '../ui-electron/index.html');
+          const callbackUrl = `file://${htmlPath}?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken)}`;
+          console.log('Redirecting to:', callbackUrl);
+          setTimeout(() => {
+            mainWindow?.loadURL(callbackUrl).catch((error) => {
+              console.error('Error loading OAuth callback:', error);
+            });
+          }, 100);
+        }
       }
-    } catch {
-      // Игнорируем ошибки парсинга URL
+    } catch (error) {
+      console.error('Error processing OAuth callback:', error);
     }
   });
 

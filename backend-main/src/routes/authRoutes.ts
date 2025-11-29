@@ -182,4 +182,90 @@ router.get(
   githubCallbackController
 );
 
+/**
+ * @route   GET /auth/callback-success
+ * @desc    Страница успешной OAuth авторизации для Electron
+ * @access  Public
+ */
+router.get('/callback-success', (_req, res) => {
+  const token = _req.query.token as string;
+  const refreshToken = _req.query.refreshToken as string;
+
+  if (!token || !refreshToken) {
+    res.status(400).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Authorization Failed</title>
+        <meta charset="UTF-8">
+      </head>
+      <body>
+        <p>Authorization failed: Missing tokens.</p>
+      </body>
+      </html>
+    `);
+    return;
+  }
+
+  // Отдаем HTML страницу, которая обработает токены
+  // В Electron приложении useOAuthCallback обработает токены из URL параметров
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Authorization Successful</title>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+          background: #f5f5f5;
+        }
+        .container {
+          text-align: center;
+          padding: 2rem;
+        }
+        .success {
+          color: #4caf50;
+          font-size: 1.2rem;
+          margin-bottom: 1rem;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="success">✓ Authorization successful</div>
+        <p>This window will close automatically...</p>
+      </div>
+      <script>
+        // Отправляем токены родительскому окну через postMessage (если есть opener)
+        if (window.opener) {
+          try {
+            window.opener.postMessage({
+              type: 'oauth-callback',
+              token: ${JSON.stringify(token)},
+              refreshToken: ${JSON.stringify(refreshToken)}
+            }, '*');
+          } catch (e) {
+            console.error('Failed to send postMessage:', e);
+          }
+          setTimeout(() => {
+            window.close();
+          }, 500);
+        } else {
+          // В Electron приложении Electron сам перехватит этот URL с токенами
+          // и загрузит главную страницу через обработчик did-navigate
+          // Просто показываем сообщение об успехе
+          document.body.innerHTML = '<div style="text-align: center; padding: 2rem;"><div style="color: #4caf50; font-size: 1.2rem; margin-bottom: 1rem;">✓ Authorization successful</div><p>Redirecting...</p></div>';
+        }
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 export default router;

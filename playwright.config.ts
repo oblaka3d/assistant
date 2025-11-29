@@ -16,8 +16,6 @@ export default defineConfig({
     timeout: 5000,
     /* Настройки для скриншотов */
     toHaveScreenshot: {
-      /* Используем кроссплатформенные снапшоты (без суффикса платформы) */
-      mode: 'precise',
       /* Сохраняем actual скриншоты рядом с тестовыми файлами */
       animations: 'disabled',
     },

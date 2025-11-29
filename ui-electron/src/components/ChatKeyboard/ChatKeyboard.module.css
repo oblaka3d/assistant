@@ -179,3 +179,8 @@
     scrollbar-color: var(--scrollbar-thumb-dark, rgba(255, 255, 255, 0.25)) transparent;
   }
 }
+
+/* Скрываем навигацию по категориям emoji */
+.emojiPanel :global(.EmojiPickerReact .epr-category-nav) {
+  display: none !important;
+}

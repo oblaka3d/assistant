@@ -40,7 +40,10 @@ export const googleCallbackController = async (
     const refreshTokenParam = encodeURIComponent(user.refreshToken);
 
     // Редиректим на специальный URL, который Electron обработает
-    res.redirect(`/auth/callback-success?token=${tokenParam}&refreshToken=${refreshTokenParam}`);
+    // Используем полный путь с префиксом API
+    res.redirect(
+      `/api/v1/auth/callback-success?token=${tokenParam}&refreshToken=${refreshTokenParam}`
+    );
   } catch (error) {
     next(error);
   }
@@ -75,7 +78,10 @@ export const yandexCallbackController = async (
     const refreshTokenParam = encodeURIComponent(user.refreshToken);
 
     // Редиректим на специальный URL, который Electron обработает
-    res.redirect(`/auth/callback-success?token=${tokenParam}&refreshToken=${refreshTokenParam}`);
+    // Используем полный путь с префиксом API
+    res.redirect(
+      `/api/v1/auth/callback-success?token=${tokenParam}&refreshToken=${refreshTokenParam}`
+    );
   } catch (error) {
     next(error);
   }
@@ -110,7 +116,10 @@ export const githubCallbackController = async (
     const refreshTokenParam = encodeURIComponent(user.refreshToken);
 
     // Редиректим на специальный URL, который Electron обработает
-    res.redirect(`/auth/callback-success?token=${tokenParam}&refreshToken=${refreshTokenParam}`);
+    // Используем полный путь с префиксом API
+    res.redirect(
+      `/api/v1/auth/callback-success?token=${tokenParam}&refreshToken=${refreshTokenParam}`
+    );
   } catch (error) {
     next(error);
   }

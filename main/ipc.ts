@@ -222,8 +222,10 @@ function handleOAuthCallback(
   try {
     const urlObj = new URL(url);
 
-    // Проверяем, является ли это callback URL (может быть /auth/callback или полный путь)
-    const isCallbackPath = urlObj.pathname.includes('/auth/callback');
+    // Проверяем, является ли это callback URL
+    // Может быть /auth/callback или /api/v1/auth/callback-success
+    const isCallbackPath =
+      urlObj.pathname.includes('/auth/callback') || urlObj.pathname.includes('/callback-success');
     const hasTokens = urlObj.searchParams.has('token') && urlObj.searchParams.has('refreshToken');
 
     if (isCallbackPath && hasTokens) {

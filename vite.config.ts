@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 const vendorChunkPatterns: Array<[string, RegExp]> = [
   ['three', /[/\\]three[/\\]/],
   // MUI выносим отдельно, но @emotion/react оставляем рядом с React в основном bundle
+  // Важно: проверяем @emotion/react ПЕРЕД MUI, чтобы он не попал в mui chunk
   ['mui', /[/\\]@mui[/\\]/],
   ['markdown', /react-markdown|remark|react-syntax-highlighter/],
 ];
@@ -13,6 +14,7 @@ const vendorChunkPatterns: Array<[string, RegExp]> = [
 // React и react-redux должны быть в основном bundle, чтобы избежать проблем с порядком загрузки
 // и ошибок типа "Cannot read properties of undefined (reading 'useSyncExternalStore')"
 // Также держим @emotion/react рядом с React
+// ВАЖНО: @emotion/react должен быть исключен из всех vendor chunks
 const reactPattern = /react(-dom|-redux)?[/\\]|@emotion[/\\]react[/\\]/;
 
 export default defineConfig(({ command }) => ({
@@ -36,13 +38,20 @@ export default defineConfig(({ command }) => ({
             return undefined;
           }
 
-          // React и react-redux должны оставаться в основном bundle
-          // чтобы избежать ошибок с useSyncExternalStore
+          // React, react-dom, react-redux и @emotion/react должны оставаться в основном bundle
+          // чтобы избежать ошибок с useSyncExternalStore и __SECRET_INTERNALS
+          // ВАЖНО: проверяем это ПЕРВЫМ, до всех других проверок
           if (reactPattern.test(id)) {
             return undefined;
           }
 
+          // Проверяем vendor chunks
+          // ВАЖНО: @emotion/react не должен попадать в mui chunk
           for (const [chunkName, pattern] of vendorChunkPatterns) {
+            // Пропускаем @emotion/react даже если он попадает под паттерн MUI
+            if (chunkName === 'mui' && id.includes('@emotion/react')) {
+              continue;
+            }
             if (pattern.test(id)) {
               return chunkName;
             }

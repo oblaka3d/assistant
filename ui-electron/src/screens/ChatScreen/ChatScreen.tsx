@@ -115,14 +115,15 @@ const ChatScreen: React.FC = () => {
 
   // Вычисляем высоту контейнера сообщений
   const messagesContainerHeight = useMemo(() => {
-    // Высота экрана минус высота StatusBar (24px), высота header (56px), высота input контейнера (примерно 60px) и высота клавиатуры
+    // Высота экрана минус высота StatusBar (24px), высота header (56px), высота input контейнера (примерно 60px), базовый отступ (24px), дополнительный отступ для клавиатуры (8px) и высота клавиатуры
     const statusBarHeight = 24; // Высота StatusBar
     const headerHeight = 56; // Высота ScreenHeader (AppBar с Toolbar)
     const inputContainerHeight = 60; // Примерная высота input контейнера
-    const totalFixedHeight = statusBarHeight + headerHeight + inputContainerHeight;
+    const baseMargin = 17; // Базовый отступ снизу
+    const totalFixedHeight = statusBarHeight + headerHeight + inputContainerHeight + baseMargin;
     const availableHeight = `calc(100vh - ${totalFixedHeight}px - ${keyboardOffset}px)`;
     return availableHeight;
-  }, [keyboardOffset]);
+  }, [keyboardOffset, isVirtualKeyboardOpen]);
 
   const containerStyle = useMemo(
     () =>

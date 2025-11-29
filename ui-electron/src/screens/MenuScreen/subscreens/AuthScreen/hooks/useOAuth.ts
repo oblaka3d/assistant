@@ -29,10 +29,13 @@ export const useOAuth = (): UseOAuthReturn => {
     }
   }, [isAuthenticated, dispatch]);
 
-  // Переход на OAuth URL
+  // Переход на OAuth URL в том же окне
   useEffect(() => {
     if (oauthProvider) {
-      window.location.href = getOAuthUrl(oauthProvider);
+      const oauthUrl = getOAuthUrl(oauthProvider);
+      // Переходим на OAuth URL в том же окне
+      // useOAuthCallback обработает токены из URL после редиректа
+      window.location.href = oauthUrl;
     }
   }, [oauthProvider]);
 
