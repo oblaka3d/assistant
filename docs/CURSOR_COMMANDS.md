@@ -2,6 +2,9 @@
 
 ## Разработка
 
+> Репозиторий собран на **npm workspaces**. Базовые команды (`npm run dev`, `npm run build`, `npm test`, `npm run lint`) проксируются в workspace `@assistant/desktop`.  
+> Любые другие скрипты из desktop-пакета запускайте через `npm run <script> --workspace @assistant/desktop`.
+
 ### Основные команды
 
 ```bash
@@ -13,11 +16,10 @@ npm run dev
 # - Electron с hot reload
 
 # Оконный режим (без kiosk)
-npm run dev:window
+npm run dev:window --workspace @assistant/desktop
 
 # Только UI (без Electron)
-npm run dev:ui
-# Запускает только Vite dev server
+npm run dev:ui --workspace @assistant/desktop
 
 # Backend main сервер
 npm run dev:backend-main
@@ -43,26 +45,26 @@ npm run dev:backend-main
 
 ```bash
 # Полная сборка (main + UI)
-npm run build
+npm run build            # alias на build desktop workspace
 # Выполняет:
 # - tsc (компиляция main процесса)
 # - vite build (сборка UI)
 # - copy:assets (копирование ресурсов)
 
 # Только UI
-npm run build:ui
+npm run build:ui --workspace @assistant/desktop
 
 # Backend main
 npm run build:backend-main
 
 # Все (backend-main + main + UI)
-npm run build:all
+npm run build:all --workspace @assistant/desktop
 ```
 
 ### Структура сборки
 
 ```
-dist/
+apps/desktop/dist/
 ├── main/              # Скомпилированный main процесс
 │   ├── electron.js
 │   ├── preload.js
@@ -81,7 +83,7 @@ dist/
 npm start
 
 # Оконный режим
-npm run start:window
+npm run start:window --workspace @assistant/desktop
 
 # Backend main сервер
 npm run start:backend-main
@@ -91,17 +93,17 @@ npm run start:backend-main
 
 ```bash
 # Все Playwright тесты
-npm test
+npm test                # alias на @assistant/desktop
 
 # Визуальные тесты (синоним)
-npm run test:visual
+npm run test:visual --workspace @assistant/desktop
 
 # Обновить эталонные снапшоты
-npm run test:visual:update
+npm run test:visual:update --workspace @assistant/desktop
 # ⚠️ Используйте локально для обновления снапшотов
 
 # UI режим тестов
-npm run test:visual:ui
+npm run test:visual:ui --workspace @assistant/desktop
 ```
 
 ### Конфигурация тестов
@@ -110,6 +112,7 @@ npm run test:visual:ui
 - **Тесты**: `ui-electron/src/**/*.spec.ts`
 - **Снапшоты**: `ui-electron/src/**/*.spec.ts-snapshots/`
 - **Dev server**: `npm run dev:ui` (автоматически запускается)
+- **Пример**: `ApplicationsScreen.spec.ts` (каталог — light, мои приложения — dark)
 
 ### Важно о снапшотах
 
@@ -211,7 +214,7 @@ NODE_ENV=development
 
 ### Backend Main
 
-Создайте `.env` в `backend-main/`:
+Создайте `.env` в `apps/backend-main/`:
 
 ```env
 # Обязательные
@@ -226,7 +229,7 @@ GOOGLE_CLIENT_SECRET=<ваш_client_secret>
 
 ### UI
 
-Создайте `ui-electron/.env.local` (опционально):
+Создайте `apps/desktop/ui-electron/.env.local` (опционально):
 
 ```env
 VITE_API_URL=http://localhost:3001/api/v1

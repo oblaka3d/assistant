@@ -1,7 +1,12 @@
 node_modules/
+apps/**/node_modules/
 dist/
 release/
+apps/desktop/dist/
+apps/desktop/release/
 storage/
+apps/backend-main/storage/
+apps/backend-main/dist/
 *.log
 .env
 .env.local

@@ -2,6 +2,8 @@
 
 ## Важные технические решения
 
+> Большинство путей в этом разделе относятся к workspace `apps/desktop`. Для краткости сохраняем исходные подпапки (`ui-electron`, `main`, и т.д.).
+
 ### 1. Vite Configuration
 
 **Файл**: `vite.config.ts`
@@ -153,7 +155,7 @@ const store = win.__REDUX_STORE__;
 - `tsconfig.json` - корневой, для main процесса
 - `ui-electron/tsconfig.json` - для UI
 - `ui-electron/tsconfig.node.json` - для Vite конфигурации
-- `backend-main/tsconfig.json` - для backend
+- `apps/backend-main/tsconfig.json` - для backend
 
 ### 10. CSS Modules
 
@@ -210,6 +212,53 @@ t('chat.sendMessage');
 2. Ожидание callback
 3. Закрытие окна после успеха
 4. Обновление состояния пользователя
+
+### 15. Applications Catalog & Store
+
+**UI:** `ui-electron/src/screens/MenuScreen/subscreens/ApplicationsScreen/ApplicationsScreen.tsx`
+
+- Состояние:
+  - `applicationsSlice` хранит `catalog`, `installed`, `storage`
+  - `applicationsFormsSlice` — значения и ошибки форм create/import/edit
+- Хуки:
+  - `useApplicationsData` автоматически диспатчит `loadApplicationsCatalog`, `loadInstalledApplications`, `loadApplicationsStorage`
+  - `useApplicationsFilters` добавляет поисковую строку и фильтр по статусу (`draft/pending/published/rejected`)
+  - `useApplicationKeyAvailability` дебаунсит проверку ID через `/applications/catalog/availability/:key`
+  - `useFileDropZone` управляет drag&drop для ZIP-архивов (import/edit)
+- Диалоги:
+  - `ApplicationCreateDialog` — валидация через `zod`, все поля требуются, key/версия ограничены `APP_*` константами
+  - `ApplicationImportDialog` — позволяет гостям загрузить ZIP и зарезервировать key, отвечает отображением прогресса
+  - `ApplicationEditDialog` — редактирует имя/тип/описание, релиз-ноты, иконку (data URL), требует архив с новой версией и выводит историю версий
+- Действия:
+  - Установка/удаление (`installExistingApplication`, `uninstallExistingApplication`)
+  - Отправка на ревью (`updateApplicationStatusThunk`)
+  - Обновление квоты хранилища (`loadApplicationsStorage` + `setStorageSnapshot`)
+  - Обновление каталога после операций (`refreshApplicationsData`)
+
+### 16. Application Storage & Uploads
+
+- Backend: `apps/backend-main/src/services/applicationStorageService.ts`
+- Хранилище файлов: `storage/applications/<user>/<app>/<version>`
+- Лимит на пользователя — `APPLICATION_STORAGE_LIMIT_BYTES = 100 MB`
+- Импорт/обновление версий принимают только `.zip`, проверяется `isAllowedArchive`
+- Имена файлов/папок проходят `sanitizeSegment`/`sanitizeArchiveName`, чтобы избежать path traversal
+- `POST /applications/import` использует `optionalAuthenticate`: гости могут импортировать архив, а после логина получат установку + обновлённую квоту
+- `createApplicationVersion` инкрементирует версию по `releaseType` (`patch/minor/major`) и расширяет историю версий
+
+### 17. Applications Visual Tests
+
+- Playwright-файл: `ApplicationsScreen.spec.ts`
+- Моки каталога/установленных приложений и квоты подменяются через `page.route('**/applications/*')`
+- Покрываются сценарии:
+  - `applications-screen-catalog-light` (store таб, светлая тема)
+  - `applications-screen-my-apps-dark` (installed таб, тёмная тема)
+- Хелперы: `navigateToScreen`, `waitForAppReady`, `setTheme`, `compareScreenshot`
+
+### 18. Shared Utilities (`packages/shared`)
+
+- TypeScript-пакет `@assistant/shared`, собирается через `npm run build --workspace @assistant/shared`
+- Предназначен для общих типов и хелперов между desktop, backend-main, будущими landing/mobile
+- Сейчас содержит пример с локалями (`getSupportedLocales`, `isSupportedLocale`) — можно расширять API по мере миграции кода
 
 ## Известные проблемы и решения
 

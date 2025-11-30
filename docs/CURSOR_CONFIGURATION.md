@@ -2,6 +2,8 @@
 
 ## Файлы конфигурации
 
+> Примечание: пути вида `ui-electron/...` относятся к workspace `apps/desktop/ui-electron/...`.
+
 ### 1. `package.json`
 
 **Основные скрипты:**
@@ -68,7 +70,7 @@
 - Dev server запускается автоматически
 - Redux store доступен через `window.__REDUX_STORE__`
 
-### 4. `tsconfig.json` (корневой)
+### 4. `apps/desktop/tsconfig.json`
 
 **Для main процесса:**
 
@@ -83,7 +85,7 @@
 }
 ```
 
-### 5. `ui-electron/tsconfig.json`
+### 5. `apps/desktop/ui-electron/tsconfig.json`
 
 **Для UI:**
 
@@ -104,7 +106,7 @@
 
 ```
 # PNG files in snapshots are small enough to store in regular Git
-# ui-electron/src/**/*.png filter=lfs diff=lfs merge=lfs -text
+# apps/desktop/ui-electron/src/**/*.png filter=lfs diff=lfs merge=lfs -text
 ```
 
 **Важно:** Git LFS отключен для снапшотов (они хранятся в обычном Git)
@@ -142,7 +144,7 @@ WINDOW_MODE=true  # Оконный режим
 
 ### Backend Main
 
-**Файл**: `backend-main/.env`
+**Файл**: `apps/backend-main/.env`
 
 ```env
 # Обязательные
@@ -161,7 +163,7 @@ GITHUB_CLIENT_SECRET=<client_secret>
 
 ### UI
 
-**Файл**: `ui-electron/.env.local` (опционально)
+**Файл**: `apps/desktop/ui-electron/.env.local` (опционально)
 
 ```env
 VITE_API_URL=http://localhost:3001/api/v1
@@ -202,7 +204,7 @@ VITE_API_URL=http://localhost:3001/api/v1
 - Linux: через apt/yum
 - Windows: требует ручной установки
 
-**Скрипт**: `scripts/setup-mongodb.ts`
+**Скрипт**: `apps/backend-main/scripts/setup-mongodb.ts`
 
 ## API Configuration
 
@@ -217,6 +219,21 @@ VITE_API_URL=http://localhost:3001/api/v1
 - `/api/v1/users/*` - Пользователи
 - `/api/v1/dialogs/*` - Диалоги
 - `/api/v1/messages/*` - Сообщения
+- `/api/v1/applications/*` - Каталог и управление приложениями
+
+### Applications API
+
+- `GET /applications/catalog` — публичный список опубликованных приложений
+- `POST /applications/catalog` — создание черновика (требует авторизацию)
+- `GET /applications/catalog/availability/:appKey` — проверка уникальности key
+- `GET /applications/catalog/:appKey` — детали + история версий (только авторизованные)
+- `PATCH /applications/catalog/:appKey/status` — обновление статуса (`draft/pending/published/rejected`)
+- `POST /applications/catalog/:appKey/versions` — загрузка новой версии (FormData, поле `archive`)
+- `POST /applications/installed` — установить приложение текущему пользователю
+- `DELETE /applications/installed/:appKey` — удалить из «моих» приложений
+- `GET /applications/installed` — список установленных приложений
+- `GET /applications/storage` — использование пользовательского хранилища (лимит 100 МБ)
+- `POST /applications/import` — импорт ZIP архива без авторизации (guest → user)
 
 ## CSS Variables
 
@@ -297,10 +314,10 @@ t('chat.sendMessage');
 
 ## Build Output
 
-**Структура `dist/`:**
+**Структура `apps/desktop/dist/`:**
 
 ```
-dist/
+apps/desktop/dist/
 ├── main/              # Main процесс
 │   ├── electron.js
 │   ├── preload.js
@@ -312,6 +329,14 @@ dist/
 └── backend-electron/  # Backend electron
 ```
 
+## Applications Storage
+
+- Директория: `apps/backend-main/storage/applications/<userId>/<appKey>/<version>`
+- Максимальный объём на пользователя — `100 MB` (`APPLICATION_STORAGE_LIMIT_BYTES`)
+- Разрешённые архивы: `.zip`
+- Имена хранятся в безопасном формате (`sanitizeSegment`, `sanitizeArchiveName`)
+- Импорт (`POST /applications/import`) и обновления версий используют `multer` с кастомным `diskStorage`
+
 ## Ports
 
 - **3000** - Vite dev server (UI)
@@ -322,7 +347,7 @@ dist/
 
 **Важные пути:**
 
-- Main process: `main/electron.ts` → `dist/main/electron.js`
-- Preload: `main/preload.ts` → `dist/main/preload.js`
-- UI: `ui-electron/` → `dist/ui-electron/`
-- Assets: `ui-electron/public/assets/` → `dist/ui-electron/assets/`
+- Main process: `apps/desktop/main/electron.ts` → `apps/desktop/dist/main/electron.js`
+- Preload: `apps/desktop/main/preload.ts` → `apps/desktop/dist/main/preload.js`
+- UI: `apps/desktop/ui-electron/` → `apps/desktop/dist/ui-electron/`
+- Assets: `apps/desktop/ui-electron/public/assets/` → `apps/desktop/dist/ui-electron/assets/`

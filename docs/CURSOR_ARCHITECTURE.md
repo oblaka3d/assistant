@@ -4,60 +4,25 @@
 
 ```
 assistant/
-├── main/                  # Electron main процесс
-│   ├── electron.ts        # Точка входа, создание окна
-│   ├── ipc.ts             # IPC обработчики
-│   ├── preload.ts         # Preload скрипт (мост между main и renderer)
-│   └── utils/             # Утилиты main процесса
-│
-├── backend-electron/      # Backend логика в Electron процессе
-│   ├── server.ts          # HTTP сервер для UI
-│   ├── voice.ts           # Голосовое взаимодействие
-│   ├── stt.ts             # Speech-to-Text
-│   ├── tts.ts             # Text-to-Speech
-│   ├── llm.ts             # LLM интеграция
-│   └── config.ts          # Конфигурация
-│
-├── ui-electron/           # React UI приложение
-│   ├── src/
-│   │   ├── screens/       # Экраны приложения
-│   │   │   ├── MainScreen/
-│   │   │   ├── ChatScreen/
-│   │   │   ├── MenuScreen/
-│   │   │   └── WelcomeScreen/
-│   │   │
-│   │   ├── components/    # Переиспользуемые компоненты
-│   │   │   ├── ChatKeyboard/  # Виртуальная клавиатура
-│   │   │   └── ...
-│   │   │
-│   │   ├── store/         # Redux store
-│   │   │   ├── slices/    # Redux slices
-│   │   │   ├── thunks/    # Async actions
-│   │   │   └── index.ts
-│   │   │
-│   │   ├── hooks/         # React хуки
-│   │   ├── utils/         # Утилиты
-│   │   ├── i18n/          # Интернационализация
-│   │   └── App.tsx        # Корневой компонент
-│   │
-│   └── index.html
-│
-├── backend-main/          # Backend сервер (Node.js + MongoDB)
-│   └── src/
-│       ├── controllers/   # Контроллеры API
-│       ├── models/        # Mongoose модели
-│       ├── routes/        # Express роуты
-│       ├── services/      # Бизнес-логика
-│       └── middleware/     # Express middleware
-│
-├── docs/                  # Документация
-├── scripts/               # Вспомогательные скрипты
-└── dist/                  # Собранные файлы
+├── apps/
+│   ├── desktop/           # Electron приложение
+│   │   ├── main/          # Main процесс (BrowserWindow, IPC, preload)
+│   │   ├── backend-electron/ # Голосовой pipeline внутри Electron
+│   │   ├── ui-electron/   # React + Vite фронтенд
+│   │   ├── scripts/       # CLI утилиты (setup MongoDB и т.д.)
+│   │   └── dist/          # Сборки desktop приложения
+│   ├── backend-main/      # Node.js + MongoDB сервер
+│   ├── landing/           # Заглушка под будущий маркетинговый сайт
+│   └── mobile/            # Заглушка под React Native
+├── packages/
+│   └── shared/            # Общие типы/утилиты (пока пример)
+├── docs/                  # Документация (CURSOR_*.md)
+└── cursor.md              # Главный навигационный файл
 ```
 
 ## Основные компоненты
 
-### 1. Electron Main Process (`main/`)
+### 1. Electron Main Process (`apps/desktop/main/`)
 
 **Ответственность:**
 
@@ -71,7 +36,7 @@ assistant/
 - `preload.ts` - Preload скрипт, экспортирует безопасные API в renderer
 - `ipc.ts` - Обработчики IPC сообщений
 
-### 2. UI Application (`ui-electron/`)
+### 2. UI Application (`apps/desktop/ui-electron/`)
 
 **Технологии:**
 
@@ -104,8 +69,31 @@ assistant/
 - `/menu/logs` → LogsScreen
 - `/menu/about` → AboutScreen
 - `/menu/auth` → AuthScreen
+- `/menu/applications` → ApplicationsScreen (каталог и установленные приложения)
 
-### 3. Backend Electron (`backend-electron/`)
+#### ApplicationsScreen
+
+- Файл: `ui-electron/src/screens/MenuScreen/subscreens/ApplicationsScreen/ApplicationsScreen.tsx`
+- Два таба:
+  - `store` — публичный каталог, доступен без авторизации
+  - `installed` — мои приложения с дополнительными фильтрами, требует авторизацию
+- Используются хуки:
+  - `useApplicationsData` — подгрузка каталога/установленных приложений/квоты хранилища и синхронизация с `applicationsSlice`
+  - `useApplicationsFilters` — поиск и фильтр по статусу
+  - `useApplicationKeyAvailability` — debounce-проверка ID приложения через `/applications/catalog/availability/:key`
+  - `useFileDropZone` — drag&drop для ZIP-архивов
+- Redux состояние делится на два слайса:
+  - `applicationsSlice` (`catalog`, `installed`, `storage`)
+  - `applicationsFormsSlice` (значения и ошибки форм create/import/edit)
+- Поддерживаются операции:
+  - Создание каталожной записи и автоустановка (диалог `ApplicationCreateDialog`)
+  - Импорт ZIP-архива без авторизации (диалог `ApplicationImportDialog`)
+  - Обновление версии/иконки/релиз-нотов через `ApplicationEditDialog`
+  - Отправка приложения на ревью (`draft/rejected → pending`), установка и удаление
+  - Просмотр занятого места (LinearProgress + `loadApplicationsStorage`)
+- Тестовое покрытие: `ApplicationsScreen.spec.ts` + снапшоты в `ApplicationsScreen.spec.ts-snapshots/`.
+
+### 3. Backend Electron (`apps/desktop/backend-electron/`)
 
 **Ответственность:**
 
@@ -121,7 +109,7 @@ assistant/
 4. `tts.ts` - Преобразование текста в речь
 5. Воспроизведение аудио
 
-### 4. Backend Main (`backend-main/`)
+### 4. Backend Main (`apps/backend-main/`)
 
 **Ответственность:**
 
@@ -136,6 +124,29 @@ assistant/
 - `/api/v1/users/*` - Управление пользователями
 - `/api/v1/dialogs/*` - Управление диалогами
 - `/api/v1/messages/*` - Управление сообщениями
+- `/api/v1/applications/*` - Каталог приложений, импорт ZIP и пользовательское хранилище
+
+#### Applications subsystem
+
+- Роутер: `apps/backend-main/src/routes/applicationsRoutes.ts`
+  - `GET /catalog` — публичный каталог (статус `published`)
+  - `POST /catalog` — создание черновика (требует авторизацию)
+  - `GET /catalog/:appKey` — детали + версия/история
+  - `PATCH /catalog/:appKey/status` — модерация (admin/tool)
+  - `POST /catalog/:appKey/versions` — загрузка новой версии (FormData + ZIP)
+  - `POST /installed` / `DELETE /installed/:key` — установка/удаление для текущего пользователя
+  - `POST /import` — импорт ZIP без авторизации, результат сохраняется пользователю после логина
+  - `GET /storage` — объём занимаемого места (100 MB лимит на пользователя)
+- Сервисы:
+  - `applicationsService.ts` — валидация ключей, статусов (`draft/pending/published/rejected`), версионирование (`patch/minor/major`)
+  - `applicationStorageService.ts` — файловая система (`storage/applications/<user>/<app>/<version>`), sanitize имён, размер каталога, лимит 100 МБ, разрешены только `.zip`
+- `UserApplication` + `Application` модели связывают установленные приложения с пользователями
+
+### 5. Shared Packages (`packages/shared/`)
+
+- `@assistant/shared` — TypeScript-библиотека с общими типами/утилитами
+- Используется как точка расширения для переиспользуемой логики между desktop, backend, landing и mobile
+- Сборка: `npm run build --workspace @assistant/shared`
 
 ## Потоки данных
 
@@ -148,13 +159,21 @@ Microphone → backend-electron/voice.ts → STT → LLM → TTS → Speaker
 ### Текстовый чат:
 
 ```
-UI (ChatScreen) → Redux (chatSlice) → API (backend-main) → MongoDB
+UI (ChatScreen) → Redux (chatSlice) → API (`apps/backend-main`) → MongoDB
 ```
 
 ### IPC коммуникация:
 
 ```
 Renderer Process ←→ Preload Script ←→ Main Process
+```
+
+### Каталог приложений:
+
+```
+ApplicationsScreen (store/thunks) ↔ apps/backend-main /applications/*
+    ↕                                   ↕
+applicationsSlice / forms        MongoDB + storage/applications
 ```
 
 ## Важные паттерны
@@ -186,17 +205,17 @@ Renderer Process ←→ Preload Script ←→ Main Process
 ## Зависимости между модулями
 
 ```
-main/electron.ts
-  ├── backend-electron/server.ts (HTTP сервер)
-  └── ui-electron/ (загружается в BrowserWindow)
+apps/desktop/main/electron.ts
+  ├── apps/desktop/backend-electron/server.ts (HTTP сервер/voice pipeline)
+  └── apps/desktop/ui-electron/ (рендерится в BrowserWindow)
 
-ui-electron/
+apps/desktop/ui-electron/
   ├── Redux Store (локальное состояние)
-  └── API calls → backend-main (REST API)
+  └── API calls → apps/backend-main (REST API)
 
-backend-electron/
+apps/desktop/backend-electron/
   └── LLM providers (OpenAI, Yandex GPT)
 
-backend-main/
+apps/backend-main/
   └── MongoDB (хранение данных)
 ```

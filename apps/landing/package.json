@@ -1,0 +1,11 @@
+{
+  "name": "@assistant/landing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Marketing landing page (placeholder)",
+  "scripts": {
+    "dev": "echo \"Landing app is not implemented yet\"",
+    "build": "echo \"Landing app build placeholder\"",
+    "start": "echo \"Landing app start placeholder\""
+  }
+}

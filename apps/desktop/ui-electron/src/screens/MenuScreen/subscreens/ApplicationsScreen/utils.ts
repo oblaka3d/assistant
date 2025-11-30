@@ -74,12 +74,12 @@ export const areCreateFormValuesEqual = (
 ): boolean =>
   Boolean(
     a &&
-      b &&
-      a.key === b.key &&
-      a.name === b.name &&
-      a.version === b.version &&
-      a.type === b.type &&
-      a.description === b.description
+    b &&
+    a.key === b.key &&
+    a.name === b.name &&
+    a.version === b.version &&
+    a.type === b.type &&
+    a.description === b.description
   );
 
 export const areImportFormValuesEqual = (
@@ -93,12 +93,12 @@ export const areEditFormValuesEqual = (
 ): boolean =>
   Boolean(
     a &&
-      b &&
-      a.name === b.name &&
-      a.description === b.description &&
-      a.type === b.type &&
-      a.releaseType === b.releaseType &&
-      a.releaseNotes === b.releaseNotes
+    b &&
+    a.name === b.name &&
+    a.description === b.description &&
+    a.type === b.type &&
+    a.releaseType === b.releaseType &&
+    a.releaseNotes === b.releaseNotes
   );
 
 export const extractErrorMessage = (error: unknown): string => {

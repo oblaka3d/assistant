@@ -2,21 +2,21 @@
   "scripts": {
     "start": "electron dist/main/electron.js",
     "start:window": "cross-env WINDOW_MODE=true electron dist/main/electron.js",
-    "start:backend-main": "cd backend-main && npm start",
+    "start:backend-main": "npm run start --workspace @assistant/backend-main",
 
     "dev": "cross-env NODE_ENV=development UI_DEV_SERVER_URL=http://localhost:3000 concurrently --kill-others-on-fail --names \"ui,main\" --prefix-colors \"cyan,magenta\" \"npm:dev:ui\" \"npm:dev:watch\"",
     "dev:window": "cross-env WINDOW_MODE=true npm run dev",
-    "dev:backend-main": "cd backend-main && npm run dev",
+    "dev:backend-main": "npm run dev --workspace @assistant/backend-main",
     "dev:ui": "cross-env NODE_ENV=development vite dev",
     "dev:electron": "wait-on dist/main/electron.js http://localhost:3000 && cross-env NODE_ENV=development electron dist/main/electron.js",
     "dev:watch": "concurrently --kill-others-on-fail --names \"tsc,electron\" --prefix-colors \"yellow,magenta\" \"tsc -w\" \"npm:dev:electron\"",
 
-    "setup:mongodb": "ts-node scripts/setup-mongodb.ts",
-    "setup:mongodb:auto": "ts-node scripts/setup-mongodb.ts --auto",
+    "setup:mongodb": "npm run setup:mongodb --workspace @assistant/backend-main",
+    "setup:mongodb:auto": "npm run setup:mongodb:auto --workspace @assistant/backend-main",
 
     "build": "tsc && npm run build:ui && npm run copy:assets",
     "build:ui": "vite build",
-    "build:backend-main": "cd backend-main && npm run build",
+    "build:backend-main": "npm run build --workspace @assistant/backend-main",
     "build:all": "npm run build:backend-main && npm run build",
     "copy:assets": "mkdir -p dist/ui-electron/assets/models && cp -r ui-electron/public/assets/* dist/ui-electron/assets/ 2>/dev/null || true",
     "copy-ui": "mkdir -p dist/ui-electron && cp -r ui-electron/* dist/ui-electron/ 2>/dev/null || xcopy /E /I /Y ui-electron dist\\ui-electron 2>nul || true",

@@ -1,0 +1,11 @@
+{
+  "name": "@assistant/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "React Native / Expo app placeholder",
+  "scripts": {
+    "dev": "echo \"Mobile app is not implemented yet\"",
+    "build": "echo \"Mobile app build placeholder\"",
+    "start": "echo \"Mobile app start placeholder\""
+  }
+}
