@@ -36,6 +36,7 @@
   "menu": {
     "title": "Меню",
     "settings": "Настройки",
+    "applications": "Приложения",
     "apiKeys": "API ключи",
     "history": "История",
     "logs": "Логи приложения",
@@ -185,6 +186,160 @@
     "resume": "Продолжить",
     "retry": "Повторить",
     "errorLoadingImage": "Не удалось загрузить изображение"
+  },
+  "applications": {
+    "title": "Приложения",
+    "tabs": {
+      "store": "Каталог",
+      "installed": "Мои приложения"
+    },
+    "searchPlaceholder": "Поиск приложений...",
+    "filters": {
+      "status": "Статус",
+      "all": "Все статусы"
+    },
+    "emptyState": "Ничего не найдено",
+    "actions": {
+      "install": "Установить",
+      "installing": "Установка...",
+      "installed": "Установлено",
+      "open": "Открыть",
+      "remove": "Удалить",
+      "import": "Импортировать архив",
+      "importing": "Импортируем...",
+      "create": "Создать приложение",
+      "submitReview": "Отправить на модерацию",
+      "resubmitReview": "Отправить повторно",
+      "edit": "Редактировать"
+    },
+    "status": {
+      "draft": "Черновик",
+      "pending": "На модерации",
+      "published": "Опубликовано",
+      "rejected": "Отклонено",
+      "updateSuccess": "Статус изменён на «{{status}}»"
+    },
+    "releaseTypes": {
+      "label": "Тип обновления",
+      "patch": "Патч (x.y.z → x.y.z+1)",
+      "minor": "Минорное (x.y.z → x.(y+1).0)",
+      "major": "Мажорное (x.y.z → (x+1).0.0)"
+    },
+    "list": {
+      "version": "Версия {{version}}",
+      "type": "Тип: {{type}}",
+      "owner": {
+        "you": "Владелец: Вы",
+        "other": "Владелец: {{owner}}",
+        "unknown": "Владелец: неизвестно"
+      }
+    },
+    "addButton": "Добавить приложение",
+    "loginRequired": "Авторизуйтесь, чтобы управлять приложениями.",
+    "menu": {
+      "importTitle": "Импорт приложения",
+      "importDescription": "Загрузите архив приложения (.zip), который содержит файл package.json",
+      "createTitle": "Создать в каталоге",
+      "createDescription": "Добавьте новое приложение в облачный каталог",
+      "authHint": "Войдите, чтобы создавать приложения"
+    },
+    "import": {
+      "success": "Приложение {{name}} импортировано",
+      "error": "Не удалось импортировать приложение",
+      "dialogTitle": "Импорт приложения",
+      "dialogDescription": "Укажите ID приложения и выберите архив, содержащий package.json.",
+      "idLabel": "ID приложения",
+      "selectFile": "Выбрать архив",
+      "replaceFile": "Заменить файл",
+      "fileSelected": "Выбрано: {{name}}",
+      "fileSelectedDetailed": "Выбрано: {{name}} • {{size}}",
+      "noFile": "Файл не выбран",
+      "fileRequired": "Выберите архив приложения",
+      "submit": "Импортировать",
+      "dropHint": "Перетащите архив сюда или выберите файл",
+      "dropActive": "Отпустите, чтобы начать импорт",
+      "fileReady": "Архив готов к загрузке",
+      "supportedFormats": "Поддерживаемый формат: .zip (до 100 МБ)"
+    },
+    "edit": {
+      "title": "Редактирование приложения",
+      "save": "Сохранить черновик",
+      "releaseNotes": "Описание изменений",
+      "iconLabel": "Иконка приложения",
+      "selectIcon": "Выбрать иконку",
+      "replaceIcon": "Заменить иконку",
+      "removeIcon": "Удалить иконку",
+      "noIcon": "Иконка не задана",
+      "archiveLabel": "Загрузите новый архив",
+      "historyTitle": "История версий",
+      "historyEmpty": "Версии пока отсутствуют",
+      "historyStatus": "Статус: {{status}}",
+      "currentVersion": "Текущая",
+      "nextVersion": "Следующая версия: {{version}}",
+      "success": "{{name}} обновлено. Новая версия сохранена как черновик."
+    },
+    "create": {
+      "success": "Приложение {{name}} добавлено в «Мои приложения»"
+    },
+    "storage": {
+      "label": "Облачное хранилище",
+      "usage": "Использовано {{used}} из {{limit}}",
+      "limit": "Лимит 100 МБ",
+      "loading": "Загружаем данные о хранилище...",
+      "error": "Не удалось получить информацию о хранилище"
+    },
+    "catalog": {
+      "chatCompanion": {
+        "name": "Chat Companion",
+        "description": "Расширяет переписку готовыми подсказками и ответами."
+      },
+      "voicePainter": {
+        "name": "Voice Painter",
+        "description": "Создает абстрактные обои по голосовым подсказкам."
+      },
+      "meetingNotes": {
+        "name": "Meeting Notes",
+        "description": "Записывает, расшифровывает и кратко пересказывает встречи."
+      }
+    },
+    "installed": {
+      "mediaHub": {
+        "name": "Media Hub",
+        "description": "Единая панель управления музыкой и видео."
+      },
+      "taskPilot": {
+        "name": "Task Pilot",
+        "description": "Легкий менеджер задач, синхронизированный с ассистентом."
+      }
+    },
+    "form": {
+      "keyLabel": "ID приложения",
+      "nameLabel": "Название",
+      "typeLabel": "Тип приложения",
+      "versionLabel": "Версия",
+      "descriptionLabel": "Описание (опционально)",
+      "submit": "Создать приложение"
+    },
+    "validation": {
+      "keyRequired": "Укажите ID приложения",
+      "keyFormat": "ID приложения может содержать латинские буквы, цифры и тире",
+      "keyLength": "ID приложения не должен превышать {{max}} символов",
+      "nameRequired": "Укажите название приложения",
+      "nameLength": "Название не должно превышать {{max}} символов",
+      "versionRequired": "Укажите версию приложения",
+      "versionLength": "Версия не должна превышать {{max}} символов",
+      "versionFormat": "Используйте формат 1.0.0",
+      "descriptionLength": "Описание не должно превышать {{max}} символов",
+      "keyAvailable": "ID свободен",
+      "keyTaken": "ID уже используется",
+      "keyChecking": "Проверяем доступность ID...",
+      "keyCheckError": "Не удалось проверить доступность ID"
+    },
+    "types": {
+      "widget": "Виджет",
+      "screen": "Экран",
+      "service": "Сервис"
+    }
   },
   "welcome": {
     "getStarted": "Начать"

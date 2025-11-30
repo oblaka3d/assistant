@@ -490,3 +490,270 @@ export const deleteAllDialogs = async (): Promise<{
     method: 'DELETE',
   });
 };
+
+// ==================== Applications ====================
+
+export type ApplicationType = 'widget' | 'screen' | 'service';
+export type ApplicationStatus = 'draft' | 'pending' | 'published' | 'rejected';
+export type ReleaseType = 'patch' | 'minor' | 'major';
+
+export interface ApplicationEntryPoints {
+  frontend?: string;
+  backend?: string;
+}
+
+export interface ApplicationStorageMeta {
+  rootDir?: string;
+  archivePath?: string;
+  contentPath?: string;
+  manifestPath?: string;
+}
+
+export interface ApplicationSummary {
+  id: string;
+  key: string;
+  name: string;
+  version: string;
+  type: ApplicationType;
+  description?: string;
+  status: ApplicationStatus;
+  isPublished?: boolean;
+  owner?: string;
+  entryPoints?: ApplicationEntryPoints;
+  permissions: string[];
+  storage?: ApplicationStorageMeta;
+  icon?: string;
+}
+
+export interface ApplicationVersionHistoryEntry {
+  version: string;
+  status: ApplicationStatus;
+  releaseNotes?: string;
+  description?: string;
+  createdAt?: string;
+}
+
+export interface ApplicationDetails extends ApplicationSummary {
+  versionHistory: ApplicationVersionHistoryEntry[];
+}
+
+export interface ApplicationStorageUsage {
+  usedBytes: number;
+  limitBytes: number;
+  availableBytes: number;
+}
+
+interface ApplicationsListResponse {
+  success: boolean;
+  data: {
+    applications: ApplicationSummary[];
+  };
+}
+
+interface ApplicationsMutationResponse {
+  success: boolean;
+  data?: {
+    application: ApplicationSummary;
+  };
+}
+
+interface ApplicationDetailsResponse {
+  success: boolean;
+  data: {
+    application: ApplicationDetails;
+  };
+}
+
+interface ApplicationStorageUsageResponse {
+  success: boolean;
+  data: {
+    storage: ApplicationStorageUsage;
+  };
+}
+
+interface ApplicationImportResponse {
+  success: boolean;
+  data: {
+    application?: ApplicationSummary;
+    filename: string;
+    originalName: string;
+    size: number;
+    storage?: ApplicationStorageUsage;
+  };
+}
+
+interface ApplicationKeyAvailabilityResponse {
+  success: boolean;
+  data: {
+    available: boolean;
+  };
+}
+
+export const fetchApplicationsCatalog = async (): Promise<ApplicationSummary[]> => {
+  const response = await fetchWithErrorHandling<ApplicationsListResponse>('/applications/catalog', {
+    method: 'GET',
+  });
+  return response.data.applications;
+};
+
+export const fetchInstalledApplications = async (): Promise<ApplicationSummary[]> => {
+  const response = await fetchWithErrorHandling<ApplicationsListResponse>(
+    '/applications/installed',
+    {
+      method: 'GET',
+    }
+  );
+  return response.data.applications;
+};
+
+export const installApplication = async (appKey: string): Promise<ApplicationsMutationResponse> => {
+  return fetchWithErrorHandling<ApplicationsMutationResponse>('/applications/installed', {
+    method: 'POST',
+    body: JSON.stringify({ appKey }),
+  });
+};
+
+export const uninstallApplication = async (appKey: string): Promise<{ success: boolean }> => {
+  return fetchWithErrorHandling<{ success: boolean }>(
+    `/applications/installed/${encodeURIComponent(appKey)}`,
+    {
+      method: 'DELETE',
+    }
+  );
+};
+
+export const createCatalogApplication = async (payload: {
+  key: string;
+  name: string;
+  version: string;
+  type: ApplicationType;
+  description?: string;
+}): Promise<ApplicationsMutationResponse> => {
+  return fetchWithErrorHandling<ApplicationsMutationResponse>('/applications/catalog', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+export const fetchApplicationDetails = async (appKey: string): Promise<ApplicationDetails> => {
+  const response = await fetchWithErrorHandling<ApplicationDetailsResponse>(
+    `/applications/catalog/${encodeURIComponent(appKey)}`,
+    {
+      method: 'GET',
+    }
+  );
+  return response.data.application;
+};
+
+export const fetchApplicationStorageUsage = async (): Promise<ApplicationStorageUsage> => {
+  const response = await fetchWithErrorHandling<ApplicationStorageUsageResponse>(
+    '/applications/storage',
+    {
+      method: 'GET',
+    }
+  );
+  return response.data.storage;
+};
+
+export const checkApplicationKeyAvailability = async (appKey: string): Promise<boolean> => {
+  const response = await fetchWithErrorHandling<ApplicationKeyAvailabilityResponse>(
+    `/applications/catalog/availability/${encodeURIComponent(appKey)}`,
+    {
+      method: 'GET',
+    }
+  );
+  return response.data.available;
+};
+
+export const importApplicationArchive = async (
+  appKey: string,
+  file: File
+): Promise<ApplicationImportResponse['data']> => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('archive', file);
+  formData.append('appKey', appKey);
+
+  const response = await fetch(`${API_BASE_URL}/applications/import`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  });
+
+  const data = (await response.json().catch(() => ({}))) as ApplicationImportResponse & ApiError;
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Failed to import application');
+  }
+
+  return (
+    data?.data ?? {
+      filename: file.name,
+      originalName: file.name,
+      size: file.size,
+    }
+  );
+};
+
+interface UpdateApplicationVersionPayload {
+  releaseType: ReleaseType;
+  releaseNotes?: string;
+  name?: string;
+  description?: string;
+  type?: ApplicationType;
+  iconDataUrl?: string | null;
+  archive: File;
+}
+
+export const updateApplicationVersion = async (
+  appKey: string,
+  payload: UpdateApplicationVersionPayload
+): Promise<ApplicationDetails> => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('releaseType', payload.releaseType);
+  if (payload.releaseNotes) {
+    formData.append('releaseNotes', payload.releaseNotes);
+  }
+  if (payload.name) {
+    formData.append('name', payload.name);
+  }
+  if (payload.description) {
+    formData.append('description', payload.description);
+  }
+  if (payload.type) {
+    formData.append('type', payload.type);
+  }
+  if (payload.iconDataUrl) {
+    formData.append('icon', payload.iconDataUrl);
+  }
+  formData.append('archive', payload.archive);
+
+  const response = await fetch(
+    `${API_BASE_URL}/applications/catalog/${encodeURIComponent(appKey)}/versions`,
+    {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    }
+  );
+
+  const data = (await response.json().catch(() => ({}))) as ApplicationDetailsResponse & ApiError;
+  if (!response.ok) {
+    throw new Error(data?.error || 'Failed to update application');
+  }
+  return data.data.application;
+};
+
+export const updateApplicationStatus = async (
+  appKey: string,
+  status: ApplicationStatus
+): Promise<ApplicationsMutationResponse> => {
+  return fetchWithErrorHandling<ApplicationsMutationResponse>(
+    `/applications/catalog/${encodeURIComponent(appKey)}/status`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }
+  );
+};

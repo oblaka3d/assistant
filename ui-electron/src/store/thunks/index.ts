@@ -4,6 +4,7 @@
  */
 
 export * from './chatThunks';
+export * from './applicationsThunks';
 export * from './sceneThunks';
 export * from './settingsThunks';
 export * from './userThunks';

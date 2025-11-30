@@ -21,8 +21,10 @@ export default defineConfig({
     },
   },
   /* Шаблон пути для снапшотов без суффикса платформы (кроссплатформенные) */
-  /* Снапшоты сохраняются рядом с тестовыми файлами: {testFileDir}/{testFileName}-snapshots/ */
-  snapshotPathTemplate: '{testFileDir}/{testFileName}.snapshots./{arg}-{projectName}{ext}',
+  /* Снапшоты сохраняются рядом с тестовыми файлами: ui-electron/src/{testFileDir}/{testFileName}-snapshots/ */
+  /* testFileDir возвращает путь относительно testDir, поэтому добавляем префикс ui-electron/src/ */
+  snapshotPathTemplate:
+    'ui-electron/src/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   /* Директория для сохранения результатов тестов */
   /* Примечание: actual скриншоты при неудачных тестах сохраняются в test-results,
      но их можно переместить рядом с тестовыми файлами через кастомный репортер */

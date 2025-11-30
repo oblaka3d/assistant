@@ -85,7 +85,7 @@ function RouterSync() {
 
     // Обновляем подэкран если нужно
     if (screen === 'menu') {
-      const validSubScreens = ['settings', 'apiKeys', 'logs', 'about', 'auth'];
+      const validSubScreens = ['settings', 'apiKeys', 'logs', 'about', 'auth', 'applications'];
       if (sub && validSubScreens.includes(sub)) {
         if (sub !== subScreenRef.current) {
           dispatch(openSubScreen(sub as SubScreen));

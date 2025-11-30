@@ -186,6 +186,160 @@
     "retry": "重试",
     "errorLoadingImage": "图像加载失败，请重试"
   },
+  "applications": {
+    "title": "应用程序",
+    "tabs": {
+      "store": "应用目录",
+      "installed": "我的应用"
+    },
+    "searchPlaceholder": "搜索应用...",
+    "filters": {
+      "status": "状态",
+      "all": "全部状态"
+    },
+    "emptyState": "没有找到应用",
+    "actions": {
+      "install": "安装",
+      "installing": "正在安装...",
+      "installed": "已安装",
+      "open": "打开",
+      "remove": "删除",
+      "import": "导入归档",
+      "importing": "正在导入...",
+      "create": "创建应用",
+      "submitReview": "提交审核",
+      "resubmitReview": "重新提交",
+      "edit": "编辑"
+    },
+    "status": {
+      "draft": "草稿",
+      "pending": "审核中",
+      "published": "已发布",
+      "rejected": "已驳回",
+      "updateSuccess": "状态已更新为 {{status}}"
+    },
+    "releaseTypes": {
+      "label": "版本号增量",
+      "patch": "补丁 (x.y.z → x.y.z+1)",
+      "minor": "次要 (x.y.z → x.(y+1).0)",
+      "major": "主要 (x.y.z → (x+1).0.0)"
+    },
+    "list": {
+      "version": "版本 {{version}}",
+      "type": "类型：{{type}}",
+      "owner": {
+        "you": "拥有者：你",
+        "other": "拥有者：{{owner}}",
+        "unknown": "拥有者：未知"
+      }
+    },
+    "addButton": "添加应用",
+    "loginRequired": "登录后可管理应用。",
+    "menu": {
+      "importTitle": "导入应用",
+      "importDescription": "上传包含 package.json 的应用归档 (.zip)",
+      "createTitle": "在目录中创建",
+      "createDescription": "向云目录添加新应用",
+      "authHint": "登录后才能创建应用"
+    },
+    "import": {
+      "success": "应用 {{name}} 已导入",
+      "error": "导入应用失败",
+      "dialogTitle": "导入应用",
+      "dialogDescription": "输入应用 ID 并选择包含 package.json 的归档文件。",
+      "idLabel": "应用 ID",
+      "selectFile": "选择归档",
+      "replaceFile": "重新选择",
+      "fileSelected": "已选择：{{name}}",
+      "fileSelectedDetailed": "已选择：{{name}} • {{size}}",
+      "noFile": "尚未选择文件",
+      "fileRequired": "请选择应用归档",
+      "submit": "导入",
+      "dropHint": "拖放归档到此处或手动选择",
+      "dropActive": "松开即可开始导入",
+      "fileReady": "归档已准备上传",
+      "supportedFormats": "仅支持 .zip（最大 100 MB）"
+    },
+    "edit": {
+      "title": "编辑应用",
+      "save": "保存草稿",
+      "releaseNotes": "版本说明",
+      "iconLabel": "应用图标",
+      "selectIcon": "选择图标",
+      "replaceIcon": "替换图标",
+      "removeIcon": "移除图标",
+      "noIcon": "暂无图标",
+      "archiveLabel": "上传新的归档文件",
+      "historyTitle": "版本历史",
+      "historyEmpty": "暂时没有版本记录",
+      "historyStatus": "状态：{{status}}",
+      "currentVersion": "当前版本",
+      "nextVersion": "下一版本：{{version}}",
+      "success": "{{name}} 已更新，新版本保存为草稿。"
+    },
+    "create": {
+      "success": "应用 {{name}} 已添加到“我的应用”"
+    },
+    "storage": {
+      "label": "云存储",
+      "usage": "已使用 {{used}} / {{limit}}",
+      "limit": "限制 100 MB",
+      "loading": "正在加载存储使用情况...",
+      "error": "无法加载存储信息"
+    },
+    "catalog": {
+      "chatCompanion": {
+        "name": "Chat Companion",
+        "description": "使用智能提示增强对话体验。"
+      },
+      "voicePainter": {
+        "name": "Voice Painter",
+        "description": "根据简单提示生成抽象壁纸。"
+      },
+      "meetingNotes": {
+        "name": "Meeting Notes",
+        "description": "自动记录、转写并总结会议内容。"
+      }
+    },
+    "installed": {
+      "mediaHub": {
+        "name": "Media Hub",
+        "description": "统一控制音乐和视频的播放。"
+      },
+      "taskPilot": {
+        "name": "Task Pilot",
+        "description": "与助手同步的轻量级任务管理器。"
+      }
+    },
+    "form": {
+      "keyLabel": "应用 ID",
+      "nameLabel": "应用名称",
+      "typeLabel": "应用类型",
+      "versionLabel": "版本",
+      "descriptionLabel": "描述（可选）",
+      "submit": "创建应用"
+    },
+    "validation": {
+      "keyRequired": "应用 ID 为必填项",
+      "keyFormat": "应用 ID 只能包含英文字母、数字和连字符",
+      "keyLength": "应用 ID 不能超过 {{max}} 个字符",
+      "nameRequired": "应用名称为必填项",
+      "nameLength": "应用名称不能超过 {{max}} 个字符",
+      "versionRequired": "版本为必填项",
+      "versionLength": "版本不能超过 {{max}} 个字符",
+      "versionFormat": "请使用 1.0.0 的格式",
+      "descriptionLength": "描述不能超过 {{max}} 个字符",
+      "keyAvailable": "该 ID 可用",
+      "keyTaken": "该 ID 已被使用",
+      "keyChecking": "正在检查 ID 可用性...",
+      "keyCheckError": "暂时无法检查 ID 可用性"
+    },
+    "types": {
+      "widget": "组件",
+      "screen": "屏幕",
+      "service": "服务"
+    }
+  },
   "welcome": {
     "getStarted": "开始"
   }

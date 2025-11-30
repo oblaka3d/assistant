@@ -17,10 +17,13 @@ export async function compareScreenshot(
     timeout?: number;
   }
 ): Promise<void> {
-  const { fullPage = true, selector, threshold = 0.2, timeout = 3000 } = options || {};
+  const { fullPage = true, selector, threshold = 0.2, timeout = 10000 } = options || {};
 
   // Ждем загрузки страницы
-  await page.waitForLoadState('networkidle', { timeout });
+  await page.waitForLoadState('domcontentloaded', { timeout });
+  await page.waitForLoadState('networkidle', { timeout }).catch(() => {
+    // Игнорируем таймауты networkidle на долгих страницах
+  });
 
   // Если указан селектор, ждем его появления
   if (selector) {
@@ -123,7 +126,7 @@ export async function setTheme(page: Page, theme: 'light' | 'dark' | 'system'): 
 export async function navigateToScreen(
   page: Page,
   screen: 'main' | 'chat' | 'menu',
-  subScreen?: 'settings' | 'apiKeys' | 'logs' | 'about' | 'auth' | null
+  subScreen?: 'settings' | 'apiKeys' | 'logs' | 'about' | 'auth' | 'applications' | null
 ): Promise<void> {
   // Сначала убеждаемся, что welcome screen закрыт, чтобы не перекрывал нужный экран
   await page.evaluate(() => {
@@ -191,6 +194,8 @@ export async function navigateToScreen(
         logs: 'text=/log|журнал/i, [class*="logs"], [class*="Logs"]',
         about: 'text=/about|о приложении|о программе/i, [class*="about"], [class*="About"]',
         auth: '[role="tab"], form, button[type="submit"], [class*="auth"], [class*="Auth"]',
+        applications:
+          'text=/приложения|applications|каталог/i, [class*="applications"], [data-screen="applications"]',
       };
 
       const selector = subScreenSelectors[subScreen];

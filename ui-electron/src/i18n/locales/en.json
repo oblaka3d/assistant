@@ -36,6 +36,7 @@
   "menu": {
     "title": "Menu",
     "settings": "Settings",
+    "applications": "Applications",
     "apiKeys": "API Keys",
     "history": "History",
     "logs": "Application Logs",
@@ -185,6 +186,160 @@
     "resume": "Resume",
     "retry": "Retry",
     "errorLoadingImage": "Image loading failed, try again"
+  },
+  "applications": {
+    "title": "Applications",
+    "tabs": {
+      "store": "App Catalog",
+      "installed": "My Applications"
+    },
+    "searchPlaceholder": "Search applications...",
+    "filters": {
+      "status": "Status",
+      "all": "All statuses"
+    },
+    "emptyState": "No applications found",
+    "actions": {
+      "install": "Install",
+      "installing": "Installing...",
+      "installed": "Installed",
+      "open": "Open",
+      "remove": "Remove",
+      "import": "Import archive",
+      "importing": "Importing...",
+      "create": "Create application",
+      "submitReview": "Send for review",
+      "resubmitReview": "Resubmit",
+      "edit": "Edit"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending review",
+      "published": "Published",
+      "rejected": "Rejected",
+      "updateSuccess": "Status updated to {{status}}"
+    },
+    "releaseTypes": {
+      "label": "Version increment",
+      "patch": "Patch (x.y.z → x.y.z+1)",
+      "minor": "Minor (x.y.z → x.(y+1).0)",
+      "major": "Major (x.y.z → (x+1).0.0)"
+    },
+    "list": {
+      "version": "Version {{version}}",
+      "type": "Type: {{type}}",
+      "owner": {
+        "you": "Owner: You",
+        "other": "Owner: {{owner}}",
+        "unknown": "Owner: Unknown"
+      }
+    },
+    "addButton": "Add application",
+    "loginRequired": "Sign in to manage applications.",
+    "menu": {
+      "importTitle": "Import application",
+      "importDescription": "Upload an application archive (.zip) that contains package.json.",
+      "createTitle": "Create in catalog",
+      "createDescription": "Add a new application to the shared catalog",
+      "authHint": "Sign in to create applications"
+    },
+    "import": {
+      "success": "Application {{name}} imported successfully",
+      "error": "Failed to import application",
+      "dialogTitle": "Import application",
+      "dialogDescription": "Provide the application ID and choose an archive that contains package.json.",
+      "idLabel": "Application ID",
+      "selectFile": "Choose archive",
+      "replaceFile": "Replace file",
+      "fileSelected": "Selected: {{name}}",
+      "fileSelectedDetailed": "Selected: {{name}} • {{size}}",
+      "noFile": "No file selected",
+      "fileRequired": "Select an archive file",
+      "submit": "Import",
+      "dropHint": "Drag & drop your archive here or choose a file",
+      "dropActive": "Release to import archive",
+      "fileReady": "Archive ready to upload",
+      "supportedFormats": "Supported format: .zip (max 100 MB)"
+    },
+    "edit": {
+      "title": "Edit application",
+      "save": "Save draft",
+      "releaseNotes": "Release notes",
+      "iconLabel": "Application icon",
+      "selectIcon": "Select icon",
+      "replaceIcon": "Replace icon",
+      "removeIcon": "Remove icon",
+      "noIcon": "No icon",
+      "archiveLabel": "Upload a new archive",
+      "historyTitle": "Version history",
+      "historyEmpty": "No versions yet",
+      "historyStatus": "Status: {{status}}",
+      "currentVersion": "Current",
+      "nextVersion": "Next version: {{version}}",
+      "success": "{{name}} updated. New version saved as a draft."
+    },
+    "create": {
+      "success": "Application {{name}} added to My Applications"
+    },
+    "storage": {
+      "label": "Cloud storage",
+      "usage": "{{used}} / {{limit}} used",
+      "limit": "Limit 100 MB",
+      "loading": "Loading storage usage...",
+      "error": "Unable to load storage usage"
+    },
+    "catalog": {
+      "chatCompanion": {
+        "name": "Chat Companion",
+        "description": "Enhance conversations with smart reply snippets."
+      },
+      "voicePainter": {
+        "name": "Voice Painter",
+        "description": "Generate abstract wallpapers from simple prompts."
+      },
+      "meetingNotes": {
+        "name": "Meeting Notes",
+        "description": "Record, transcribe, and summarize meetings automatically."
+      }
+    },
+    "installed": {
+      "mediaHub": {
+        "name": "Media Hub",
+        "description": "Unified control panel for music and video playback."
+      },
+      "taskPilot": {
+        "name": "Task Pilot",
+        "description": "Lightweight task manager synchronized with the assistant."
+      }
+    },
+    "form": {
+      "keyLabel": "Application ID",
+      "nameLabel": "Application name",
+      "typeLabel": "Application type",
+      "versionLabel": "Version",
+      "descriptionLabel": "Description (optional)",
+      "submit": "Create application"
+    },
+    "validation": {
+      "keyRequired": "Application ID is required",
+      "keyFormat": "Application ID can contain English letters, digits, and hyphen",
+      "keyLength": "Application ID must not exceed {{max}} characters",
+      "nameRequired": "Application name is required",
+      "nameLength": "Application name must not exceed {{max}} characters",
+      "versionRequired": "Version is required",
+      "versionLength": "Version must not exceed {{max}} characters",
+      "versionFormat": "Use the format 1.0.0",
+      "descriptionLength": "Description must not exceed {{max}} characters",
+      "keyAvailable": "ID is available",
+      "keyTaken": "ID is already in use",
+      "keyChecking": "Checking ID availability...",
+      "keyCheckError": "Unable to check ID availability right now"
+    },
+    "types": {
+      "widget": "Widget",
+      "screen": "Screen",
+      "service": "Service"
+    }
   },
   "welcome": {
     "getStarted": "Get Started"

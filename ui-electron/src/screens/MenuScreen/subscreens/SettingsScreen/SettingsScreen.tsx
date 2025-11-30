@@ -24,6 +24,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { ColorPicker } from '../../../../components/ColorPicker';
@@ -89,6 +90,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const [resetDialogOpen, setResetDialogOpen] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
   // Ref для debounce таймера
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -112,6 +114,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
     setShowPreview(true);
   };
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setPortalContainer(document.body);
+    }
+  }, []);
+
   // Сохранение настроек на сервер с debounce (1 секунда)
   useEffect(() => {
     // Пропускаем сохранение при первой загрузке или если не авторизован
@@ -127,7 +135,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
 
     // Устанавливаем новый таймер
     saveTimeoutRef.current = setTimeout(() => {
-      dispatch(
+      const savePromise = (dispatch as unknown as (action: unknown) => Promise<unknown>)(
         saveSettings({
           volume,
           language,
@@ -141,7 +149,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           idleRemoteEndpoint,
           modelScene,
         })
-      ).catch((error) => {
+      );
+
+      savePromise.catch((error: unknown) => {
         log.error('Failed to save settings:', error);
       });
     }, 1000);
@@ -253,6 +263,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const handleCancelReset = () => {
     setResetDialogOpen(false);
   };
+
+  const modelSelectValue = useMemo(() => {
+    const currentModelName = modelScene.modelPath.split('/').pop() || '';
+    if (availableModels.includes(currentModelName)) {
+      return currentModelName;
+    }
+    return availableModels.length > 0 ? availableModels[0] : '';
+  }, [availableModels, modelScene.modelPath]);
 
   return (
     <Box className={styles.container}>
@@ -418,7 +436,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <ModelSelector
               id="model-select"
               label={t('settings.model')}
-              value={modelScene.modelPath.split('/').pop() || availableModels[0] || ''}
+              value={modelSelectValue}
               onChange={(value) => {
                 if (value) {
                   const modelPath = `${ASSETS_PATHS.MODELS}${value}`;
@@ -553,18 +571,21 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </Box>
         </SettingSection>
       </ScrollableContent>
-      {showPreview && (
-        <IdleScreen
-          key={previewRefreshKey}
-          mode={idleMode}
-          customImagePath={idleCustomImagePath}
-          remoteEndpoint={idleRemoteEndpoint}
-          refreshKey={previewRefreshKey}
-          onResume={() => {
-            setShowPreview(false);
-          }}
-        />
-      )}
+      {showPreview &&
+        portalContainer &&
+        createPortal(
+          <IdleScreen
+            key={previewRefreshKey}
+            mode={idleMode}
+            customImagePath={idleCustomImagePath}
+            remoteEndpoint={idleRemoteEndpoint}
+            refreshKey={previewRefreshKey}
+            onResume={() => {
+              setShowPreview(false);
+            }}
+          />,
+          portalContainer
+        )}
 
       {/* Диалог подтверждения сброса */}
       <Dialog open={resetDialogOpen} onClose={handleCancelReset}>

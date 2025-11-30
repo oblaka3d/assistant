@@ -1,3 +1,4 @@
+import AppsIcon from '@mui/icons-material/Apps';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DescriptionIcon from '@mui/icons-material/Description';
 import InfoIcon from '@mui/icons-material/Info';
@@ -37,6 +38,7 @@ import { saveSettings } from '../../store/thunks';
 import styles from './MenuScreen.module.css';
 import AboutScreen from './subscreens/AboutScreen/AboutScreen';
 import APIKeysScreen from './subscreens/APIKeysScreen/APIKeysScreen';
+import ApplicationsScreen from './subscreens/ApplicationsScreen/ApplicationsScreen';
 import AuthScreen from './subscreens/AuthScreen/AuthScreen';
 import LogsScreen from './subscreens/LogsScreen/LogsScreen';
 import SettingsScreen from './subscreens/SettingsScreen/SettingsScreen';
@@ -48,6 +50,7 @@ const SUBSCREEN_COMPONENTS: Record<string, React.ComponentType<{ onBack: () => v
   logs: LogsScreen,
   about: AboutScreen,
   auth: AuthScreen,
+  applications: ApplicationsScreen,
 };
 
 const MenuScreen: React.FC = () => {
@@ -73,11 +76,11 @@ const MenuScreen: React.FC = () => {
     // Сохраняем настройки на сервер (если пользователь авторизован)
     if (isAuthenticated) {
       try {
-        await dispatch(
+        await (dispatch as unknown as (action: unknown) => Promise<unknown>)(
           saveSettings({
             theme: newTheme,
           })
-        ).unwrap();
+        );
       } catch (error) {
         // Игнорируем ошибки сохранения, настройка все равно применена локально
         console.error('Failed to save theme:', error);
@@ -109,6 +112,11 @@ const MenuScreen: React.FC = () => {
       icon: <SettingsIcon />,
       text: t('menu.settings'),
       onClick: () => dispatch(openSubScreen('settings')),
+    },
+    {
+      icon: <AppsIcon />,
+      text: t('menu.applications'),
+      onClick: () => dispatch(openSubScreen('applications')),
     },
     {
       icon: <VpnKeyIcon />,

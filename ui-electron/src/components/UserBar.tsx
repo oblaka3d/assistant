@@ -83,15 +83,17 @@ const UserBar: React.FC<UserBarProps> = ({ onLoginClick }) => {
             )}
           </Box>
           <Tooltip title={t('user.logout')}>
-            <IconButton
-              onClick={handleLogout}
-              disabled={isLoading}
-              size="small"
-              className={styles.logoutButton}
-              color="primary"
-            >
-              <LogoutIcon fontSize="small" />
-            </IconButton>
+            <span style={{ display: 'inline-flex' }}>
+              <IconButton
+                onClick={handleLogout}
+                disabled={isLoading}
+                size="small"
+                className={styles.logoutButton}
+                color="primary"
+              >
+                <LogoutIcon fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
       ) : (

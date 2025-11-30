@@ -123,7 +123,7 @@ const ChatScreen: React.FC = () => {
     const totalFixedHeight = statusBarHeight + headerHeight + inputContainerHeight + baseMargin;
     const availableHeight = `calc(100vh - ${totalFixedHeight}px - ${keyboardOffset}px)`;
     return availableHeight;
-  }, [keyboardOffset, isVirtualKeyboardOpen]);
+  }, [keyboardOffset]);
 
   const containerStyle = useMemo(
     () =>

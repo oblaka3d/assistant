@@ -35,3 +35,31 @@ export const authenticate: RequestHandler = (
     res.status(401).json({ error: 'Authentication failed' });
   }
 };
+
+/**
+ * Middleware, которое пытается аутентифицировать пользователя, но не прерывает цепочку при ошибке
+ */
+export const optionalAuthenticate: RequestHandler = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      next();
+      return;
+    }
+
+    const token = authHeader.substring(7);
+    try {
+      const decoded = verifyToken(token);
+      (req as AuthRequest).user = decoded;
+    } catch {
+      // Игнорируем ошибки в optional режиме
+    }
+    next();
+  } catch {
+    next();
+  }
+};

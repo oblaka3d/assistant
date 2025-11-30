@@ -9,6 +9,7 @@ import { connectDatabase } from './config/database';
 import passport from './config/passport'; // Инициализация Passport стратегий
 import { errorHandler, notFound } from './middleware/errorHandler';
 import apiKeysRoutes from './routes/apiKeysRoutes';
+import applicationsRoutes from './routes/applicationsRoutes';
 import authRoutes from './routes/authRoutes';
 import chatRoutes from './routes/chatRoutes';
 import idleRoutes from './routes/idleRoutes';
@@ -54,6 +55,7 @@ app.get('/health', (_req, res) => {
 // Routes
 app.use(`${config.api.prefix}/auth`, authRoutes);
 app.use(`${config.api.prefix}/settings`, settingsRoutes);
+app.use(`${config.api.prefix}/applications`, applicationsRoutes);
 app.use(`${config.api.prefix}`, idleRoutes);
 app.use(`${config.api.prefix}/api-keys`, apiKeysRoutes);
 app.use(`${config.api.prefix}/chats`, chatRoutes);
