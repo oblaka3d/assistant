@@ -65,6 +65,7 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'ui-electron/src'),
+      '@assistant/shared': path.resolve(__dirname, '../../packages/shared/src'),
     },
   },
   server: {

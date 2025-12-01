@@ -254,6 +254,20 @@ t('chat.sendMessage');
   - `applications-screen-my-apps-dark` (installed таб, тёмная тема)
 - Хелперы: `navigateToScreen`, `waitForAppReady`, `setTheme`, `compareScreenshot`
 
+### 18. Backend ORM (Prisma)
+
+- Схема находится в `apps/backend-main/prisma/schema.prisma` (MongoDB provider)
+- Клиент и конфигурация создаются через `npm run prisma:generate --workspace @assistant/backend-main`
+- Обновление схемы в БД: `npm run prisma:push --workspace @assistant/backend-main`
+- Общий инстанс Prisma лежит в `apps/backend-main/src/lib/prisma.ts`
+- `applicationsService` переписан на Prisma (без Mongoose) и использует общий DTO из `@assistant/shared`
+
+### 19. Shared DTOs (`packages/shared`)
+
+- Пакет `@assistant/shared` содержит Zod-схемы и типы для контрактов API
+- Собирается командой `npm run build --workspace @assistant/shared`
+- Backend и Desktop импортируют `SharedApplicationDTO` и сопутствующие типы, что устраняет дублирование структур данных
+
 ### 18. Shared Utilities (`packages/shared`)
 
 - TypeScript-пакет `@assistant/shared`, собирается через `npm run build --workspace @assistant/shared`

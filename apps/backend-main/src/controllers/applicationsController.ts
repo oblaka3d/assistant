@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { Prisma, type ApplicationEntryPoints } from '@prisma/client';
 import AdmZip from 'adm-zip';
 import { RequestHandler } from 'express';
 
@@ -149,24 +150,29 @@ const buildManifestFromPackageJson = (payload: PackageJsonPayload) => {
     frontend: payload.frontend,
     backend: payload.backend,
   };
-  const entryPoints = {
-    frontend: readEntryValue(entryPointsSource?.frontend),
-    backend: readEntryValue(entryPointsSource?.backend),
-  };
+  const frontendEntry = readEntryValue(entryPointsSource?.frontend);
+  const backendEntry = readEntryValue(entryPointsSource?.backend);
 
-  if (!entryPoints.frontend) {
+  if (!frontendEntry) {
     throw new Error('package.json must define a frontend entry point');
   }
 
+  const entryPoints: ApplicationEntryPoints = {
+    frontend: frontendEntry,
+    backend: backendEntry && backendEntry.length > 0 ? backendEntry : null,
+  };
+
+  const manifest = {
+    name: packageName,
+    version: packageVersion,
+    type: packageType,
+    description: packageDescription ?? null,
+    entryPoints,
+    permissions: normalizePackagePermissions(payload.permissions),
+  } satisfies Prisma.InputJsonValue;
+
   return {
-    manifest: {
-      name: packageName,
-      version: packageVersion,
-      type: packageType,
-      description: packageDescription,
-      entryPoints,
-      permissions: normalizePackagePermissions(payload.permissions),
-    },
+    manifest,
   };
 };
 
@@ -443,7 +449,7 @@ export const importApplicationArchiveHandler: RequestHandler = async (req, res) 
       name: manifest.name,
       version: manifest.version,
       type: manifest.type,
-      description: manifest.description,
+      description: manifest.description ?? undefined,
       ownerId: authUserId ?? undefined,
       entryPoints: manifest.entryPoints,
       permissions: manifest.permissions,

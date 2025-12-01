@@ -150,7 +150,7 @@ export const getMeController: RequestHandler = async (
       success: true,
       data: {
         user: {
-          id: user._id.toString(),
+          id: user.id,
           email: user.email,
           name: user.name,
           createdAt: user.createdAt,

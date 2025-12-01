@@ -17,7 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@assistant/shared": ["../../../packages/shared/src/index.ts"],
+      "@assistant/shared/*": ["../../../packages/shared/src/*"]
     }
   },
   "include": ["src", "src/types/**/*", "*.ts", "*.tsx"],

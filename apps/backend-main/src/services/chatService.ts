@@ -1,82 +1,85 @@
-import { Types } from 'mongoose';
+import type { Dialog, Prisma } from '@prisma/client';
 
-import { Dialog, IDialog, IMessage } from '../models/Chat';
+import { prisma } from '../lib/prisma';
 
 export interface DialogUpdateData {
   title?: string;
-  messages?: IMessage[];
+  messages?: Prisma.DialogUpdateInput['messages'];
 }
 
-/**
- * Получить все диалоги пользователя
- */
-export const getUserDialogs = async (userId: string | Types.ObjectId): Promise<IDialog[]> => {
-  return Dialog.find({ userId }).sort({ updatedAt: -1 }).exec();
+export const getUserDialogs = async (userId: string): Promise<Dialog[]> => {
+  return prisma.dialog.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+  });
 };
 
-/**
- * Получить диалог по ID
- */
-export const getDialogById = async (
-  userId: string | Types.ObjectId,
-  dialogId: string
-): Promise<IDialog | null> => {
-  return Dialog.findOne({ userId, dialogId }).exec();
+export const getDialogById = async (userId: string, dialogId: string): Promise<Dialog | null> => {
+  return prisma.dialog.findUnique({
+    where: {
+      userId_dialogId: {
+        userId,
+        dialogId,
+      },
+    },
+  });
 };
 
-/**
- * Создать новый диалог
- */
 export const createDialog = async (
-  userId: string | Types.ObjectId,
+  userId: string,
   dialogId: string,
   title?: string
-): Promise<IDialog> => {
-  const dialog = await Dialog.create({
-    userId,
-    dialogId,
-    title: title || 'Новый диалог',
-    messages: [],
+): Promise<Dialog> => {
+  return prisma.dialog.create({
+    data: {
+      userId,
+      dialogId,
+      title: title || 'Новый диалог',
+      messages: [],
+    },
   });
-  return dialog;
 };
 
-/**
- * Обновить диалог
- */
 export const updateDialog = async (
-  userId: string | Types.ObjectId,
+  userId: string,
   dialogId: string,
   updateData: DialogUpdateData
-): Promise<IDialog> => {
-  const dialog = await Dialog.findOneAndUpdate(
-    { userId, dialogId },
-    { $set: updateData },
-    { new: true, upsert: true, runValidators: true }
-  );
-
-  if (!dialog) {
-    throw new Error('Failed to update dialog');
-  }
+): Promise<Dialog> => {
+  const dialog = await prisma.dialog.upsert({
+    where: {
+      userId_dialogId: {
+        userId,
+        dialogId,
+      },
+    },
+    update: {
+      ...(updateData.title !== undefined ? { title: updateData.title } : {}),
+      ...(updateData.messages !== undefined
+        ? { messages: updateData.messages as Dialog['messages'] }
+        : {}),
+    },
+    create: {
+      userId,
+      dialogId,
+      title: updateData.title || 'Новый диалог',
+      messages: (updateData.messages as Dialog['messages']) ?? [],
+    },
+  });
 
   return dialog;
 };
 
-/**
- * Удалить диалог
- */
-export const deleteDialog = async (
-  userId: string | Types.ObjectId,
-  dialogId: string
-): Promise<boolean> => {
-  const result = await Dialog.deleteOne({ userId, dialogId });
-  return result.deletedCount > 0;
+export const deleteDialog = async (userId: string, dialogId: string): Promise<boolean> => {
+  const result = await prisma.dialog.deleteMany({
+    where: {
+      userId,
+      dialogId,
+    },
+  });
+  return result.count > 0;
 };
 
-/**
- * Удалить все диалоги пользователя
- */
-export const deleteAllUserDialogs = async (userId: string | Types.ObjectId): Promise<number> => {
-  const result = await Dialog.deleteMany({ userId });
-  return result.deletedCount;
+export const deleteAllUserDialogs = async (userId: string): Promise<number> => {
+  const result = await prisma.dialog.deleteMany({ where: { userId } });
+  return result.count;
 };

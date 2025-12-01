@@ -150,7 +150,8 @@ WINDOW_MODE=true  # Оконный режим
 # Обязательные
 API_KEY_SECRET=<32-символьный_секрет>
 JWT_SECRET=<32-символьный_секрет>
-MONGODB_URI=mongodb://localhost:27017/voice-assistant
+MONGODB_URI=mongodb://localhost:27017/voice-assistant?replicaSet=rs0&directConnection=true
+DATABASE_URL=mongodb://localhost:27017/voice-assistant?replicaSet=rs0&directConnection=true
 
 # OAuth (опционально)
 GOOGLE_CLIENT_ID=<client_id>
@@ -160,6 +161,17 @@ YANDEX_CLIENT_SECRET=<client_secret>
 GITHUB_CLIENT_ID=<client_id>
 GITHUB_CLIENT_SECRET=<client_secret>
 ```
+
+> Prisma всегда использует транзакции, поэтому MongoDB должна работать в режиме **replica set**. Для локальной установки через Homebrew:
+>
+> 1. Добавьте в `/opt/homebrew/etc/mongod.conf` блок
+>    ```
+>    replication:
+>      replSetName: rs0
+>    ```
+> 2. Перезапустите `brew services restart mongodb-community`.
+> 3. Выполните `mongosh --quiet --eval "rs.initiate()"`.
+> 4. Убедитесь, что `mongosh --quiet --eval "rs.status().members.map(m => m.stateStr)"` возвращает `['PRIMARY']`.
 
 ### UI
 
@@ -234,6 +246,14 @@ VITE_API_URL=http://localhost:3001/api/v1
 - `GET /applications/installed` — список установленных приложений
 - `GET /applications/storage` — использование пользовательского хранилища (лимит 100 МБ)
 - `POST /applications/import` — импорт ZIP архива без авторизации (guest → user)
+
+### Prisma (backend-main)
+
+- Схема: `apps/backend-main/prisma/schema.prisma`
+- Генерация клиента и zod-схем: `npm run prisma:generate --workspace @assistant/backend-main`
+- Применение схемы: `npm run prisma:push --workspace @assistant/backend-main`
+- Клиент используется через `apps/backend-main/src/lib/prisma.ts`
+- Автогенерируемые zod-схемы и типы складываются в `packages/shared/src/zod/schemas.ts` и доступны в desktop через `@assistant/shared`
 
 ## CSS Variables
 

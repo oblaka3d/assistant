@@ -11,23 +11,30 @@ apps/
   landing/        # Заготовка под рекламный лендинг (Vite/Next – TBD)
   mobile/         # Заготовка под React Native / Expo приложение
 packages/
-  shared/         # Общие типы и утилиты (пока заглушка)
+  shared/         # Общие типы, DTO и zod-схемы (используются backend + desktop)
 docs/             # Документация (cursor.md, CURSOR_*.md)
 ```
 
 ## Скрипты верхнего уровня
 
-| Команда                                                 | Описание                                                                |
-| ------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `npm run dev`                                           | Запускает desktop workspace (эквивалент `apps/desktop` → `npm run dev`) |
-| `npm run dev:backend-main`                              | Запускает API сервер (workspace `apps/backend-main`)                    |
-| `npm run build`                                         | Сборка desktop приложения                                               |
-| `npm run build:backend-main`                            | Сборка backend-main                                                     |
-| `npm run test`                                          | Playwright визуальные тесты desktop UI                                  |
-| `npm run lint` / `npm run format` / `npm run typecheck` | Соответствующие проверки для desktop workspace                          |
-| `npm run run:all`                                       | Полный цикл `setup MongoDB → build all → старт Electron + backend`      |
+| Команда                                                       | Описание                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `npm run dev`                                                 | Запускает desktop workspace (эквивалент `apps/desktop` → `npm run dev`) |
+| `npm run dev:backend-main`                                    | Запускает API сервер (workspace `apps/backend-main`)                    |
+| `npm run build`                                               | Сборка desktop приложения                                               |
+| `npm run build:backend-main`                                  | Сборка backend-main                                                     |
+| `npm run test`                                                | Playwright визуальные тесты desktop UI                                  |
+| `npm run lint` / `npm run format` / `npm run typecheck`       | Соответствующие проверки для desktop workspace                          |
+| `npm run run:all`                                             | Полный цикл `setup MongoDB → build all → старт Electron + backend`      |
+| `npm run prisma:generate --workspace @assistant/backend-main` | Генерация Prisma клиента **и zod-схем в `packages/shared/src/zod`**     |
+| `npm run prisma:push --workspace @assistant/backend-main`     | Применение Prisma схемы к MongoDB                                       |
 
-Плейсхолдеры `apps/landing`, `apps/mobile`, `packages/shared` уже подключены к workspace и готовы к разработке (команды пока выводят заглушку).
+Плейсхолдеры `apps/landing` и `apps/mobile` уже подключены к workspace и готовы к разработке (команды пока выводят заглушку).
+
+## Новое в монорепе
+
+- **Prisma ORM** для `apps/backend-main`: схема хранится в `apps/backend-main/prisma/schema.prisma`, клиент создаётся в `src/lib/prisma.ts`, а `applicationsService`/`authService`/`settingsService`/`chatService` работают через Prisma.
+- **Shared DTO package** (`packages/shared`): помимо ручных схем (`applications.ts`) автоматически содержит zod-схемы из Prisma (`src/zod/schemas.ts`), благодаря чему backend и desktop используют один и тот же контракт.
 
 ## Как работать
 

@@ -1,6 +1,9 @@
 import crypto from 'crypto';
 
-import { IUser, User } from '../models/User';
+import type { User } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+import { prisma } from '../lib/prisma';
 import { generateToken, generateRefreshToken, TokenPayload } from '../utils/jwt';
 
 export interface RegisterData {
@@ -24,86 +27,79 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
-/**
- * Регистрация нового пользователя
- */
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+
+const buildTokens = (user: Pick<User, 'id' | 'email'>) => {
+  const payload: TokenPayload = {
+    userId: user.id,
+    email: user.email,
+  };
+
+  return {
+    token: generateToken(payload),
+    refreshToken: generateRefreshToken(payload),
+  };
+};
+
+const toAuthResponse = (user: Pick<User, 'id' | 'email' | 'name'>): AuthResponse => {
+  const tokens = buildTokens(user);
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    },
+    ...tokens,
+  };
+};
+
+const userWithPasswordSelect = {
+  id: true,
+  email: true,
+  name: true,
+  password: true,
+} as const;
+
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
-  // Проверка существования пользователя
-  const existingUser = await User.findOne({ email: data.email });
+  const email = normalizeEmail(data.email);
+  const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     throw new Error('User with this email already exists');
   }
 
-  // Создание нового пользователя
-  const user = new User({
-    email: data.email,
-    password: data.password,
-    name: data.name,
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+  const user = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name: data.name,
+    },
   });
 
-  await user.save();
-
-  // Генерация токенов
-  const payload: TokenPayload = {
-    userId: user._id.toString(),
-    email: user.email,
-  };
-
-  const token = generateToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  return {
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      name: user.name,
-    },
-    token,
-    refreshToken,
-  };
+  return toAuthResponse(user);
 };
 
-/**
- * Авторизация пользователя
- */
 export const login = async (data: LoginData): Promise<AuthResponse> => {
-  // Поиск пользователя с паролем
-  const user = await User.findOne({ email: data.email }).select('+password');
-  if (!user) {
+  const email = normalizeEmail(data.email);
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: userWithPasswordSelect,
+  });
+
+  if (!user || !user.password) {
     throw new Error('Invalid email or password');
   }
 
-  // Проверка пароля
-  const isPasswordValid = await user.comparePassword(data.password);
+  const isPasswordValid = await bcrypt.compare(data.password, user.password);
   if (!isPasswordValid) {
     throw new Error('Invalid email or password');
   }
 
-  // Генерация токенов
-  const payload: TokenPayload = {
-    userId: user._id.toString(),
-    email: user.email,
-  };
-
-  const token = generateToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  return {
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      name: user.name,
-    },
-    token,
-    refreshToken,
-  };
+  return toAuthResponse(user);
 };
 
-/**
- * Получение пользователя по ID
- */
-export const getUserById = async (userId: string): Promise<IUser | null> => {
-  return User.findById(userId);
+export const getUserById = async (userId: string): Promise<User | null> => {
+  return prisma.user.findUnique({ where: { id: userId } });
 };
 
 export interface UpdateProfileData {
@@ -111,62 +107,45 @@ export interface UpdateProfileData {
   email?: string;
 }
 
-/**
- * Обновление профиля пользователя
- */
 export const updateProfile = async (
   userId: string,
   data: UpdateProfileData
 ): Promise<AuthResponse> => {
-  const user = await User.findById(userId);
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     throw new Error('User not found');
   }
 
-  // Если меняется email, проверяем, что он не занят
-  if (data.email && data.email !== user.email) {
-    const existingUser = await User.findOne({ email: data.email });
-    if (existingUser) {
+  const nextEmail = data.email ? normalizeEmail(data.email) : user.email;
+
+  if (nextEmail !== user.email) {
+    const existingUser = await prisma.user.findUnique({ where: { email: nextEmail } });
+    if (existingUser && existingUser.id !== user.id) {
       throw new Error('User with this email already exists');
     }
-    user.email = data.email;
   }
 
-  if (data.name) {
-    user.name = data.name;
-  }
-
-  await user.save();
-
-  // Генерация новых токенов
-  const payload: TokenPayload = {
-    userId: user._id.toString(),
-    email: user.email,
-  };
-
-  const token = generateToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  return {
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      name: user.name,
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      email: nextEmail,
+      name: data.name ?? user.name,
     },
-    token,
-    refreshToken,
-  };
+  });
+
+  return toAuthResponse(updatedUser);
 };
 
-/**
- * Изменение пароля пользователя
- */
 export const changePassword = async (
   userId: string,
   currentPassword: string,
   newPassword: string
 ): Promise<void> => {
-  const user = await User.findById(userId).select('+password');
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: userWithPasswordSelect,
+  });
+
   if (!user) {
     throw new Error('User not found');
   }
@@ -175,58 +154,64 @@ export const changePassword = async (
     throw new Error('Password not set for this account');
   }
 
-  // Проверяем текущий пароль
-  const isPasswordValid = await user.comparePassword(currentPassword);
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
   if (!isPasswordValid) {
     throw new Error('Current password is incorrect');
   }
 
-  // Устанавливаем новый пароль
-  user.password = newPassword;
-  await user.save();
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
 };
 
-/**
- * Генерация токена для сброса пароля
- */
 export const generatePasswordResetToken = async (email: string): Promise<string | null> => {
-  const user = await User.findOne({ email });
+  const normalizedEmail = normalizeEmail(email);
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (!user) {
-    // Не сообщаем, что пользователь не найден (безопасность)
     return null;
   }
 
-  // Генерируем случайный токен
   const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-  user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 минут
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  });
 
-  await user.save();
-
-  // Возвращаем незашифрованный токен для отправки по email
   return resetToken;
 };
 
-/**
- * Сброс пароля по токену
- */
 export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-  const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpires: { $gt: Date.now() },
-  }).select('+resetPasswordToken +resetPasswordExpires');
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: {
+        gt: new Date(),
+      },
+    },
+    select: { id: true },
+  });
 
   if (!user) {
     throw new Error('Invalid or expired reset token');
   }
 
-  // Устанавливаем новый пароль
-  user.password = newPassword;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  await user.save();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
 };

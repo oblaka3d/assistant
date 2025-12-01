@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "npm run dev:desktop",
     "dev:desktop": "npm run dev --workspace @assistant/desktop",
+    "dev:desktop:window": "npm run dev:window --workspace @assistant/desktop",
     "dev:backend-main": "npm run dev --workspace @assistant/backend-main",
     "dev:landing": "npm run dev --workspace @assistant/landing",
     "dev:mobile": "npm run dev --workspace @assistant/mobile",
@@ -29,9 +30,11 @@
     "format:desktop": "npm run format --workspace @assistant/desktop",
     "format:backend-main": "npm run format --workspace @assistant/backend-main",
     "check": "npm run check --workspace @assistant/desktop",
-    "typecheck": "npm run typecheck --workspace @assistant/desktop",
+    "typecheck": "npm run typecheck:desktop && npm run typecheck:backend-main",
+    "typecheck:desktop": "npm run typecheck --workspace @assistant/desktop",
+    "typecheck:backend-main": "npm run typecheck --workspace @assistant/backend-main",
     "setup:mongodb": "npm run setup:mongodb --workspace @assistant/backend-main",
-    "run:all": "npm run run:all --workspace @assistant/desktop",
-    "prepare": "npm run prepare --workspace @assistant/desktop"
+    "run:all": "npm run run:all --workspace @assistant/desktop && npm run run:all --workspace @assistant/backend-main",
+    "prepare": "npm run prepare --workspace @assistant/desktop && npm run prepare --workspace @assistant/backend-main"
   }
 }

@@ -1,15 +1,19 @@
-import { Types } from 'mongoose';
-
 import {
-  Application,
+  SharedApplicationDetailsDTO,
+  SharedApplicationEntryPoints,
+  SharedApplicationStorageMeta,
+  SharedApplicationVersionHistoryDTO,
+} from '@assistant/shared';
+import type {
   ApplicationEntryPoints,
   ApplicationStatus,
   ApplicationStorageMeta,
   ApplicationType,
-  ApplicationVersionHistoryEntry,
-  IApplication,
-} from '../models/Application';
-import { UserApplication } from '../models/UserApplication';
+  ApplicationVersion,
+  Prisma,
+} from '@prisma/client';
+
+import { prisma } from '../lib/prisma';
 
 const APP_KEY_REGEX = /^[a-z0-9-]+$/;
 export const APPLICATION_VERSION_REGEX = /^\d+\.\d+\.\d+$/;
@@ -27,6 +31,9 @@ export const APPLICATION_STATUSES: ApplicationStatus[] = [
 ];
 export type ReleaseType = 'patch' | 'minor' | 'major';
 export const RELEASE_TYPES: ReleaseType[] = ['patch', 'minor', 'major'];
+
+export type ApplicationVersionHistoryDTO = SharedApplicationVersionHistoryDTO;
+export type ApplicationDTO = SharedApplicationDetailsDTO;
 
 const normalizeKey = (key: string): string => key.trim().toLowerCase();
 
@@ -108,15 +115,18 @@ const normalizeEntryPoints = (
   if (!entryPoints) {
     return undefined;
   }
-  const frontend =
+  const frontendRaw =
     typeof entryPoints.frontend === 'string' ? entryPoints.frontend.trim() : undefined;
-  const backend = typeof entryPoints.backend === 'string' ? entryPoints.backend.trim() : undefined;
+  const backendRaw =
+    typeof entryPoints.backend === 'string' ? entryPoints.backend.trim() : undefined;
+  const frontend = frontendRaw && frontendRaw.length > 0 ? frontendRaw : undefined;
+  const backend = backendRaw && backendRaw.length > 0 ? backendRaw : undefined;
   if (!frontend && !backend) {
     return undefined;
   }
   return {
-    ...(frontend ? { frontend } : {}),
-    ...(backend ? { backend } : {}),
+    frontend: frontend ?? null,
+    backend: backend ?? null,
   };
 };
 
@@ -165,64 +175,103 @@ const bumpVersion = (currentVersion: string, releaseType: ReleaseType): string =
   return `${major}.${minor}.${patch}`;
 };
 
-export interface ApplicationVersionHistoryDTO {
-  version: string;
-  status: ApplicationStatus;
-  releaseNotes?: string;
-  description?: string;
-  createdAt?: string;
-}
+const mapEntryPointsToDTO = (
+  entryPoints?: ApplicationEntryPoints | null
+): SharedApplicationEntryPoints | undefined => {
+  if (!entryPoints) {
+    return undefined;
+  }
+  const frontendRaw =
+    typeof entryPoints.frontend === 'string' ? entryPoints.frontend.trim() : undefined;
+  const backendRaw =
+    typeof entryPoints.backend === 'string' ? entryPoints.backend.trim() : undefined;
+  const frontend = frontendRaw && frontendRaw.length > 0 ? frontendRaw : undefined;
+  const backend = backendRaw && backendRaw.length > 0 ? backendRaw : undefined;
+  if (!frontend && !backend) {
+    return undefined;
+  }
+  return {
+    ...(frontend ? { frontend } : {}),
+    ...(backend ? { backend } : {}),
+  };
+};
 
-export interface ApplicationDTO {
-  id: string;
-  key: string;
-  name: string;
-  version: string;
-  type: ApplicationType;
-  description?: string;
-  status: ApplicationStatus;
-  isPublished: boolean;
-  owner?: string;
-  entryPoints?: ApplicationEntryPoints;
-  permissions: string[];
-  storage?: ApplicationStorageMeta;
-  icon?: string;
-  versionHistory?: ApplicationVersionHistoryDTO[];
-}
+const mapStorageToDTO = (
+  storage?: ApplicationStorageMeta | null
+): SharedApplicationStorageMeta | undefined => {
+  if (!storage) {
+    return undefined;
+  }
+  const { rootDir, archivePath, contentPath, manifestPath } = storage;
+  const result: SharedApplicationStorageMeta = {};
+  if (typeof rootDir === 'string' && rootDir.trim().length > 0) {
+    result.rootDir = rootDir.trim();
+  }
+  if (typeof archivePath === 'string' && archivePath.trim().length > 0) {
+    result.archivePath = archivePath.trim();
+  }
+  if (typeof contentPath === 'string' && contentPath.trim().length > 0) {
+    result.contentPath = contentPath.trim();
+  }
+  if (typeof manifestPath === 'string' && manifestPath.trim().length > 0) {
+    result.manifestPath = manifestPath.trim();
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+};
 
-const mapVersionHistoryToDTO = (
-  history: ApplicationVersionHistoryEntry[]
-): ApplicationVersionHistoryDTO[] => {
+const mapVersionHistoryToDTO = (history: ApplicationVersion[]): ApplicationVersionHistoryDTO[] => {
   return history.map((entry) => ({
     version: entry.version,
     status: entry.status,
-    releaseNotes: entry.releaseNotes,
-    description: entry.description,
+    releaseNotes: entry.releaseNotes ?? undefined,
+    description: entry.description ?? undefined,
     createdAt: entry.createdAt ? entry.createdAt.toISOString() : undefined,
+    entryPoints: mapEntryPointsToDTO(entry.entryPoints),
+    permissions: entry.permissions ?? [],
+    storage: mapStorageToDTO(entry.storage),
+    manifest: entry.manifest ?? undefined,
   }));
 };
 
+const applicationInclude = {
+  versions: {
+    orderBy: {
+      createdAt: 'desc' as const,
+    },
+  },
+} as const;
+
+type ApplicationRecord = Prisma.ApplicationGetPayload<{
+  include: typeof applicationInclude;
+}>;
+
 const mapApplicationToDTO = (
-  application: IApplication,
+  application: ApplicationRecord,
   options?: { includeHistory?: boolean }
-): ApplicationDTO => ({
-  id: application._id.toString(),
-  key: application.key,
-  name: application.name,
-  version: application.version,
-  type: application.type,
-  description: application.description ?? '',
-  status: application.status,
-  isPublished: application.isPublished,
-  owner: application.owner ? application.owner.toString() : undefined,
-  entryPoints: application.entryPoints,
-  permissions: application.permissions ?? [],
-  storage: application.storage,
-  icon: application.icon,
-  versionHistory: options?.includeHistory
-    ? mapVersionHistoryToDTO(application.versionHistory ?? [])
-    : undefined,
-});
+): ApplicationDTO => {
+  const entryPoints = mapEntryPointsToDTO(application.entryPoints);
+  const storage = mapStorageToDTO(application.storage);
+
+  return {
+    id: application.id,
+    key: application.key,
+    name: application.name,
+    version: application.version,
+    type: application.type,
+    description: application.description ?? '',
+    status: application.status,
+    isPublished: application.isPublished,
+    owner: application.ownerId ?? undefined,
+    entryPoints,
+    permissions: application.permissions ?? [],
+    storage,
+    icon: application.icon ?? undefined,
+    versionHistory:
+      options?.includeHistory && application.versions
+        ? mapVersionHistoryToDTO(application.versions ?? [])
+        : undefined,
+  };
+};
 
 export interface CreateApplicationOptions {
   key: string;
@@ -235,7 +284,7 @@ export interface CreateApplicationOptions {
   entryPoints?: ApplicationEntryPoints;
   permissions?: string[];
   storage?: ApplicationStorageMeta;
-  manifest?: Record<string, unknown>;
+  manifest?: Prisma.InputJsonValue;
   icon?: string;
   releaseNotes?: string;
 }
@@ -251,16 +300,40 @@ export interface CreateApplicationVersionOptions {
   entryPoints?: ApplicationEntryPoints;
   permissions?: string[];
   storage?: ApplicationStorageMeta;
-  manifest?: Record<string, unknown>;
+  manifest?: Prisma.InputJsonValue;
   icon?: string;
 }
 
+const getApplicationByKeyOrThrow = async (key: string): Promise<ApplicationRecord> => {
+  const application = await prisma.application.findUnique({
+    where: { key: assertValidKey(key) },
+    include: applicationInclude,
+  });
+  if (!application) {
+    throw new Error('Application not found');
+  }
+  return application;
+};
+
+const ensureApplicationOwner = (application: ApplicationRecord, userId: string): void => {
+  if (!application.ownerId || application.ownerId !== userId) {
+    throw new Error('You are not allowed to modify this application');
+  }
+};
+
+const assertValidStatus = (status: string): ApplicationStatus => {
+  if (!APPLICATION_STATUSES.includes(status as ApplicationStatus)) {
+    throw new Error(`Invalid application status: ${status}`);
+  }
+  return status as ApplicationStatus;
+};
+
 export const getCatalogApplications = async (): Promise<ApplicationDTO[]> => {
-  const applications = await Application.find({
-    status: 'published',
-  })
-    .sort({ name: 1 })
-    .exec();
+  const applications = await prisma.application.findMany({
+    where: { status: 'published' },
+    orderBy: { name: 'asc' },
+    include: applicationInclude,
+  });
   return applications.map((application) => mapApplicationToDTO(application));
 };
 
@@ -283,7 +356,10 @@ export const createCatalogApplication = async (
     releaseNotes,
   } = options;
   const normalizedKey = assertValidKey(key);
-  const existing = await Application.findOne({ key: normalizedKey }).exec();
+  const existing = await prisma.application.findUnique({
+    where: { key: normalizedKey },
+    select: { id: true },
+  });
 
   if (existing) {
     throw new Error('Application key already exists');
@@ -297,56 +373,40 @@ export const createCatalogApplication = async (
   const normalizedPermissions = normalizePermissions(permissions);
   const normalizedStatus = status ?? 'draft';
 
-  const application = await Application.create({
-    key: normalizedKey,
-    name: normalizedName,
-    version: normalizedVersion,
-    type: normalizedType,
-    description: normalizedDescription,
-    owner: ownerId ?? undefined,
-    status: normalizedStatus,
-    isPublished: normalizedStatus === 'published',
-    entryPoints: normalizedEntryPoints,
-    permissions: normalizedPermissions,
-    storage,
-    manifest,
-    icon: normalizeIcon(icon),
-    versionHistory: [
-      {
-        version: normalizedVersion,
-        status: normalizedStatus,
-        description: normalizedDescription,
-        releaseNotes,
-        entryPoints: normalizedEntryPoints,
-        permissions: normalizedPermissions,
-        storage,
-        manifest,
+  const application = await prisma.application.create({
+    data: {
+      key: normalizedKey,
+      name: normalizedName,
+      version: normalizedVersion,
+      type: normalizedType,
+      description: normalizedDescription,
+      ownerId: ownerId ?? null,
+      status: normalizedStatus,
+      isPublished: normalizedStatus === 'published',
+      entryPoints: normalizedEntryPoints ?? null,
+      permissions: normalizedPermissions,
+      storage: storage ?? null,
+      manifest: manifest ?? null,
+      icon: normalizeIcon(icon) ?? null,
+      versions: {
+        create: [
+          {
+            version: normalizedVersion,
+            status: normalizedStatus,
+            description: normalizedDescription ?? null,
+            releaseNotes: releaseNotes ?? null,
+            entryPoints: normalizedEntryPoints ?? null,
+            permissions: normalizedPermissions,
+            storage: storage ?? null,
+            manifest: manifest ?? null,
+          },
+        ],
       },
-    ],
+    },
+    include: applicationInclude,
   });
 
-  return mapApplicationToDTO(application);
-};
-
-const assertValidStatus = (status: string): ApplicationStatus => {
-  if (!APPLICATION_STATUSES.includes(status as ApplicationStatus)) {
-    throw new Error(`Invalid application status: ${status}`);
-  }
-  return status as ApplicationStatus;
-};
-
-const getApplicationByKeyOrThrow = async (key: string): Promise<IApplication> => {
-  const application = await Application.findOne({ key: assertValidKey(key) }).exec();
-  if (!application) {
-    throw new Error('Application not found');
-  }
-  return application;
-};
-
-const ensureApplicationOwner = (application: IApplication, userId: string): void => {
-  if (!application.owner || application.owner.toString() !== userId) {
-    throw new Error('You are not allowed to modify this application');
-  }
+  return mapApplicationToDTO(application, { includeHistory: true });
 };
 
 export const getApplicationDetails = async (key: string): Promise<ApplicationDTO> => {
@@ -360,15 +420,14 @@ export const updateApplicationStatus = async (
 ): Promise<ApplicationDTO> => {
   const normalizedKey = assertValidKey(key);
   const normalizedStatus = assertValidStatus(status);
-  const application = await Application.findOneAndUpdate(
-    { key: normalizedKey },
-    { status: normalizedStatus, isPublished: normalizedStatus === 'published' },
-    { new: true }
-  ).exec();
-
-  if (!application) {
-    throw new Error('Application not found');
-  }
+  const application = await prisma.application.update({
+    where: { key: normalizedKey },
+    data: {
+      status: normalizedStatus,
+      isPublished: normalizedStatus === 'published',
+    },
+    include: applicationInclude,
+  });
 
   return mapApplicationToDTO(application);
 };
@@ -406,42 +465,54 @@ export const createApplicationVersion = async (
   const nextManifest = manifest ?? application.manifest;
   const nextIcon = icon ? (normalizeIcon(icon) ?? application.icon) : application.icon;
 
-  application.name = nextName;
-  application.description = nextDescription;
-  application.type = nextType;
-  application.version = nextVersion;
-  application.entryPoints = nextEntryPoints;
-  application.permissions = nextPermissions ?? [];
-  application.storage = nextStorage;
-  application.manifest = nextManifest;
-  application.icon = nextIcon;
-  application.status = 'draft';
-  application.isPublished = false;
-
-  application.versionHistory = application.versionHistory ?? [];
-  application.versionHistory.push({
-    version: nextVersion,
-    status: 'draft',
-    releaseNotes,
-    description: nextDescription,
-    entryPoints: nextEntryPoints,
-    permissions: nextPermissions ?? [],
-    storage: nextStorage,
-    manifest: nextManifest,
+  await prisma.applicationVersion.create({
+    data: {
+      applicationId: application.id,
+      version: nextVersion,
+      status: 'draft',
+      releaseNotes: releaseNotes ?? null,
+      description: nextDescription ?? null,
+      entryPoints: nextEntryPoints ?? null,
+      permissions: nextPermissions ?? [],
+      storage: nextStorage ?? null,
+      manifest: nextManifest ?? null,
+    },
   });
 
-  await application.save();
-  return mapApplicationToDTO(application, { includeHistory: true });
+  const updated = await prisma.application.update({
+    where: { id: application.id },
+    data: {
+      name: nextName,
+      description: nextDescription,
+      type: nextType,
+      version: nextVersion,
+      entryPoints: nextEntryPoints ?? null,
+      permissions: nextPermissions ?? [],
+      storage: nextStorage ?? null,
+      manifest: nextManifest ?? null,
+      icon: nextIcon ?? null,
+      status: 'draft',
+      isPublished: false,
+    },
+    include: applicationInclude,
+  });
+
+  return mapApplicationToDTO(updated, { includeHistory: true });
 };
 
 export const getInstalledApplications = async (userId: string): Promise<ApplicationDTO[]> => {
-  const entries = await UserApplication.find({ user: new Types.ObjectId(userId) })
-    .populate<{ application: IApplication | null }>('application')
-    .exec();
+  const entries = await prisma.userApplication.findMany({
+    where: { userId },
+    include: {
+      application: {
+        include: applicationInclude,
+      },
+    },
+  });
 
   return entries
     .filter((entry) => entry.application)
-    .map((entry) => mapApplicationToDTO(entry.application as IApplication));
+    .map((entry) => mapApplicationToDTO(entry.application as ApplicationRecord));
 };
 
 export const installApplicationForUser = async (
@@ -449,24 +520,35 @@ export const installApplicationForUser = async (
   appKey: string
 ): Promise<ApplicationDTO> => {
   const normalizedKey = assertValidKey(appKey);
-  const application = await Application.findOne({ key: normalizedKey }).exec();
+  const application = await prisma.application.findUnique({
+    where: { key: normalizedKey },
+    include: applicationInclude,
+  });
   if (!application) {
     throw new Error('Application not found');
   }
 
-  await UserApplication.findOneAndUpdate(
-    { user: userId, application: application._id },
-    { user: userId, application: application._id },
-    { upsert: true, new: true }
-  ).exec();
+  await prisma.userApplication.upsert({
+    where: {
+      userId_applicationId: {
+        userId,
+        applicationId: application.id,
+      },
+    },
+    update: {},
+    create: {
+      userId,
+      applicationId: application.id,
+    },
+  });
 
   return mapApplicationToDTO(application);
 };
 
 export const isApplicationKeyAvailable = async (appKey: string): Promise<boolean> => {
   const normalizedKey = assertValidKey(appKey);
-  const existing = await Application.exists({ key: normalizedKey });
-  return !existing;
+  const existing = await prisma.application.count({ where: { key: normalizedKey } });
+  return existing === 0;
 };
 
 export const uninstallApplicationForUser = async (
@@ -474,13 +556,18 @@ export const uninstallApplicationForUser = async (
   appKey: string
 ): Promise<void> => {
   const normalizedKey = assertValidKey(appKey);
-  const application = await Application.findOne({ key: normalizedKey }).exec();
+  const application = await prisma.application.findUnique({
+    where: { key: normalizedKey },
+    select: { id: true },
+  });
   if (!application) {
     throw new Error('Application not found');
   }
 
-  await UserApplication.findOneAndDelete({
-    user: new Types.ObjectId(userId),
-    application: application._id,
-  }).exec();
+  await prisma.userApplication.deleteMany({
+    where: {
+      userId,
+      applicationId: application.id,
+    },
+  });
 };

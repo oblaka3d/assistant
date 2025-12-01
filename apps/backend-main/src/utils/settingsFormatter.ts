@@ -1,6 +1,15 @@
-import { ISettings } from '../models/Settings';
+import type { ModelSceneSettings, Settings } from '@prisma/client';
 
-export const formatSettingsResponse = (settings: ISettings) => ({
+const ensureModelScene = (modelScene?: ModelSceneSettings | null) => ({
+  modelPath: modelScene?.modelPath ?? './assets/models/character.glb',
+  sceneName: modelScene?.sceneName ?? null,
+  enableToonShader: modelScene?.enableToonShader ?? false,
+  lightIntensity: modelScene?.lightIntensity ?? 2,
+  cameraDistance: modelScene?.cameraDistance ?? 2,
+  animationSpeed: modelScene?.animationSpeed ?? 1,
+});
+
+export const formatSettingsResponse = (settings: Settings) => ({
   settings: {
     volume: settings.volume,
     language: settings.language,
@@ -16,13 +25,6 @@ export const formatSettingsResponse = (settings: ISettings) => ({
     idleMode: settings.idleMode,
     idleCustomImagePath: settings.idleCustomImagePath,
     idleRemoteEndpoint: settings.idleRemoteEndpoint,
-    modelScene: {
-      modelPath: settings.modelScene.modelPath,
-      sceneName: settings.modelScene.sceneName,
-      enableToonShader: settings.modelScene.enableToonShader,
-      lightIntensity: settings.modelScene.lightIntensity,
-      cameraDistance: settings.modelScene.cameraDistance,
-      animationSpeed: settings.modelScene.animationSpeed,
-    },
+    modelScene: ensureModelScene(settings.modelScene),
   },
 });

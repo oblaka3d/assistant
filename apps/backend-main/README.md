@@ -9,6 +9,7 @@ src/
 ├── config/          # Конфигурация (MongoDB, JWT, OAuth)
 ├── controllers/     # Обработчики запросов
 ├── middleware/      # Auth, validation
+├── lib/             # Prisma клиент
 ├── models/          # Mongoose модели (User, Settings, Chat)
 ├── routes/          # Express роуты
 ├── services/        # Бизнес-логика
@@ -28,7 +29,8 @@ src/
 Создайте `.env`:
 
 ```env
-MONGODB_URI=mongodb://localhost:27017/voice-assistant
+MONGODB_URI=mongodb://localhost:27017/voice-assistant?replicaSet=rs0&directConnection=true
+DATABASE_URL=mongodb://localhost:27017/voice-assistant?replicaSet=rs0&directConnection=true
 JWT_SECRET=<секрет>
 API_KEY_SECRET=<секрет>
 PORT=3001
@@ -37,6 +39,12 @@ PORT=3001
 GOOGLE_CLIENT_ID=<id>
 GOOGLE_CLIENT_SECRET=<secret>
 ```
+
+> Для работы Prisma с MongoDB требуется replica set. Если используете Homebrew:
+>
+> 1. Добавьте `replication.replSetName: rs0` в `/opt/homebrew/etc/mongod.conf`.
+> 2. Выполните `brew services restart mongodb-community`.
+> 3. Запустите `mongosh --quiet --eval "rs.initiate()"`.
 
 ## API Endpoints
 
@@ -58,6 +66,14 @@ GOOGLE_CLIENT_SECRET=<secret>
 - `POST /api/v1/dialogs` - Создать диалог
 - `PATCH /api/v1/dialogs/:id` - Обновить диалог
 - `DELETE /api/v1/dialogs/:id` - Удалить диалог
+
+## Prisma & Shared DTOs
+
+- Схема ORM: `prisma/schema.prisma`
+- Клиент и логгер: `src/lib/prisma.ts`
+- Генерация клиента: `npm run prisma:generate`
+- Синхронизация схемы с MongoDB: `npm run prisma:push`
+- DTO переиспользуются из workspace `@assistant/shared` (`packages/shared`)
 
 ## Запуск
 

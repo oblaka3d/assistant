@@ -2,6 +2,18 @@
  * API клиент для взаимодействия с backend-main
  */
 
+import type {
+  SharedApplicationDTO,
+  SharedApplicationDetailsDTO,
+  SharedApplicationEntryPoints,
+  SharedApplicationStatus,
+  SharedApplicationStorageMeta,
+  SharedApplicationType,
+  SharedApplicationVersionHistoryDTO,
+} from '@assistant/shared';
+import { IdleModeSchema, LanguageSchema, ThemeSchema } from '@assistant/shared';
+import { z } from 'zod';
+
 const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
 
 const normalizeBaseUrl = (url: string): string => {
@@ -80,32 +92,39 @@ export interface ApiError {
   errors?: Array<{ msg: string; param: string }>;
 }
 
-export interface ModelSceneSettings {
-  modelPath: string;
-  sceneName: string | null;
-  enableToonShader: boolean;
-  lightIntensity: number;
-  cameraDistance: number;
-  animationSpeed: number;
-}
+const ModelSceneSettingsSchema = z.object({
+  modelPath: z.string(),
+  sceneName: z.string().nullable(),
+  enableToonShader: z.boolean(),
+  lightIntensity: z.number(),
+  cameraDistance: z.number(),
+  animationSpeed: z.number(),
+});
 
-export interface SettingsData {
-  volume: number;
-  language: string;
-  theme: 'light' | 'dark' | 'system';
-  accentColorLight: string;
-  accentColorDark: string;
-  sttProviderName: string | null;
-  llmProviderName: string | null;
-  llmModel: string | null;
-  ttsProviderName: string | null;
-  welcomeTitle: string;
-  idleTimeoutSeconds: number;
-  idleMode: 'api' | 'custom';
-  idleCustomImagePath: string;
-  idleRemoteEndpoint: string;
-  modelScene: ModelSceneSettings;
-}
+const SettingsDataSchema = z.object({
+  volume: z.number(),
+  language: LanguageSchema,
+  theme: ThemeSchema,
+  accentColorLight: z.string(),
+  accentColorDark: z.string(),
+  sttProviderName: z.string().nullable(),
+  llmProviderName: z.string().nullable(),
+  llmModel: z.string().nullable(),
+  ttsProviderName: z.string().nullable(),
+  welcomeTitle: z.string(),
+  idleTimeoutSeconds: z.number(),
+  idleMode: IdleModeSchema,
+  idleCustomImagePath: z.string(),
+  idleRemoteEndpoint: z.string(),
+  modelScene: ModelSceneSettingsSchema,
+});
+
+const UpdateSettingsRequestSchema = SettingsDataSchema.partial().extend({
+  modelScene: ModelSceneSettingsSchema.partial().optional(),
+});
+
+export type ModelSceneSettings = z.infer<typeof ModelSceneSettingsSchema>;
+export type SettingsData = z.infer<typeof SettingsDataSchema>;
 
 export interface SettingsResponse {
   success: boolean;
@@ -114,23 +133,7 @@ export interface SettingsResponse {
   };
 }
 
-export interface UpdateSettingsRequest {
-  volume?: number;
-  language?: string;
-  theme?: 'light' | 'dark' | 'system';
-  accentColorLight?: string;
-  accentColorDark?: string;
-  sttProviderName?: string | null;
-  llmProviderName?: string | null;
-  llmModel?: string | null;
-  ttsProviderName?: string | null;
-  welcomeTitle?: string;
-  idleTimeoutSeconds?: number;
-  idleMode?: 'api' | 'custom';
-  idleCustomImagePath?: string;
-  idleRemoteEndpoint?: string;
-  modelScene?: Partial<ModelSceneSettings>;
-}
+export type UpdateSettingsRequest = z.infer<typeof UpdateSettingsRequestSchema>;
 
 export interface ApiKeysResponse {
   success: boolean;
@@ -493,49 +496,17 @@ export const deleteAllDialogs = async (): Promise<{
 
 // ==================== Applications ====================
 
-export type ApplicationType = 'widget' | 'screen' | 'service';
-export type ApplicationStatus = 'draft' | 'pending' | 'published' | 'rejected';
+export type ApplicationType = SharedApplicationType;
+export type ApplicationStatus = SharedApplicationStatus;
 export type ReleaseType = 'patch' | 'minor' | 'major';
 
-export interface ApplicationEntryPoints {
-  frontend?: string;
-  backend?: string;
-}
-
-export interface ApplicationStorageMeta {
-  rootDir?: string;
-  archivePath?: string;
-  contentPath?: string;
-  manifestPath?: string;
-}
-
-export interface ApplicationSummary {
-  id: string;
-  key: string;
-  name: string;
-  version: string;
-  type: ApplicationType;
-  description?: string;
-  status: ApplicationStatus;
-  isPublished?: boolean;
-  owner?: string;
-  entryPoints?: ApplicationEntryPoints;
-  permissions: string[];
-  storage?: ApplicationStorageMeta;
-  icon?: string;
-}
-
-export interface ApplicationVersionHistoryEntry {
-  version: string;
-  status: ApplicationStatus;
-  releaseNotes?: string;
-  description?: string;
-  createdAt?: string;
-}
-
-export interface ApplicationDetails extends ApplicationSummary {
-  versionHistory: ApplicationVersionHistoryEntry[];
-}
+export type ApplicationEntryPoints = SharedApplicationEntryPoints;
+export type ApplicationStorageMeta = SharedApplicationStorageMeta;
+export type ApplicationSummary = SharedApplicationDTO;
+export type ApplicationVersionHistoryEntry = SharedApplicationVersionHistoryDTO;
+export type ApplicationDetails = SharedApplicationDetailsDTO & {
+  versionHistory?: SharedApplicationVersionHistoryDTO[];
+};
 
 export interface ApplicationStorageUsage {
   usedBytes: number;

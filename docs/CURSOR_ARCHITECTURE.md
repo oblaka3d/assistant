@@ -138,9 +138,9 @@ assistant/
   - `POST /import` — импорт ZIP без авторизации, результат сохраняется пользователю после логина
   - `GET /storage` — объём занимаемого места (100 MB лимит на пользователя)
 - Сервисы:
-  - `applicationsService.ts` — валидация ключей, статусов (`draft/pending/published/rejected`), версионирование (`patch/minor/major`)
+  - `applicationsService.ts` — валидация ключей, статусов (`draft/pending/published/rejected`), версионирование (`patch/minor/major`), **данные читаются/пишутся через Prisma (`prisma/schema.prisma`) и DTO из `@assistant/shared`**
   - `applicationStorageService.ts` — файловая система (`storage/applications/<user>/<app>/<version>`), sanitize имён, размер каталога, лимит 100 МБ, разрешены только `.zip`
-- `UserApplication` + `Application` модели связывают установленные приложения с пользователями
+- Prisma модели `Application`/`UserApplication` заменяют Mongoose-слой для каталога и установок
 
 ### 5. Shared Packages (`packages/shared/`)
 

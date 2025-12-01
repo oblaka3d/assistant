@@ -1,4 +1,6 @@
-import { User } from '../models/User';
+import type { User } from '@prisma/client';
+
+import { prisma } from '../lib/prisma';
 import { generateToken, generateRefreshToken, TokenPayload } from '../utils/jwt';
 
 export interface OAuthProfile {
@@ -18,75 +20,73 @@ export interface OAuthResponse {
   refreshToken: string;
 }
 
-/**
- * Поиск или создание пользователя через OAuth
- */
+const buildOAuthTokens = (user: Pick<User, 'id' | 'email'>) => {
+  const payload: TokenPayload = {
+    userId: user.id,
+    email: user.email,
+  };
+
+  return {
+    token: generateToken(payload),
+    refreshToken: generateRefreshToken(payload),
+  };
+};
+
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+
 export const findOrCreateOAuthUser = async (
   provider: 'google' | 'yandex' | 'github',
   profile: OAuthProfile
 ): Promise<OAuthResponse> => {
-  // Ищем пользователя по OAuth провайдеру
-  let user = await User.findOne({
-    'oauthProviders.provider': provider,
-    'oauthProviders.providerId': profile.id,
+  const email = normalizeEmail(profile.email);
+  const providerEntry = { provider, providerId: profile.id };
+
+  let user = await prisma.user.findFirst({
+    where: {
+      oauthProviders: {
+        some: providerEntry,
+      },
+    },
   });
 
   if (user) {
-    // Пользователь существует, обновляем информацию если нужно
-    if (profile.email && user.email !== profile.email) {
-      user.email = profile.email;
-    }
-    if (profile.name && user.name !== profile.name) {
-      user.name = profile.name;
-    }
-    await user.save();
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email,
+        name: profile.name ?? user.name,
+      },
+    });
   } else {
-    // Проверяем, существует ли пользователь с таким email
-    const existingUser = await User.findOne({ email: profile.email.toLowerCase() });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      // Добавляем OAuth провайдер к существующему пользователю
-      if (!existingUser.oauthProviders) {
-        existingUser.oauthProviders = [];
-      }
-      existingUser.oauthProviders.push({
-        provider,
-        providerId: profile.id,
+      const updatedProviders = [...(existingUser.oauthProviders ?? []), providerEntry];
+      user = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          oauthProviders: updatedProviders,
+        },
       });
-      await existingUser.save();
-      user = existingUser;
     } else {
-      // Создаем нового пользователя
-      user = new User({
-        email: profile.email.toLowerCase(),
-        name: profile.name,
-        oauthProviders: [
-          {
-            provider,
-            providerId: profile.id,
-          },
-        ],
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: profile.name ?? email,
+          oauthProviders: [providerEntry],
+        },
       });
-      await user.save();
     }
   }
 
-  // Генерация токенов
-  const payload: TokenPayload = {
-    userId: user._id.toString(),
-    email: user.email,
-  };
-
-  const token = generateToken(payload);
-  const refreshToken = generateRefreshToken(payload);
+  const tokens = buildOAuthTokens(user);
 
   return {
     user: {
-      id: user._id.toString(),
+      id: user.id,
       email: user.email,
       name: user.name,
     },
-    token,
-    refreshToken,
+    ...tokens,
   };
 };

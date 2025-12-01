@@ -1,0 +1,219 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator zod {
+  provider        = "prisma-zod-generator"
+  output          = "../../../packages/shared/src/zod"
+  useMultipleFiles = false
+  createInputTypes = true
+  updateInputTypes = true
+  pureModels       = true
+  dateTimeStrategy = "isoString"
+  omitOutputFieldsByDefault = false
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationType {
+  widget   @map("widget")
+  screen   @map("screen")
+  service  @map("service")
+}
+
+enum ApplicationStatus {
+  draft     @map("draft")
+  pending   @map("pending")
+  published @map("published")
+  rejected  @map("rejected")
+}
+
+enum ReleaseType {
+  patch @map("patch")
+  minor @map("minor")
+  major @map("major")
+}
+
+enum Language {
+  ru @map("ru")
+  en @map("en")
+  zh @map("zh")
+}
+
+enum Theme {
+  light  @map("light")
+  dark   @map("dark")
+  system @map("system")
+}
+
+enum IdleMode {
+  api    @map("api")
+  custom @map("custom")
+}
+
+enum MessagePosition {
+  left  @map("left")
+  right @map("right")
+}
+
+type OAuthProvider {
+  provider   String
+  providerId String
+}
+
+type ApplicationEntryPoints {
+  frontend String?
+  backend  String?
+}
+
+type ApplicationStorageMeta {
+  rootDir     String?
+  archivePath String?
+  contentPath String?
+  manifestPath String?
+}
+
+type ModelSceneSettings {
+  modelPath        String?
+  sceneName        String?
+  enableToonShader Boolean?
+  lightIntensity   Float?
+  cameraDistance   Float?
+  animationSpeed   Float?
+}
+
+type ChatMessage {
+  id       String
+  position MessagePosition
+  type     String
+  text     String
+  date     DateTime
+}
+
+model User {
+  id                    String             @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String             @unique
+  password              String?
+  name                  String
+  oauthProviders        OAuthProvider[]
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  applications          Application[]      @relation("ApplicationOwner")
+  installs              UserApplication[]
+  apiKeys               ApiKey[]
+  settings              Settings?
+  dialogs               Dialog[]
+}
+
+model Application {
+  id             String                      @id @default(auto()) @map("_id") @db.ObjectId
+  key            String                      @unique
+  name           String
+  version        String
+  type           ApplicationType
+  description    String?
+  status         ApplicationStatus           @default(draft)
+  isPublished    Boolean                     @default(false)
+  ownerId        String?                     @db.ObjectId
+  owner          User?                       @relation("ApplicationOwner", fields: [ownerId], references: [id])
+  entryPoints    ApplicationEntryPoints?
+  permissions    String[]                    @default([])
+  storage        ApplicationStorageMeta?
+  manifest       Json?
+  icon           String?
+  versions       ApplicationVersion[]
+  userInstalls   UserApplication[]
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@index([status])
+  @@index([ownerId])
+}
+
+model ApplicationVersion {
+  id            String                     @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId String                     @db.ObjectId
+  application   Application                @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  version       String
+  status        ApplicationStatus          @default(draft)
+  releaseNotes  String?
+  description   String?
+  createdAt     DateTime                   @default(now())
+  entryPoints   ApplicationEntryPoints?
+  permissions   String[]                   @default([])
+  storage       ApplicationStorageMeta?
+  manifest      Json?
+
+  @@unique([applicationId, version], map: "application_version_unique")
+}
+
+model UserApplication {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String      @db.ObjectId
+  applicationId String      @db.ObjectId
+  user          User        @relation(fields: [userId], references: [id])
+  application   Application @relation(fields: [applicationId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, applicationId])
+}
+
+model ApiKey {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+  provider     String
+  encryptedKey String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model Settings {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String              @unique @db.ObjectId
+  user               User                @relation(fields: [userId], references: [id])
+  volume             Int                 @default(70)
+  language           Language            @default(ru)
+  theme              Theme               @default(system)
+  accentColorLight   String              @default("#4a90e2")
+  accentColorDark    String              @default("#4a90e2")
+  sttProviderName    String?
+  llmProviderName    String?
+  llmModel           String?
+  ttsProviderName    String?
+  welcomeTitle       String              @default("")
+  idleTimeoutSeconds Int                 @default(0)
+  idleMode           IdleMode            @default(api)
+  idleCustomImagePath String             @default("")
+  idleRemoteEndpoint String             @default("")
+  modelScene         ModelSceneSettings?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model Dialog {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String        @db.ObjectId
+  user      User          @relation(fields: [userId], references: [id])
+  dialogId  String
+  title     String
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([userId, dialogId])
+}
