@@ -24,6 +24,9 @@
 - `CURSOR_COMMANDS.md` - Команды
 - `CURSOR_TECHNICAL.md` - Технические детали
 - `CURSOR_CONFIGURATION.md` - Конфигурации
+- `ACTION_PLAN.md` - План работ / ближайшие шаги
+- `EPICS.md` - Эпики и крупные направления
+- `PROJECT_PLAN.md` - Общее планирование проекта
 
 ## Использование
 

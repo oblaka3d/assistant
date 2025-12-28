@@ -63,7 +63,7 @@ apps/desktop/
 - `/menu/apiKeys` → API ключи
 - и т.д.
 
-Подробнее см. [ui-electron/src/tests/ROUTING.md](./ui-electron/src/tests/ROUTING.md)
+Маршруты и их метаданные задаются в `ui-electron/src/constants/screenConfig.ts`, а синхронизация URL ↔ Redux выполняется в `ui-electron/src/App.tsx` (через `RouterSync`).
 
 ## 🛠️ Команды разработки
 
@@ -107,7 +107,7 @@ npm run test:visual:update --workspace @assistant/desktop
 npm run test:visual:ui --workspace @assistant/desktop
 ```
 
-Подробнее о тестах см. [tests/README.md](./tests/README.md)
+UI тесты находятся прямо в `ui-electron/src/screens/**/**/*.spec.ts` и запускаются Playwright'ом.
 
 ## ⚙️ Настройка
 

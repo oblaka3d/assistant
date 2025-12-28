@@ -98,7 +98,23 @@ module.exports = {
   overrides: [
     {
       files: ['apps/desktop/ui-electron/src/**/*'],
+      settings: {
+        'import/resolver': {
+          typescript: {
+            alwaysTryTypes: true,
+            project: ['./apps/desktop/ui-electron/tsconfig.json'],
+            tsconfigRootDir: __dirname,
+          },
+        },
+      },
       rules: {
+        'import/no-unresolved': [
+          'error',
+          {
+            // В UI часть алиасов резолвится через Vite/tsconfig paths, а не через собранный пакет в node_modules.
+            ignore: ['.css$', '.module.css$', '.scss$', '^@assistant/shared($|/)'],
+          },
+        ],
         '@typescript-eslint/no-unsafe-assignment': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',
         '@typescript-eslint/no-unsafe-call': 'off',
@@ -120,6 +136,12 @@ module.exports = {
         browser: false,
       },
       rules: {
+        'import/no-unresolved': [
+          'error',
+          {
+            ignore: ['.css$', '.module.css$', '.scss$', '^@assistant/shared($|/)'],
+          },
+        ],
         'no-console': 'off',
         '@typescript-eslint/no-require-imports': 'off',
         'import/no-named-as-default-member': 'off',

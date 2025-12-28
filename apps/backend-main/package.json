@@ -11,12 +11,14 @@
     "watch": "tsc -w",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\"",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run format:check && npm run typecheck",
     "setup:mongodb": "ts-node scripts/setup-mongodb.ts",
     "setup:mongodb:auto": "ts-node scripts/setup-mongodb.ts --auto",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "prisma:push": "prisma db push --schema prisma/schema.prisma"
+    "prisma:push": "prisma db push --schema prisma/schema.prisma",
+    "prepare": "node -e \"process.exit(0)\""
   },
   "keywords": [
     "backend",

@@ -229,7 +229,7 @@ VITE_API_URL=http://localhost:3001/api/v1
 
 - `/api/v1/auth/*` - OAuth авторизация
 - `/api/v1/users/*` - Пользователи
-- `/api/v1/dialogs/*` - Диалоги
+- `/api/v1/chats/*` - Диалоги
 - `/api/v1/messages/*` - Сообщения
 - `/api/v1/applications/*` - Каталог и управление приложениями
 

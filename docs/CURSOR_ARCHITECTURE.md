@@ -121,9 +121,9 @@ assistant/
 **API Endpoints:**
 
 - `/api/v1/auth/*` - OAuth авторизация
-- `/api/v1/users/*` - Управление пользователями
-- `/api/v1/dialogs/*` - Управление диалогами
-- `/api/v1/messages/*` - Управление сообщениями
+- `/api/v1/chats/*` - Управление диалогами (чаты)
+- `/api/v1/settings/*` - Настройки пользователя
+- `/api/v1/api-keys/*` - Хранение API ключей (шифрование на сервере)
 - `/api/v1/applications/*` - Каталог приложений, импорт ZIP и пользовательское хранилище
 
 #### Applications subsystem

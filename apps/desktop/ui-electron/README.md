@@ -36,14 +36,14 @@ src/
 ## Разработка
 
 ```bash
-# Из корня репозитория: полный dev-режим (Vite + Electron)
-npm run dev
+# Полный dev-режим (Vite + Electron)
+npm run dev --workspace @assistant/desktop
 
 # Только UI (без Electron) — полезно для работы с компонентами
-npm run dev:ui
+npm run dev:ui --workspace @assistant/desktop
 
 # Прод-сборка UI
-npm run build:ui
+npm run build:ui --workspace @assistant/desktop
 ```
 
 ### Переменные окружения

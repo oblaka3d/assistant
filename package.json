@@ -34,7 +34,7 @@
     "typecheck:desktop": "npm run typecheck --workspace @assistant/desktop",
     "typecheck:backend-main": "npm run typecheck --workspace @assistant/backend-main",
     "setup:mongodb": "npm run setup:mongodb --workspace @assistant/backend-main",
-    "run:all": "npm run run:all --workspace @assistant/desktop && npm run run:all --workspace @assistant/backend-main",
+    "run:all": "npm run run:all --workspace @assistant/desktop",
     "prepare": "npm run prepare --workspace @assistant/desktop && npm run prepare --workspace @assistant/backend-main"
   }
 }
