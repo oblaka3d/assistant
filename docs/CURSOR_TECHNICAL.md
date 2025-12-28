@@ -189,7 +189,7 @@ t('chat.sendMessage');
 **Особенности:**
 
 - Загрузка 3D модели из `ui-electron/public/assets/*.glb`
-- Анимации через `@react-three/fiber` и `@react-three/drei`
+- Анимации через `three` (AnimationMixer/AnimationAction)
 - WebGL может быть недоступен в тестовом окружении
 
 ### 13. API Client

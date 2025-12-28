@@ -16,14 +16,16 @@ npm run dev
 # - Electron с hot reload
 
 # Оконный режим (без kiosk)
-npm run dev:window --workspace @assistant/desktop
+npm run dev:desktop:window
+# или (эквивалент)
+# npm run dev:window --workspace @assistant/desktop
 
 # Только UI (без Electron)
 npm run dev:ui --workspace @assistant/desktop
 
 # Backend main сервер
 npm run dev:backend-main
-# Запускает nodemon + ts-node для backend-main
+# Запускает ts-node-dev для backend-main
 
 # Prisma (backend-main)
 npm run prisma:generate --workspace @assistant/backend-main   # ещё обновляет packages/shared/src/zod/*
