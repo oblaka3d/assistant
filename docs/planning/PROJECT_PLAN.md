@@ -31,7 +31,7 @@
 
 1. **Hardware** - BTT Pi 1.2 + аудио + дисплей (опционально)
 2. **OS** - Linux (Armbian/Debian/Ubuntu) на ARM64
-3. **Software** - Electron приложение + Unity WebGL персонаж
+3. **Software** - Electron приложение + Three.js 3D персонаж
 4. **Audio** - ALSA для записи/воспроизведения
 5. **AI** - STT + LLM + TTS через API
 
@@ -356,54 +356,43 @@
 
 ---
 
-### Этап 6: Разработка Unity проекта (5-7 дней)
+### Этап 6: Подготовка 3D модели (Three.js) (5-7 дней)
 
-#### 6.1 Установка Unity Editor
+#### 6.1 Установка 3D редактора
 
-- [ ] Установить Unity Hub на рабочем компьютере (Windows/Mac/Linux)
-- [ ] Установить Unity 2021.3 LTS или 2022.3 LTS
-- [ ] Установить модуль WebGL Build Support
+- [ ] Установить Blender или использовать готовые модели
+- [ ] Ознакомиться с форматом glTF/GLB
 
-#### 6.2 Создание Unity проекта
+#### 6.2 Создание/Подготовка 3D модели
 
-- [ ] Создать новый проект (3D URP или 3D Core)
-- [ ] Следовать инструкции: **[unity/SETUP_GUIDE.md](../unity/SETUP_GUIDE.md)**
+- [ ] Найти или создать персонажа (Low-poly)
+- [ ] Следовать инструкции: **[threejs/SETUP_GUIDE.md](../threejs/SETUP_GUIDE.md)**
 
 **Основные шаги**:
 
-- [ ] Создать сцену с камерой
-- [ ] Импортировать/создать персонажа
-- [ ] Настроить Animator Controller
-- [ ] Создать скрипт CharacterController
+- [ ] Импортировать модель в Blender
+- [ ] Настроить риг (скелет)
 - [ ] Добавить анимации (Idle, Listening, Thinking, Talking)
-- [ ] Настроить Toon Shader
+- [ ] Оптимизировать геометрию и материалы
 - [ ] Протестировать анимации
 
-#### 6.3 Сборка Unity WebGL
+#### 6.3 Экспорт модели (GLB)
 
-- [ ] Настроить Player Settings:
-  - Company Name: `VoiceAssistant`
-  - Product Name: `Voice Assistant ARM`
-  - Compression Format: `Gzip`
-  - Code Optimization: `Size`
-- [ ] Собрать WebGL билд:
-  - Build Settings → WebGL → Build
-  - Выбрать папку: `[проект]/unity/Build`
-- [ ] Переименовать файлы (если нужно):
-  - `build.loader.js`
-  - `build.framework.js`
-  - `build.data`
-  - `build.wasm`
+- [ ] Экспортировать в формате `.glb`:
+  - Включить анимации
+  - Включить материалы/текстуры
+  - Использовать сжатие (опционально)
+- [ ] Положить результат в `apps/desktop/public/assets/models/character.glb`
 
-#### 6.4 Копирование билда на BTT Pi
+#### 6.4 Копирование модели на BTT Pi
 
-- [ ] Скопировать файлы на BTT Pi:
+- [ ] Скопировать файлы на BTT Pi (если модель обновлялась локально):
   ```bash
   # С рабочего компьютера
-  scp -r unity/Build pi@btt-pi-ip:/home/pi/voice-assistant-arm/unity/
+  scp apps/desktop/public/assets/models/character.glb pi@btt-pi-ip:/home/pi/voice-assistant-arm/apps/desktop/public/assets/models/
   ```
 
-**Результат этапа**: Готовый Unity WebGL билд персонажа.
+**Результат этапа**: Готовая 3D модель (GLB) с анимациями.
 
 ---
 
@@ -417,7 +406,7 @@
   npm run build
   npm run start:window --workspace @assistant/desktop
   ```
-- [ ] Проверка загрузки Unity персонажа
+- [ ] Проверка загрузки 3D персонажа
 - [ ] Проверка переключения анимаций (Idle, Listening, Thinking, Talking)
 
 #### 7.2 Тестирование аудио
@@ -462,10 +451,10 @@
   ```bash
   free -h
   ```
-- [ ] Оптимизировать Unity билд (если нужно):
+- [ ] Оптимизировать 3D модель (если нужно):
   - Уменьшить разрешение рендеринга
   - Упростить модели/шейдеры
-  - Отключить ненужные компоненты
+  - Отключить тени или сложные эффекты
 
 **Результат этапа**: Полностью работающий ассистент с тестами.
 
@@ -576,7 +565,7 @@
   ```bash
   lsusb  # найти камеру
   ```
-- [ ] Настроить захват видео для Unity (опционально)
+- [ ] Настроить захват видео для Three.js (опционально)
 - [ ] Добавить функцию видеозвонков (если нужно)
 
 #### 10.2 Автономное питание
@@ -610,7 +599,7 @@
 | 3. Настройка аудио         | 1-2 дня     | 🔴 Высокий |
 | 4. Установка ПО            | 2-3 дня     | 🔴 Высокий |
 | 5. Настройка API           | 1 день      | 🔴 Высокий |
-| 6. Разработка Unity        | 5-7 дней    | 🟡 Средний |
+| 6. Подготовка 3D           | 5-7 дней    | 🟡 Средний |
 | 7. Интеграция и тесты      | 3-5 дней    | 🔴 Высокий |
 | 8. Автозапуск              | 1 день      | 🟡 Средний |
 | 9. Финальная сборка        | 1-2 дня     | 🟡 Средний |
@@ -634,7 +623,7 @@
 
 ### Программное обеспечение:
 
-- [ ] Unity Editor (на рабочем компьютере)
+- [ ] Blender / 3D Editor (на рабочем компьютере)
 - [ ] Node.js 18+ (на BTT Pi и рабочем компьютере)
 - [ ] Git
 - [ ] Терминальный эмулятор (PuTTY, SSH клиент)
@@ -647,7 +636,7 @@
 ### Производительность BTT Pi 1.2
 
 - BTT Pi 1.2 имеет ограниченную производительность
-- Unity WebGL билд должен быть оптимизирован:
+- 3D сцена Three.js должна быть оптимизирована:
   - Низкополигональные модели
   - Простые шейдеры
   - Низкое разрешение рендеринга (720p или ниже)
@@ -684,7 +673,7 @@
 - [ ] Node.js установлен и работает
 - [ ] Проект склонирован и зависимости установлены
 - [ ] API ключи настроены в `.env`
-- [ ] Unity билд скопирован в `unity/Build/`
+- [ ] 3D модель скопирована в `apps/desktop/public/assets/models/`
 - [ ] Приложение собирается без ошибок: `npm run build`
 - [ ] Тестовый запуск прошел успешно: `npm run start:window --workspace @assistant/desktop`
 
@@ -697,11 +686,11 @@
 - [BTT Pi 1.2 документация](https://github.com/bigtreetech/BTT-Pi) (если доступна)
 - [Armbian документация](https://docs.armbian.com/)
 - [Electron документация](https://www.electronjs.org/docs)
-- [Unity WebGL документация](https://docs.unity3d.com/Manual/webgl.html)
+- [Three.js документация](https://threejs.org/docs/)
 
 ### Полезные ссылки:
 
-- Инструкция по Unity: [`unity/SETUP_GUIDE.md`](../unity/SETUP_GUIDE.md)
+- Инструкция по Three.js: [`threejs/SETUP_GUIDE.md`](../threejs/SETUP_GUIDE.md)
 - Основная документация: `../README.md`
 
 ---
