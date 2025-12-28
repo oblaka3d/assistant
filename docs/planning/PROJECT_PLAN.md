@@ -4,7 +4,7 @@
 
 > 📋 **Детальный план действий!** Для детальной декомпозиции задач с ID, зависимостями и временными оценками см.: **[ACTION_PLAN.md](./ACTION_PLAN.md)**  
 > 📦 **Эпики проекта!** Для структурированного списка задач в формате эпиков см.: **[EPICS.md](./EPICS.md)**  
-> 🎨 **Техническое задание для дизайнера!** Если вы работаете с дизайнером UI/UX, предоставьте техническое задание: **[DESIGN_SPECIFICATION.md](./DESIGN_SPECIFICATION.md)**
+> 🎨 **Техническое задание для дизайнера!** Если вы работаете с дизайнером UI/UX, используйте: **[DESIGN_SPECIFICATION.md](../design/DESIGN_SPECIFICATION.md)**
 
 ---
 
@@ -367,7 +367,7 @@
 #### 6.2 Создание Unity проекта
 
 - [ ] Создать новый проект (3D URP или 3D Core)
-- [ ] Следовать инструкции: **[unity/SETUP_GUIDE.md](./unity/SETUP_GUIDE.md)**
+- [ ] Следовать инструкции: **[unity/SETUP_GUIDE.md](../unity/SETUP_GUIDE.md)**
 
 **Основные шаги**:
 
@@ -415,7 +415,7 @@
   ```bash
   cd /home/pi/voice-assistant-arm
   npm run build
-  npm run start:window
+  npm run start:window --workspace @assistant/desktop
   ```
 - [ ] Проверка загрузки Unity персонажа
 - [ ] Проверка переключения анимаций (Idle, Listening, Thinking, Talking)
@@ -542,7 +542,7 @@
 - [ ] Собрать дистрибутив:
   ```bash
   cd /home/pi/voice-assistant-arm
-  npm run dist:arm64
+  npm run dist:linux:arm64 --workspace @assistant/desktop
   ```
 - [ ] Проверить созданный AppImage:
   ```bash
@@ -686,7 +686,7 @@
 - [ ] API ключи настроены в `.env`
 - [ ] Unity билд скопирован в `unity/Build/`
 - [ ] Приложение собирается без ошибок: `npm run build`
-- [ ] Тестовый запуск прошел успешно: `npm run start:window`
+- [ ] Тестовый запуск прошел успешно: `npm run start:window --workspace @assistant/desktop`
 
 ---
 
@@ -701,8 +701,8 @@
 
 ### Полезные ссылки:
 
-- Инструкция по Unity: `unity/SETUP_GUIDE.md`
-- Основная документация: `README.md`
+- Инструкция по Unity: [`unity/SETUP_GUIDE.md`](../unity/SETUP_GUIDE.md)
+- Основная документация: `../README.md`
 
 ---
 

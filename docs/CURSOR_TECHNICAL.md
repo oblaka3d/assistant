@@ -1,5 +1,7 @@
 # 🔧 Технические детали
 
+> Навигация по документации: **[`docs/INDEX.md`](./INDEX.md)** (единая точка входа).
+
 ## Важные технические решения
 
 > Большинство путей в этом разделе относятся к workspace `apps/desktop`. Для краткости сохраняем исходные подпапки (`ui-electron`, `main`, и т.д.).
@@ -189,7 +191,7 @@ t('chat.sendMessage');
 **Особенности:**
 
 - Загрузка 3D модели из `ui-electron/public/assets/*.glb`
-- Анимации через `@react-three/fiber` и `@react-three/drei`
+- Анимации через `three` (AnimationMixer/AnimationAction)
 - WebGL может быть недоступен в тестовом окружении
 
 ### 13. API Client

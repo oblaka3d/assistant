@@ -3,6 +3,13 @@
 import 'dotenv/config';
 import { defineConfig, env } from 'prisma/config';
 
+// Prisma CLI (generate/typecheck) грузит этот файл даже когда `.env` не настроен.
+// Для генерации клиентских типов подключение к БД не требуется, но `env('DATABASE_URL')` обязателен.
+// Даем безопасный дефолт для локальной разработки; в реальном окружении переменная должна быть задана явно.
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'mongodb://localhost:27017/voice-assistant';
+}
+
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {

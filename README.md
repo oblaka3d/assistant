@@ -36,6 +36,18 @@ docs/             # Документация (cursor.md, CURSOR_*.md)
 - **Prisma ORM** для `apps/backend-main`: схема хранится в `apps/backend-main/prisma/schema.prisma`, клиент создаётся в `src/lib/prisma.ts`, а `applicationsService`/`authService`/`settingsService`/`chatService` работают через Prisma.
 - **Shared DTO package** (`packages/shared`): помимо ручных схем (`applications.ts`) автоматически содержит zod-схемы из Prisma (`src/zod/schemas.ts`), благодаря чему backend и desktop используют один и тот же контракт.
 
+## Документация
+
+- **Навигация по докам**: [`docs/INDEX.md`](./docs/INDEX.md)
+- **Для Cursor / AI**: [`cursor.md`](./cursor.md)
+- **Архитектура**: [`docs/CURSOR_ARCHITECTURE.md`](./docs/CURSOR_ARCHITECTURE.md)
+- **Команды и workflow**: [`docs/CURSOR_COMMANDS.md`](./docs/CURSOR_COMMANDS.md)
+- **Технические детали**: [`docs/CURSOR_TECHNICAL.md`](./docs/CURSOR_TECHNICAL.md)
+- **Конфигурации**: [`docs/CURSOR_CONFIGURATION.md`](./docs/CURSOR_CONFIGURATION.md)
+- **План работ**: [`docs/planning/ACTION_PLAN.md`](./docs/planning/ACTION_PLAN.md)
+- **Epics**: [`docs/planning/EPICS.md`](./docs/planning/EPICS.md)
+- **Project plan**: [`docs/planning/PROJECT_PLAN.md`](./docs/planning/PROJECT_PLAN.md)
+
 ## Как работать
 
 1. Установите зависимости из корня: `npm install`.

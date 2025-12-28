@@ -119,7 +119,7 @@ const SettingsDataSchema = z.object({
   modelScene: ModelSceneSettingsSchema,
 });
 
-const UpdateSettingsRequestSchema = SettingsDataSchema.partial().extend({
+const _UpdateSettingsRequestSchema = SettingsDataSchema.partial().extend({
   modelScene: ModelSceneSettingsSchema.partial().optional(),
 });
 
@@ -133,7 +133,7 @@ export interface SettingsResponse {
   };
 }
 
-export type UpdateSettingsRequest = z.infer<typeof UpdateSettingsRequestSchema>;
+export type UpdateSettingsRequest = z.infer<typeof _UpdateSettingsRequestSchema>;
 
 export interface ApiKeysResponse {
   success: boolean;
