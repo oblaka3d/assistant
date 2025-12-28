@@ -7,6 +7,7 @@ apps/desktop/release/
 storage/
 apps/backend-main/storage/
 apps/backend-main/dist/
+package-lock.json
 *.log
 .env
 .env.local
