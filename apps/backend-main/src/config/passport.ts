@@ -3,6 +3,7 @@ import { Strategy as GitHubStrategy } from 'passport-github2';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as YandexStrategy } from 'passport-yandex';
 
+import { prisma } from '../lib/prisma';
 import { findOrCreateOAuthUser, OAuthProfile } from '../services/oauthService';
 
 import { config } from './index';
@@ -16,8 +17,10 @@ passport.serializeUser((user: any, done: any) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 passport.deserializeUser(async (id: string, done: any) => {
   try {
-    const { User } = await import('../models/User');
-    const user = await User.findById(id);
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, name: true },
+    });
     done(null, user || undefined);
   } catch (error) {
     done(error as Error, undefined);

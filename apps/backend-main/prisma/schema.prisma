@@ -12,8 +12,10 @@ generator zod {
   provider        = "prisma-zod-generator"
   output          = "../../../packages/shared/src/zod"
   useMultipleFiles = false
-  createInputTypes = true
-  updateInputTypes = true
+  // Упрощение: нам нужны схемы для DTO/моделей, а не полный набор Prisma input-types.
+  // Это заметно ускоряет генерацию и снижает связность `@assistant/shared` с Prisma internals.
+  createInputTypes = false
+  updateInputTypes = false
   pureModels       = true
   dateTimeStrategy = "isoString"
   omitOutputFieldsByDefault = false

@@ -5,8 +5,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 import { config } from './config';
-import { connectDatabase } from './config/database';
 import passport from './config/passport'; // Инициализация Passport стратегий
+import { prisma } from './lib/prisma';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import apiKeysRoutes from './routes/apiKeysRoutes';
 import applicationsRoutes from './routes/applicationsRoutes';
@@ -67,14 +67,20 @@ app.use(errorHandler);
 // Запуск сервера
 const startServer = async (): Promise<void> => {
   try {
-    // Подключение к MongoDB
-    await connectDatabase();
+    // Подключение к MongoDB через Prisma
+    await prisma.$connect();
 
     // Запуск Express сервера
     app.listen(config.port, () => {
       console.log(`🚀 Server is running on port ${config.port}`);
       console.log(`📝 Environment: ${config.nodeEnv}`);
       console.log(`🔗 API prefix: ${config.api.prefix}`);
+    });
+
+    // Graceful shutdown
+    process.on('SIGINT', async () => {
+      await prisma.$disconnect();
+      process.exit(0);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
