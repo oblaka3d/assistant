@@ -37,6 +37,7 @@ npm test
 
 ## Дизайн и Unity (если актуально для продукта)
 
+- [`UI_SCREENS.md`](./UI_SCREENS.md)
 - [`design/DESIGN_SPECIFICATION.md`](./design/DESIGN_SPECIFICATION.md)
 - [`unity/SETUP_GUIDE.md`](./unity/SETUP_GUIDE.md)
 - [`unity/TECHNICAL_SPECIFICATION.md`](./unity/TECHNICAL_SPECIFICATION.md)
