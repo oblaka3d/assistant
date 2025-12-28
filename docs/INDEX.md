@@ -35,11 +35,11 @@ npm test
 - [`planning/EPICS.md`](./planning/EPICS.md)
 - [`planning/PROJECT_PLAN.md`](./planning/PROJECT_PLAN.md)
 
-## Дизайн и Unity (если актуально для продукта)
+## Дизайн и Three.js (3D графика)
 
 - [`design/DESIGN_SPECIFICATION.md`](./design/DESIGN_SPECIFICATION.md)
-- [`unity/SETUP_GUIDE.md`](./unity/SETUP_GUIDE.md)
-- [`unity/TECHNICAL_SPECIFICATION.md`](./unity/TECHNICAL_SPECIFICATION.md)
+- [`threejs/SETUP_GUIDE.md`](./threejs/SETUP_GUIDE.md)
+- [`threejs/TECHNICAL_SPECIFICATION.md`](./threejs/TECHNICAL_SPECIFICATION.md)
 
 ## Принцип упрощения документации (правило)
 
