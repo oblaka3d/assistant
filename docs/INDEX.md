@@ -9,7 +9,7 @@
 ## Быстрый старт (локально)
 
 ```bash
-npm install
+npm ci
 
 # dev (Electron + Vite UI)
 npm run dev

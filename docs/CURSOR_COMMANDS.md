@@ -195,7 +195,7 @@ npm run run:all
 
 1. Checkout кода (без LFS)
 2. Setup Node.js 18
-3. Install dependencies (`npm install`)
+3. Install dependencies (`npm ci`)
 4. Install Playwright browsers
 5. Run tests (`npm test`)
 

@@ -18,6 +18,7 @@
     "setup:mongodb:auto": "ts-node scripts/setup-mongodb.ts --auto",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:push": "prisma db push --schema prisma/schema.prisma",
+    "postinstall": "npm run prisma:generate",
     "prepare": "node -e \"process.exit(0)\""
   },
   "keywords": [
