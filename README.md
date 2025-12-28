@@ -38,6 +38,7 @@ docs/             # Документация (cursor.md, CURSOR_*.md)
 
 ## Документация
 
+- **Навигация по докам**: [`docs/INDEX.md`](./docs/INDEX.md)
 - **Для Cursor / AI**: [`cursor.md`](./cursor.md)
 - **Архитектура**: [`docs/CURSOR_ARCHITECTURE.md`](./docs/CURSOR_ARCHITECTURE.md)
 - **Команды и workflow**: [`docs/CURSOR_COMMANDS.md`](./docs/CURSOR_COMMANDS.md)

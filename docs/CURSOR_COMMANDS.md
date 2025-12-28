@@ -1,5 +1,7 @@
 # 🛠️ Команды и Workflow
 
+> Навигация по документации: **[`docs/INDEX.md`](./INDEX.md)** (единая точка входа).
+
 ## Разработка
 
 > Репозиторий собран на **npm workspaces**. Базовые команды (`npm run dev`, `npm run build`, `npm test`, `npm run lint`) проксируются в workspace `@assistant/desktop`.  
