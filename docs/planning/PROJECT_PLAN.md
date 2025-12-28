@@ -4,7 +4,7 @@
 
 > 📋 **Детальный план действий!** Для детальной декомпозиции задач с ID, зависимостями и временными оценками см.: **[ACTION_PLAN.md](./ACTION_PLAN.md)**  
 > 📦 **Эпики проекта!** Для структурированного списка задач в формате эпиков см.: **[EPICS.md](./EPICS.md)**  
-> 🎨 **Техническое задание для дизайнера!** Если вы работаете с дизайнером UI/UX, используйте: **[DESIGN_SPECIFICATION.md](./DESIGN_SPECIFICATION.md)**
+> 🎨 **Техническое задание для дизайнера!** Если вы работаете с дизайнером UI/UX, используйте: **[DESIGN_SPECIFICATION.md](../design/DESIGN_SPECIFICATION.md)**
 
 ---
 
@@ -367,7 +367,7 @@
 #### 6.2 Создание Unity проекта
 
 - [ ] Создать новый проект (3D URP или 3D Core)
-- [ ] Следовать инструкции: **[unity/SETUP_GUIDE.md](./unity/SETUP_GUIDE.md)**
+- [ ] Следовать инструкции: **[unity/SETUP_GUIDE.md](../unity/SETUP_GUIDE.md)**
 
 **Основные шаги**:
 
@@ -701,8 +701,8 @@
 
 ### Полезные ссылки:
 
-- Инструкция по Unity: [`unity/SETUP_GUIDE.md`](./unity/SETUP_GUIDE.md)
-- Основная документация: `README.md`
+- Инструкция по Unity: [`unity/SETUP_GUIDE.md`](../unity/SETUP_GUIDE.md)
+- Основная документация: `../README.md`
 
 ---
 

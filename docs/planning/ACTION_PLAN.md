@@ -648,9 +648,9 @@
 ## 📚 Дополнительные документы
 
 - **Эпики проекта**: [EPICS.md](./EPICS.md) - структурированный список задач в формате эпиков
-- **Техническое задание для дизайнера**: [DESIGN_SPECIFICATION.md](./DESIGN_SPECIFICATION.md)
+- **Техническое задание для дизайнера**: [DESIGN_SPECIFICATION.md](../design/DESIGN_SPECIFICATION.md)
 - **План реализации проекта**: [PROJECT_PLAN.md](./PROJECT_PLAN.md)
-- **Техническое задание для Unity аниматора**: [unity/TECHNICAL_SPECIFICATION.md](./unity/TECHNICAL_SPECIFICATION.md)
+- **Техническое задание для Unity аниматора**: [unity/TECHNICAL_SPECIFICATION.md](../unity/TECHNICAL_SPECIFICATION.md)
 
 ---
 

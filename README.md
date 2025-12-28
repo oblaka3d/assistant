@@ -44,9 +44,9 @@ docs/             # Документация (cursor.md, CURSOR_*.md)
 - **Команды и workflow**: [`docs/CURSOR_COMMANDS.md`](./docs/CURSOR_COMMANDS.md)
 - **Технические детали**: [`docs/CURSOR_TECHNICAL.md`](./docs/CURSOR_TECHNICAL.md)
 - **Конфигурации**: [`docs/CURSOR_CONFIGURATION.md`](./docs/CURSOR_CONFIGURATION.md)
-- **План работ**: [`docs/ACTION_PLAN.md`](./docs/ACTION_PLAN.md)
-- **Epics**: [`docs/EPICS.md`](./docs/EPICS.md)
-- **Project plan**: [`docs/PROJECT_PLAN.md`](./docs/PROJECT_PLAN.md)
+- **План работ**: [`docs/planning/ACTION_PLAN.md`](./docs/planning/ACTION_PLAN.md)
+- **Epics**: [`docs/planning/EPICS.md`](./docs/planning/EPICS.md)
+- **Project plan**: [`docs/planning/PROJECT_PLAN.md`](./docs/planning/PROJECT_PLAN.md)
 
 ## Как работать
 

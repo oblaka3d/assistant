@@ -31,13 +31,13 @@ npm test
 
 ## Планирование (не обязательно для ежедневной разработки)
 
-- [`ACTION_PLAN.md`](./ACTION_PLAN.md)
-- [`EPICS.md`](./EPICS.md)
-- [`PROJECT_PLAN.md`](./PROJECT_PLAN.md)
+- [`planning/ACTION_PLAN.md`](./planning/ACTION_PLAN.md)
+- [`planning/EPICS.md`](./planning/EPICS.md)
+- [`planning/PROJECT_PLAN.md`](./planning/PROJECT_PLAN.md)
 
 ## Дизайн и Unity (если актуально для продукта)
 
-- [`DESIGN_SPECIFICATION.md`](./DESIGN_SPECIFICATION.md)
+- [`design/DESIGN_SPECIFICATION.md`](./design/DESIGN_SPECIFICATION.md)
 - [`unity/SETUP_GUIDE.md`](./unity/SETUP_GUIDE.md)
 - [`unity/TECHNICAL_SPECIFICATION.md`](./unity/TECHNICAL_SPECIFICATION.md)
 
