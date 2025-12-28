@@ -110,3 +110,5 @@ npm run test:visual:update --workspace @assistant/desktop
 
 ![ApplicationsScreen (catalog) — light](../apps/desktop/ui-electron/src/screens/MenuScreen/subscreens/ApplicationsScreen/ApplicationsScreen.spec.ts-snapshots/applications-screen-catalog-light-chromium.png)
 
+![ApplicationsScreen (my apps) — dark](../apps/desktop/ui-electron/src/screens/MenuScreen/subscreens/ApplicationsScreen/ApplicationsScreen.spec.ts-snapshots/applications-screen-my-apps-dark-chromium.png)
+
